@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Secrets
+.env
+.env.local
+
+# Generated data (rebuildable: `uv run python scripts/build_index.py`)
+backend/data/index/
+backend/data/uploads/
+*.db
+*.db-shm
+*.db-wal
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
