@@ -72,20 +72,48 @@ def code_files_containing(root: Path, needle: str) -> list[Path]:
     return hits
 
 
-def unreferenced_modules() -> list[str]:
-    """Modules under ``app/`` that nothing imports - i.e. candidate dead code."""
-    searchable = python_files(BACKEND / "app") + python_files(BACKEND / "tests")
+def imported_modules() -> set[str]:
+    """Every module path actually imported anywhere, resolved from the AST.
+
+    Text search is not good enough here. ``from app.repositories import db`` never
+    produces the substring ``app.repositories.db``, so a grep-based check silently
+    depends on whether some docstring happens to mention the module - which meant
+    this audit was reporting live modules as dead. Parsing the imports is exact.
+    """
+    searchable = python_files(APP) + python_files(BACKEND / "tests")
     scripts_dir = BACKEND / "scripts"
     if scripts_dir.is_dir():
         searchable += python_files(scripts_dir)
-    corpus = "\n".join(p.read_text(encoding="utf-8", errors="replace") for p in searchable)
+
+    referenced: set[str] = set()
+    for path in searchable:
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8", errors="replace"))
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    referenced.add(alias.name)
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                referenced.add(node.module)
+                # `from app.services import matching` imports a submodule, not a
+                # name, so record both readings and let the caller match either.
+                for alias in node.names:
+                    referenced.add(f"{node.module}.{alias.name}")
+    return referenced
+
+
+def unreferenced_modules() -> list[str]:
+    """Modules under ``app/`` that nothing imports - i.e. candidate dead code."""
+    referenced = imported_modules()
 
     orphans: list[str] = []
     for path in python_files(APP):
         if path.name in {"__init__.py", "main.py"}:
             continue
         dotted = "app." + path.relative_to(APP).with_suffix("").as_posix().replace("/", ".")
-        if dotted not in corpus:
+        if dotted not in referenced:
             orphans.append(dotted)
     return orphans
 

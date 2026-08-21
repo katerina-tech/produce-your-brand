@@ -18,6 +18,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
 REPO_ROOT = BACKEND_ROOT.parent
 
+# Values that mean "nobody edited .env yet" rather than a usable credential.
+_PLACEHOLDER_KEYS = frozenset(
+    {"sk-", "sk-...", "sk-xxx", "sk-proj-...", "your-key-here", "changeme", "todo"}
+)
+
 
 class Settings(BaseSettings):
     """Runtime settings, loaded from environment / ``.env``.
@@ -87,7 +92,14 @@ class Settings(BaseSettings):
 
     @property
     def has_api_key(self) -> bool:
-        return bool(self.openai_api_key.get_secret_value().strip())
+        """True only for a key that could plausibly work.
+
+        A copied-but-unedited ``.env`` still contains the example placeholder. If
+        that counted as configured, ``/api/health`` would report ``ok`` and the
+        failure would only surface later as an opaque 401 from OpenAI.
+        """
+        key = self.openai_api_key.get_secret_value().strip()
+        return bool(key) and key not in _PLACEHOLDER_KEYS and not key.endswith("...")
 
 
 @lru_cache(maxsize=1)
