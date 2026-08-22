@@ -43,12 +43,25 @@ class Settings(BaseSettings):
     openai_api_key: SecretStr = Field(default=SecretStr(""), alias="OPENAI_API_KEY")
 
     # --- models ------------------------------------------------------------
-    model_name: str = "gpt-4o"
-    classifier_model_name: str = "gpt-4o-mini"
-    embedding_model: str = "text-embedding-3-small"
+    # The base URL makes the provider swappable. It defaults to OpenRouter
+    # because that is the gateway this project is configured against; OpenRouter
+    # speaks the OpenAI API, so the SDK, structured outputs and embeddings all
+    # work unchanged. To talk to OpenAI directly instead, set an OpenAI key, set
+    # PYS_OPENAI_BASE_URL= (empty) and drop the "openai/" prefix from the model
+    # names below. Nothing in the code changes.
+    openai_base_url: str | None = "https://openrouter.ai/api/v1"
+    model_name: str = "openai/gpt-4o"
+    classifier_model_name: str = "openai/gpt-4o-mini"
+    embedding_model: str = "openai/text-embedding-3-small"
     llm_temperature: float = 0.0
     llm_timeout_seconds: float = 60.0
     llm_max_retries: int = 2
+    # Every response here is a small structured object, so a large completion
+    # budget buys nothing. It must be set explicitly: the client library
+    # otherwise reserves the model's full output window, which gateways bill or
+    # gate against up front - OpenRouter rejects such a request with HTTP 402
+    # even when the actual response would be a few hundred tokens.
+    llm_max_tokens: int = 2048
 
     # --- paths (all derived; never user-supplied) ---------------------------
     data_dir: Path = BACKEND_ROOT / "data"
@@ -81,6 +94,14 @@ class Settings(BaseSettings):
 
     # --- api ---------------------------------------------------------------
     cors_origins: tuple[str, ...] = ("http://localhost:3000",)
+
+    @field_validator("openai_base_url", mode="before")
+    @classmethod
+    def _blank_base_url_means_openai(cls, value: object) -> object:
+        """Treat ``PYS_OPENAI_BASE_URL=`` as "use OpenAI directly"."""
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
 
     @field_validator("cors_origins", "allowed_upload_types", mode="before")
     @classmethod

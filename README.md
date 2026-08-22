@@ -2,7 +2,7 @@
 
 **AI-powered B2B sourcing and production orchestration.** You already have the product and the design — describe what you want customised, and Produce Your Stuff works out *how* it can be made and *who* can make it.
 
-> **Status: Phase 0 complete** (foundations). The backend boots, contracts and the supplier dataset are in place and verified. The LangGraph workflow, RAG and frontend land in Phases 2–5 — see [Implementation status](#implementation-status). This README describes only what actually exists; the full approved design lives in [docs/architecture.md](docs/architecture.md).
+> **Status: Phase 2 complete.** The full agent works end to end against a live model: natural language → typed brief → clarification → method recommendation → deterministic supplier matching → RFQ, with four human approval gates. Agentic RAG (Phase 3), the HTTP API surface and security guard (Phase 4) and the Next.js frontend (Phase 5) are still to come — see [Implementation status](#implementation-status). This README describes only what actually exists; the full approved design lives in [docs/architecture.md](docs/architecture.md).
 
 ---
 
@@ -48,7 +48,11 @@ production-ready RFQ                → human edits and approves
 cp .env.example .env
 ```
 
-Add your `OPENAI_API_KEY` to `.env`. It is read by exactly one module (`app/config.py`), stored as a `SecretStr`, never logged, and never exposed to the frontend.
+Add your API key to `.env`. It is read by exactly one module (`app/config.py`), stored as a `SecretStr`, never logged, and never exposed to the frontend.
+
+**Provider.** The key may be an OpenAI key or an **OpenRouter** key — OpenRouter speaks the OpenAI API, including strict JSON-schema structured outputs and embeddings, so only the base URL differs. The default configuration targets OpenRouter with `openai/gpt-4o` (reasoning) and `openai/gpt-4o-mini` (routing and explanations). To use OpenAI directly, set `PYS_OPENAI_BASE_URL=` (empty) and drop the `openai/` prefix from the model names; no code changes.
+
+`PYS_LLM_MAX_TOKENS` defaults to 2048 and is deliberately explicit: the client library otherwise reserves the model's full output window, and gateways gate on that up front — OpenRouter returns HTTP 402 for a request that would actually have cost a few hundred tokens.
 
 ```bash
 cd backend && uv sync
@@ -79,6 +83,16 @@ cd backend && uv run python scripts/audit_architecture.py
 ```
 
 That last one is the guard rail against this project's predecessor: it fails the build if a second LangGraph, prompt module, LLM factory, vector store, knowledge directory or supplier data source appears, or if any module under `app/` becomes unreferenced dead code.
+
+### The live demo
+
+The test suite runs entirely on a scripted provider — no key, no network, no cost. One script exercises the real model:
+
+```bash
+cd backend && uv run python scripts/demo_run.py
+```
+
+It drives the §20 demo scenario ("I have 100 black yoga mats…") through every stage and prints the brief, the recommendation, the scored matches with their factor breakdown, and the generated RFQ. Every human gate is auto-approved so the run is unattended. **Nothing is sent to any supplier** — the RFQ is printed and discarded.
 
 ---
 
@@ -141,6 +155,40 @@ flowchart TB
 
 ---
 
+## The workflow
+
+One LangGraph, five human interrupts. `scripts/audit_architecture.py` fails the build if a second `StateGraph` ever appears.
+
+```mermaid
+stateDiagram-v2
+    [*] --> extract_requirement
+    extract_requirement --> validate_requirement
+    validate_requirement --> ask_clarifying_question : critical field missing<br/>(capped at 3 rounds)
+    ask_clarifying_question --> update_requirement : PAUSE for answer
+    update_requirement --> validate_requirement
+    validate_requirement --> human_review_requirement : complete
+    human_review_requirement --> recommend_production_method : PAUSE confirm/edit
+    recommend_production_method --> human_review_method
+    human_review_method --> search_suppliers : PAUSE confirm method
+    search_suppliers --> calculate_matches
+    calculate_matches --> human_select_supplier
+    human_select_supplier --> generate_rfq : PAUSE select
+    generate_rfq --> human_review_rfq
+    human_review_rfq --> [*] : PAUSE approve
+```
+
+**Human-in-the-loop is structural, not decorative.** The graph physically cannot pass a gate without a resume payload, and `RFQ.approved` is set only by an explicit approve action — declining ends the run without a completed project. Every decision is written to `project_events` with `actor='human'`.
+
+**Memory.** Two stores, deliberately separate. LangGraph's SQLite checkpointer holds conversation state (short-term); the `projects` table holds the durable business record (long-term). A project survives a process restart because the record is ours and does not depend on a checkpoint format we do not own.
+
+**Error handling.** A model failure never propagates as an exception. It is logged, recorded in `errors`, and the stage becomes `FAILED` so the graph routes to a controlled stop — the client gets a typed error, never a stack trace. Failures that only affect prose degrade instead: if the match-explanation call fails, matches still render with their Python-generated per-factor reasons.
+
+### Tools
+
+`search_suppliers` · `get_supplier_capabilities` · `calculate_supplier_matches` · `resolve_supplier`, all with typed schemas in `app/tools/registry.py`. Note what is *absent*: scoring is not a tool the model can influence. It is called by a node with data the model never touches.
+
+---
+
 ## Repository layout
 
 ```
@@ -151,18 +199,28 @@ backend/
     api/                 # HTTP boundary (routes + wire DTOs)
     domain/              # Pydantic contracts: requirement, supplier, matching,
                          #   method, knowledge, rfq, project
-    llm/                 # one model factory, one prompt source     [Phase 2]
-    graph/               # the single LangGraph workflow            [Phase 2]
-    tools/               # typed function tools                     [Phase 2]
-    services/            # deterministic business logic             [Phase 1]
+    llm/
+      factory.py         # the only ChatOpenAI construction
+      prompts.py         # the only prompt text in the codebase
+    graph/
+      state.py           # ProductionState + checkpointed type allowlist
+      nodes.py           # thin nodes; 5 interrupts
+      workflow.py        # THE single StateGraph
+    tools/registry.py    # typed function tools over the services
+    services/
+      completeness.py    # deterministic missing-field logic
+      matching.py        # deterministic scorer (no LLM imports)
+      rfq_builder.py     # deterministic RFQ assembly
+      project_service.py # graph pause/resume + persistence
     rag/                 # one pipeline, one vector store           [Phase 3]
-    repositories/        # SQLite + supplier data access            [Phase 1]
+    repositories/        # SQLite + supplier data access
     security/            # layered prompt-injection guard           [Phase 4]
   data/
     suppliers.json       # 24 curated records — single source of truth
     knowledge/           # the only knowledge-base directory        [Phase 3]
   scripts/
     audit_architecture.py
+    demo_run.py          # the only code that calls a real model
   tests/
 frontend/                # Next.js app                             [Phase 5]
 docs/architecture.md     # the approved design
@@ -189,14 +247,14 @@ One logging configuration, JSON by default (`PYS_LOG_FORMAT=console` for local r
 | Phase | Scope | State |
 |---|---|---|
 | 0 | Foundations: pinned deps, config, logging, domain contracts, supplier dataset, API boot | **complete** |
-| 1 | Deterministic core: completeness, matching scorer, RFQ builder, repositories | next |
-| 2 | Agent core: LLM factory, prompts, the single LangGraph with 5 interrupts | planned |
-| 3 | Agentic RAG: knowledge base, vector store, retrieval router | planned |
-| 4 | Security guard + full API surface | planned |
+| 1 | Deterministic core: completeness, matching scorer, RFQ builder, repositories | **complete** |
+| 2 | Agent core: LLM factory, prompts, the single LangGraph with 5 interrupts, project service | **complete** |
+| 3 | Agentic RAG: knowledge base, vector store, retrieval router | next |
+| 4 | Security guard + full HTTP API surface | planned |
 | 5 | Next.js frontend | planned |
 | 6 | Documentation and final verification | planned |
 
-Sections still to be written here, as the code that justifies them lands: LangGraph node diagram, tool catalogue, memory model, RAG design, the security layers, the full matching algorithm, the demo walkthrough, known limitations and roadmap. The design for all of it is already fixed in [docs/architecture.md](docs/architecture.md).
+Sections still to be written here, as the code that justifies them lands: RAG design, the security layers, and the HTTP API reference. The design for all of it is already fixed in [docs/architecture.md](docs/architecture.md).
 
 ## Deliberately not built
 
