@@ -52,7 +52,9 @@ Add your API key to `.env`. It is read by exactly one module (`app/config.py`), 
 
 **Provider.** The key may be an OpenAI key or an **OpenRouter** key — OpenRouter speaks the OpenAI API, including strict JSON-schema structured outputs and embeddings, so only the base URL differs. The default configuration targets OpenRouter with `openai/gpt-4o` (reasoning) and `openai/gpt-4o-mini` (routing and explanations). To use OpenAI directly, set `PYS_OPENAI_BASE_URL=` (empty) and drop the `openai/` prefix from the model names; no code changes.
 
-`PYS_LLM_MAX_TOKENS` defaults to 2048 and is deliberately explicit: the client library otherwise reserves the model's full output window, and gateways gate on that up front — OpenRouter returns HTTP 402 for a request that would actually have cost a few hundred tokens.
+`PYS_LLM_MAX_TOKENS` defaults to 1024 and is deliberately explicit: the client library otherwise reserves the model's full output window, and gateways gate on that up front — OpenRouter returns HTTP 402 for a request that would actually have cost a few hundred tokens.
+
+> **Troubleshooting `ProductionRequirement generation failed`.** This means the model provider refused the request. On OpenRouter's free tier it is almost always a `402`: the remaining balance no longer affords even the reserved token budget, and the affordable ceiling keeps shrinking as credit drains. Confirm from the backend log, then either add credits or set `PYS_MODEL_NAME=openai/gpt-4o-mini` — far cheaper, and it extracts correctly. The workflow handles the failure cleanly either way: nothing is committed, no partner is contacted, and the project records the error rather than crashing.
 
 ```bash
 cd backend && uv sync

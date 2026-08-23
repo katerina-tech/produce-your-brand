@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { BackLink, Card, CardHeader, Notice, StageStepper } from "@/components/ui";
@@ -42,10 +43,14 @@ function StageView({ state }: { state: ProjectState }) {
       );
     }
 
+    // A failed run already explains itself above; a second panel saying
+    // "nothing to review" only adds noise to a page the user is already
+    // puzzled by.
+    if (stage === "failed") return null;
+
     return (
       <Notice tone="warning" title="Nothing to review">
-        This project has no pending step. It may have ended early — see the
-        errors above if any are shown.
+        This project has no pending step.
       </Notice>
     );
   }
@@ -125,8 +130,20 @@ export default async function ProjectPage({
               <li key={message}>{message}</li>
             ))}
           </ul>
-          <p className="mt-2 text-xs">
-            Nothing was committed. Start a new project to try again.
+          <p className="mt-3 text-xs">
+            Nothing was committed, so no partner was contacted and nothing was
+            saved beyond this record. A generation failure is most often the
+            model provider refusing the request — check{" "}
+            <code className="font-mono">/api/health</code> and the backend log,
+            then start a new project.
+          </p>
+          <p className="mt-3">
+            <Link
+              href="/new"
+              className="font-medium underline decoration-mismatch/40 underline-offset-4"
+            >
+              Start a new project
+            </Link>
           </p>
         </Notice>
       ) : null}
