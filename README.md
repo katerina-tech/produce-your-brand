@@ -2,7 +2,7 @@
 
 **AI-powered B2B sourcing and production orchestration.** You already have the product and the design — describe what you want customised, and Produce Your Stuff works out *how* it can be made and *who* can make it.
 
-> **Status: Phase 2 complete.** The full agent works end to end against a live model: natural language → typed brief → clarification → method recommendation → deterministic supplier matching → RFQ, with four human approval gates. Agentic RAG (Phase 3), the HTTP API surface and security guard (Phase 4) and the Next.js frontend (Phase 5) are still to come — see [Implementation status](#implementation-status). This README describes only what actually exists; the full approved design lives in [docs/architecture.md](docs/architecture.md).
+> **Status: Phase 3 complete.** The full agent works end to end against a live model: natural language → typed brief → clarification → *knowledge-grounded* method recommendation → deterministic supplier matching → RFQ, with four human approval gates. The HTTP API surface and security guard (Phase 4) and the Next.js frontend (Phase 5) are still to come — see [Implementation status](#implementation-status). This README describes only what actually exists; the full approved design lives in [docs/architecture.md](docs/architecture.md).
 
 ---
 
@@ -189,6 +189,46 @@ stateDiagram-v2
 
 ---
 
+## Agentic RAG
+
+One knowledge directory, one pipeline, one index. `scripts/audit_architecture.py` fails the build if a second appears — the predecessor project had two knowledge directories and FAISS entry points in two modules, so retrieval behaved differently depending on which code path you hit.
+
+**The corpus.** 13 curated documents in `backend/data/knowledge/`, each with YAML frontmatter (`title`, `production_method`, `materials`, `source`, `source_url`, `updated_at`): laser engraving and its material limits, the PVC safety refusal, screen/digital/pad printing, heat transfer and foil, embroidery, labels, packaging, material compatibility, artwork requirements, production limitations. Cross-cutting references carry `production_method: null` rather than a fabricated method.
+
+These are **internally authored notes**, labelled as such in every `source` field, with `source_url: null` throughout — no citation points at a document this project has not written. Technical claims are general trade knowledge, and the recommendation surfaces `confidence` and `open_questions` so nothing reads as a guarantee.
+
+**The pipeline.** `load → markdown-header split → size split (800/120) → embed → FAISS → data/index/`. FAISS is used directly rather than through a framework wrapper: fewer dependencies, and persistence is a plain index file plus JSON instead of a pickle — a pickled index is arbitrary code execution waiting for someone to swap the file. The index self-heals: a fingerprint over document bytes plus the embedding model name means editing a document or switching model forces a rebuild rather than silently searching a stale corpus.
+
+**What makes it agentic.** Retrieval does not fire on every request. Routing is layered, cheapest first:
+
+| Layer | Decides |
+|---|---|
+| Deterministic fast path | *"Which suppliers in Berlin support laser engraving?"* → supplier repository, **no model call**. *"Is laser engraving appropriate for anodised aluminium?"* → retrieve, **no model call**. |
+| Deterministic rule on the brief | Material unconfirmed → retrieve, because feasibility genuinely cannot be assumed. |
+| The model | Everything genuinely ambiguous — is this pairing routine enough to answer from general knowledge? |
+
+If the router itself fails, it errs toward retrieving: an unnecessary lookup is cheap, a confident wrong technical claim is not.
+
+**It demonstrably changes the answer.** The same demo request, with and without retrieval:
+
+| | Without retrieval | Grounded |
+|---|---|---|
+| confidence | medium | high |
+| constraints | 1, generic | 4, including the corpus's "1 to 2 mm line thickness for weeded vinyl" |
+| open questions | "type of gold finish" | "the specific PVC compound, as this affects temperature settings" |
+
+`retrieval_used` and `sources` are set **in code from what was actually retrieved**, never asserted by the model — a recommendation made without sources cannot claim any.
+
+**Trust boundary.** Retrieved passages are untrusted input, exactly like customer text: screened, then fenced as `<untrusted_knowledge_excerpts>` in a *user* message, never the system prompt. A retrieval outage costs confidence in the recommendation, not the project — the workflow continues with no knowledge rather than failing.
+
+Build the index explicitly (it also builds lazily on first use):
+
+```bash
+cd backend && uv run python scripts/build_index.py
+```
+
+---
+
 ## Repository layout
 
 ```
@@ -212,14 +252,18 @@ backend/
       matching.py        # deterministic scorer (no LLM imports)
       rfq_builder.py     # deterministic RFQ assembly
       project_service.py # graph pause/resume + persistence
-    rag/                 # one pipeline, one vector store           [Phase 3]
+    rag/
+      store.py           # THE vector store: load, chunk, embed, index, search
+      retriever.py       # retrieval + the routing decision
     repositories/        # SQLite + supplier data access
     security/            # layered prompt-injection guard           [Phase 4]
   data/
     suppliers.json       # 24 curated records — single source of truth
-    knowledge/           # the only knowledge-base directory        [Phase 3]
+    knowledge/           # 13 curated documents - the only KB directory
+    index/               # generated FAISS index (gitignored, rebuildable)
   scripts/
     audit_architecture.py
+    build_index.py       # thin entry point to the one builder
     demo_run.py          # the only code that calls a real model
   tests/
 frontend/                # Next.js app                             [Phase 5]
@@ -249,12 +293,12 @@ One logging configuration, JSON by default (`PYS_LOG_FORMAT=console` for local r
 | 0 | Foundations: pinned deps, config, logging, domain contracts, supplier dataset, API boot | **complete** |
 | 1 | Deterministic core: completeness, matching scorer, RFQ builder, repositories | **complete** |
 | 2 | Agent core: LLM factory, prompts, the single LangGraph with 5 interrupts, project service | **complete** |
-| 3 | Agentic RAG: knowledge base, vector store, retrieval router | next |
-| 4 | Security guard + full HTTP API surface | planned |
+| 3 | Agentic RAG: knowledge base, vector store, retrieval router | **complete** |
+| 4 | Security guard + full HTTP API surface | next |
 | 5 | Next.js frontend | planned |
 | 6 | Documentation and final verification | planned |
 
-Sections still to be written here, as the code that justifies them lands: RAG design, the security layers, and the HTTP API reference. The design for all of it is already fixed in [docs/architecture.md](docs/architecture.md).
+Sections still to be written here, as the code that justifies them lands: the security layers and the HTTP API reference. The design for all of it is already fixed in [docs/architecture.md](docs/architecture.md).
 
 ## Deliberately not built
 

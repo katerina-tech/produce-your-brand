@@ -102,6 +102,12 @@ def main() -> int:
     rule("STEP 3 - production method recommendation (human gate 2)")
     assert view.payload is not None
     rec = view.payload["recommendation"]
+
+    # The agentic-RAG evidence: whether knowledge was consulted, and what for.
+    print(f"  retrieval   : {'consulted' if rec['retrieval_used'] else 'not needed'}")
+    for citation in rec.get("sources") or []:
+        print(f"     source   : {citation['title']}")
+    print()
     print(f"  primary     : {rec['primary']}")
     print(f"  alternative : {rec['alternative']}")
     print(f"  confidence  : {rec['confidence']}")

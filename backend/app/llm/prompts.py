@@ -292,3 +292,42 @@ def rfq_prose_messages(
             )
         ),
     ]
+
+
+# ------------------------------------------------------- retrieval routing
+
+RETRIEVAL_ROUTER_TASK = """Your task: decide whether answering this needs the \
+production knowledge base.
+
+Set needs_retrieval to TRUE when the answer depends on technical facts that \
+should be looked up rather than recalled:
+- an unusual, coated, heat-sensitive or unconfirmed substrate;
+- a metallic, foil or other physical-effect finish;
+- a safety question about processing a material;
+- specific artwork limits, tolerances or durability claims;
+- any pairing of method and material that is not routine.
+
+Set needs_retrieval to FALSE when:
+- the question is about which partners exist, where they are, or what they offer \
+- that is a database lookup, not a technical question;
+- the pairing is entirely routine and well established (screen printing on \
+cotton, embroidery on a canvas bag);
+- the question is commercial rather than technical (price, lead time, quantity).
+
+When TRUE, put a focused search query in `query`. Give a one-line `reason` \
+either way. Prefer retrieval when genuinely unsure: an unnecessary lookup is \
+cheap, a confident wrong technical claim is not."""
+
+
+def retrieval_router_messages(question: str) -> list[BaseMessage]:
+    """Ask whether technical knowledge is needed. The agentic part of the RAG."""
+    return [
+        _system(RETRIEVAL_ROUTER_TASK),
+        HumanMessage(
+            content=(
+                f"{UNTRUSTED_PREAMBLE}\n\n"
+                f"{fence('question', question)}\n\n"
+                "Decide whether the production knowledge base is needed."
+            )
+        ),
+    ]

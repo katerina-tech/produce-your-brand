@@ -31,7 +31,9 @@ from app.config import Settings, get_settings
 from app.domain.enums import Stage
 from app.graph import nodes
 from app.graph.state import CHECKPOINTED_TYPES, ProductionState
-from app.llm.factory import LLMProvider, get_provider
+from app.llm.factory import LLMProvider, get_embedding_provider, get_provider
+from app.rag.retriever import KnowledgeRetriever
+from app.rag.store import KnowledgeStore
 from app.repositories.supplier_repo import SupplierRepository
 from app.tools.registry import ProductionTools
 
@@ -70,6 +72,7 @@ class GraphDeps:
     provider: LLMProvider
     tools: ProductionTools
     today: date
+    retriever: KnowledgeRetriever | None = None
     top_matches: int = 3
     deadline_buffer_days: int = 5
     max_clarification_rounds: int = 3
@@ -111,6 +114,20 @@ def route_after_validation(state: ProductionState, max_rounds: int) -> str:
     return "ask_clarifying_question"
 
 
+def route_after_knowledge_assessment(state: ProductionState) -> str:
+    """The conditional edge that makes retrieval optional.
+
+    A feasibility question earns a lookup; a routine pairing does not. This is
+    the branch that has to actually vary, or the RAG is decorative.
+    """
+    if _has_failed(state):
+        return "failed"
+    decision = state.get("retrieval_decision")
+    if decision is not None and decision.needs_retrieval:
+        return "retrieve_production_knowledge"
+    return "recommend_production_method"
+
+
 def route_after_method_recommendation(state: ProductionState) -> str:
     return "failed" if _has_failed(state) else "human_review_method"
 
@@ -136,6 +153,8 @@ def build_graph(deps: GraphDeps) -> StateGraph[ProductionState, None, Any, Any]:
     graph.add_node("ask_clarifying_question", bind(nodes.ask_clarifying_question))
     graph.add_node("update_requirement", bind(nodes.update_requirement))
     graph.add_node("human_review_requirement", bind(nodes.human_review_requirement))
+    graph.add_node("assess_knowledge_need", bind(nodes.assess_knowledge_need))
+    graph.add_node("retrieve_production_knowledge", bind(nodes.retrieve_production_knowledge))
     graph.add_node("recommend_production_method", bind(nodes.recommend_production_method))
     graph.add_node("human_review_method", bind(nodes.human_review_method))
     graph.add_node("search_suppliers", bind(nodes.search_suppliers))
@@ -164,7 +183,17 @@ def build_graph(deps: GraphDeps) -> StateGraph[ProductionState, None, Any, Any]:
     graph.add_edge("ask_clarifying_question", "update_requirement")
     graph.add_edge("update_requirement", "validate_requirement")
 
-    graph.add_edge("human_review_requirement", "recommend_production_method")
+    graph.add_edge("human_review_requirement", "assess_knowledge_need")
+    graph.add_conditional_edges(
+        "assess_knowledge_need",
+        route_after_knowledge_assessment,
+        {
+            "retrieve_production_knowledge": "retrieve_production_knowledge",
+            "recommend_production_method": "recommend_production_method",
+            "failed": END,
+        },
+    )
+    graph.add_edge("retrieve_production_knowledge", "recommend_production_method")
     graph.add_conditional_edges(
         "recommend_production_method",
         route_after_method_recommendation,
@@ -220,9 +249,19 @@ def compile_workflow(
 def production_deps(settings: Settings | None = None, today: date | None = None) -> GraphDeps:
     """Wire the real provider, tools and settings. The single production seam."""
     settings = settings or get_settings()
+    store = KnowledgeStore(
+        knowledge_dir=settings.knowledge_dir,
+        index_dir=settings.index_dir,
+        embeddings=get_embedding_provider(settings),
+        embedding_model=settings.embedding_model,
+        chunk_size=settings.chunk_size,
+        chunk_overlap=settings.chunk_overlap,
+    )
+    provider = get_provider(settings)
     return GraphDeps(
-        provider=get_provider(settings),
+        provider=provider,
         tools=ProductionTools(SupplierRepository(settings.suppliers_file)),
+        retriever=KnowledgeRetriever(store, provider, k=settings.retrieval_k),
         today=today or date.today(),
         top_matches=settings.top_matches,
         deadline_buffer_days=settings.deadline_buffer_days,

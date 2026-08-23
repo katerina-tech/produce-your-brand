@@ -9,6 +9,7 @@ whether a model happens to behave well on a given day.
 
 from __future__ import annotations
 
+import hashlib
 from typing import Any, TypeVar
 
 from langchain_core.messages import BaseMessage
@@ -128,3 +129,59 @@ class CapturingProvider:
         return "\n".join(
             str(message.content) for message in self.prompts[-1] if message.type == "human"
         )
+
+
+class HashingEmbedder:
+    """Deterministic offline embeddings with genuine lexical similarity.
+
+    Not a stub returning noise. Each token is hashed into a fixed-width bucket and
+    the vector is L2-normalised, which makes cosine similarity a real measure of
+    term overlap. That matters: it means the retrieval tests assert actual
+    ranking behaviour rather than merely that the plumbing runs.
+
+    Semantic (non-overlapping vocabulary) similarity is beyond it, so genuine
+    embedding quality is exercised separately by scripts/demo_run.py.
+    """
+
+    def __init__(self, dimensions: int = 512) -> None:
+        self.dimensions = dimensions
+        self.document_calls = 0
+        self.query_calls = 0
+
+    @staticmethod
+    def _tokens(text: str) -> list[str]:
+        cleaned = "".join(char.lower() if char.isalnum() else " " for char in text)
+        return [token for token in cleaned.split() if len(token) > 2]
+
+    def _vector(self, text: str) -> list[float]:
+        import math
+
+        buckets = [0.0] * self.dimensions
+        for token in self._tokens(text):
+            digest = hashlib.sha256(token.encode("utf-8")).digest()
+            index = int.from_bytes(digest[:4], "big") % self.dimensions
+            buckets[index] += 1.0
+
+        norm = math.sqrt(sum(value * value for value in buckets))
+        if norm == 0.0:
+            buckets[0] = 1.0
+            return buckets
+        return [value / norm for value in buckets]
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        self.document_calls += 1
+        return [self._vector(text) for text in texts]
+
+    def embed_query(self, text: str) -> list[float]:
+        self.query_calls += 1
+        return self._vector(text)
+
+
+class FailingEmbedder:
+    """Fails every call, to prove retrieval outages degrade rather than crash."""
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        raise LLMError("simulated embedding outage")
+
+    def embed_query(self, text: str) -> list[float]:
+        raise LLMError("simulated embedding outage")

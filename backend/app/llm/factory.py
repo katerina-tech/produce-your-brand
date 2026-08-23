@@ -18,7 +18,7 @@ unvalidated model output reach business logic.
 from __future__ import annotations
 
 import logging
-from typing import Literal, Protocol, TypeVar
+from typing import Any, Literal, Protocol, TypeVar
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage
@@ -133,3 +133,79 @@ class OpenAIProvider:
 def get_provider(settings: Settings | None = None) -> LLMProvider:
     """Return the production provider. The only construction site."""
     return OpenAIProvider(settings)
+
+
+class EmbeddingProvider(Protocol):
+    """What the RAG pipeline needs to turn text into vectors."""
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        """Embed corpus chunks at index-build time."""
+        ...
+
+    def embed_query(self, text: str) -> list[float]:
+        """Embed a single search query."""
+        ...
+
+
+class OpenAIEmbeddingProvider:
+    """Production embeddings. Same gateway and key as the chat models."""
+
+    def __init__(self, settings: Settings | None = None) -> None:
+        self._settings = settings or get_settings()
+        self._client: Any = None
+
+    def _embeddings(self) -> Any:
+        if self._client is not None:
+            return self._client
+
+        from langchain_openai import OpenAIEmbeddings
+
+        settings = self._settings
+        if not settings.has_api_key:
+            raise LLMError("No API key configured. Set OPENAI_API_KEY in .env - see .env.example.")
+
+        self._client = OpenAIEmbeddings(
+            model=settings.embedding_model,
+            openai_api_key=settings.openai_api_key,
+            openai_api_base=settings.openai_base_url,
+            request_timeout=settings.llm_timeout_seconds,
+            # Send plain strings rather than pre-tokenised arrays. The default
+            # tokenises client-side with tiktoken, which OpenAI accepts but
+            # OpenAI-compatible gateways frequently do not.
+            check_embedding_ctx_length=False,
+        )
+        return self._client
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        try:
+            vectors: list[list[float]] = self._embeddings().embed_documents(texts)
+        except Exception as error:
+            log_event(
+                logger,
+                Event.LLM_ERROR,
+                "embedding documents failed",
+                level=logging.ERROR,
+                count=len(texts),
+                error_type=type(error).__name__,
+            )
+            raise LLMError("document embedding failed") from error
+        return vectors
+
+    def embed_query(self, text: str) -> list[float]:
+        try:
+            vector: list[float] = self._embeddings().embed_query(text)
+        except Exception as error:
+            log_event(
+                logger,
+                Event.LLM_ERROR,
+                "embedding query failed",
+                level=logging.ERROR,
+                error_type=type(error).__name__,
+            )
+            raise LLMError("query embedding failed") from error
+        return vector
+
+
+def get_embedding_provider(settings: Settings | None = None) -> EmbeddingProvider:
+    """Return the production embedding provider. The only construction site."""
+    return OpenAIEmbeddingProvider(settings)

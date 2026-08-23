@@ -25,7 +25,7 @@ from app.domain.enums import (
     ProductionMethod,
     Stage,
 )
-from app.domain.knowledge import KnowledgeCitation
+from app.domain.knowledge import KnowledgeCitation, KnowledgeSnippet, RetrievalDecision
 from app.domain.matching import FactorScore, MatchFactor, MatchResult, Verdict
 from app.domain.method import MethodRecommendation
 from app.domain.requirement import ProductionRequirement
@@ -47,6 +47,9 @@ class ProductionState(TypedDict, total=False):
     missing_fields: list[str]
     clarification_rounds: int
     clarifying_question: str | None
+
+    retrieval_decision: RetrievalDecision | None
+    retrieved_knowledge: list[KnowledgeSnippet]
 
     recommended_methods: MethodRecommendation | None
     confirmed_method: ProductionMethod | None
@@ -107,6 +110,8 @@ CHECKPOINTED_TYPES: tuple[type, ...] = (
     MatchResult,
     FactorScore,
     KnowledgeCitation,
+    KnowledgeSnippet,
+    RetrievalDecision,
     RFQ,
     # enums
     ProductionMethod,
@@ -130,6 +135,8 @@ def initial_state(project_id: str, raw_request: str, reference_date: str) -> Pro
         missing_fields=[],
         clarification_rounds=0,
         clarifying_question=None,
+        retrieval_decision=None,
+        retrieved_knowledge=[],
         recommended_methods=None,
         confirmed_method=None,
         supplier_candidates=[],

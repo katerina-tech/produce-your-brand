@@ -22,6 +22,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.types import interrupt
 
 from app.domain.enums import ProductionMethod, Stage
+from app.domain.knowledge import KnowledgeCitation, KnowledgeSnippet, RetrievalDecision
 from app.domain.method import MethodRecommendation
 from app.domain.requirement import ProductionRequirement
 from app.graph.state import (
@@ -33,6 +34,7 @@ from app.graph.state import (
 from app.llm import prompts
 from app.llm.factory import LLMError
 from app.logging_config import Event, log_event, redact_text
+from app.rag.retriever import format_snippets
 from app.services import completeness, rfq_builder
 from app.tools.registry import ToolError
 
@@ -237,6 +239,72 @@ def _requirement_from_decision(decision: object) -> ProductionRequirement | None
         return None
 
 
+# ------------------------------------------------------------- agentic rag
+
+
+def assess_knowledge_need(state: ProductionState, deps: GraphDeps) -> dict[str, Any]:
+    """Decide whether this project needs the production knowledge base.
+
+    This is the node that makes the RAG agentic. It does not retrieve; it only
+    decides. When no retriever is configured the answer is trivially "no", which
+    keeps the graph runnable without an index.
+    """
+    requirement = state.get("production_requirement")
+    if requirement is None:
+        return _fail(Stage.METHOD_REVIEW, "no requirement to assess")
+
+    if deps.retriever is None:
+        return {
+            "retrieval_decision": RetrievalDecision(
+                needs_retrieval=False,
+                reason="No knowledge base configured.",
+            )
+        }
+
+    decision = deps.retriever.assess_requirement(requirement)
+    return {"retrieval_decision": decision}
+
+
+def retrieve_production_knowledge(state: ProductionState, deps: GraphDeps) -> dict[str, Any]:
+    """Fetch supporting passages. Failure degrades to no knowledge, not an error.
+
+    A retrieval outage should cost confidence in the recommendation, not the
+    whole project, so this never fails the workflow.
+    """
+    decision = state.get("retrieval_decision")
+    requirement = state.get("production_requirement")
+    if deps.retriever is None or decision is None or not decision.query or requirement is None:
+        return {"retrieved_knowledge": []}
+
+    try:
+        snippets = deps.retriever.search_production_knowledge(decision.query)
+    except Exception as error:  # index missing, embedding outage, corrupt file
+        log_event(
+            logger,
+            Event.TOOL_ERROR,
+            "retrieval failed; continuing without knowledge",
+            level=logging.WARNING,
+            error_type=type(error).__name__,
+        )
+        return {"retrieved_knowledge": []}
+
+    # Retrieved documents are untrusted input, exactly like customer text.
+    screened = [
+        snippet.model_copy(
+            update={"text": deps.screen_untrusted(snippet.text, "knowledge_excerpt")}
+        )
+        for snippet in snippets
+    ]
+    log_event(
+        logger,
+        Event.RAG_COMPLETED,
+        project_id=state.get("project_id"),
+        snippets=len(screened),
+        titles=[snippet.citation.title for snippet in screened],
+    )
+    return {"retrieved_knowledge": screened}
+
+
 # ------------------------------------------------------ method recommendation
 
 
@@ -246,6 +314,9 @@ def recommend_production_method(state: ProductionState, deps: GraphDeps) -> dict
     if requirement is None:
         return _fail(Stage.METHOD_REVIEW, "no requirement to reason about")
 
+    snippets = state.get("retrieved_knowledge") or []
+    knowledge = format_snippets(snippets) if snippets else None
+
     try:
         recommendation = deps.provider.structured(
             MethodRecommendation,
@@ -253,11 +324,20 @@ def recommend_production_method(state: ProductionState, deps: GraphDeps) -> dict
                 requirement,
                 [method.value for method in ProductionMethod],
                 _reference_date(state),
-                knowledge=None,
+                knowledge=knowledge,
             ),
         )
     except LLMError as error:
         return _fail(Stage.METHOD_REVIEW, str(error))
+
+    # Citations and the retrieval flag are set here, not by the model: what was
+    # actually retrieved is a fact about this run, not something to be claimed.
+    recommendation = recommendation.model_copy(
+        update={
+            "retrieval_used": bool(snippets),
+            "sources": _dedupe_citations(snippets),
+        }
+    )
 
     log_event(
         logger,
@@ -267,8 +347,22 @@ def recommend_production_method(state: ProductionState, deps: GraphDeps) -> dict
         alternative=recommendation.alternative.value if recommendation.alternative else None,
         confidence=recommendation.confidence.value,
         open_questions=len(recommendation.open_questions),
+        retrieval_used=recommendation.retrieval_used,
+        sources=len(recommendation.sources),
     )
     return {"recommended_methods": recommendation, "current_stage": Stage.METHOD_REVIEW}
+
+
+def _dedupe_citations(snippets: list[KnowledgeSnippet]) -> list[KnowledgeCitation]:
+    """One citation per source document, in retrieval order."""
+    seen: set[str] = set()
+    citations: list[KnowledgeCitation] = []
+    for snippet in snippets:
+        if snippet.citation.title in seen:
+            continue
+        seen.add(snippet.citation.title)
+        citations.append(snippet.citation)
+    return citations
 
 
 def human_review_method(state: ProductionState, deps: GraphDeps) -> dict[str, Any]:
