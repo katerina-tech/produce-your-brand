@@ -36,12 +36,36 @@ SchemaT = TypeVar("SchemaT", bound=BaseModel)
 Purpose = Literal["main", "classifier"]
 
 
+# Markers used by upstream providers when their own content policy blocks a
+# request. A refusal is not a neutral outage: for the injection classifier it is
+# corroborating evidence that the text was hostile.
+_CONTENT_FILTER_MARKERS = (
+    "content management policy",
+    "content_filter",
+    "content policy",
+    "responsibleaipolicyviolation",
+)
+
+
 class LLMError(RuntimeError):
     """A model call failed or returned something unusable.
 
     Raised instead of leaking provider-specific exceptions upward, so nodes can
     convert any failure into a controlled workflow error.
+
+    ``content_filtered`` distinguishes "the provider refused this text" from
+    "the call did not work", because the two mean different things to a caller
+    that is screening input.
     """
+
+    def __init__(self, message: str, *, content_filtered: bool = False) -> None:
+        super().__init__(message)
+        self.content_filtered = content_filtered
+
+
+def _is_content_filter(error: BaseException) -> bool:
+    lowered = str(error).lower()
+    return any(marker in lowered for marker in _CONTENT_FILTER_MARKERS)
 
 
 class LLMProvider(Protocol):
@@ -112,7 +136,10 @@ class OpenAIProvider:
                 purpose=purpose,
                 error_type=type(error).__name__,
             )
-            raise LLMError(f"{schema.__name__} generation failed") from error
+            raise LLMError(
+                f"{schema.__name__} generation failed",
+                content_filtered=_is_content_filter(error),
+            ) from error
 
         if not isinstance(result, schema):
             # Defensive: a gateway that ignores the schema must not slip an

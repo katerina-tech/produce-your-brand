@@ -35,6 +35,7 @@ from app.llm.factory import LLMProvider, get_embedding_provider, get_provider
 from app.rag.retriever import KnowledgeRetriever
 from app.rag.store import KnowledgeStore
 from app.repositories.supplier_repo import SupplierRepository
+from app.security.guard import build_guard
 from app.tools.registry import ProductionTools
 
 logger = logging.getLogger(__name__)
@@ -52,11 +53,10 @@ class BoundNode(Protocol):
 
 
 def _passthrough_screen(text: str, _label: str) -> str:
-    """Default screening: identity.
+    """Screening disabled. Only for tests that assert unscreened behaviour.
 
-    Phase 4 replaces this with the layered injection guard. It is a seam rather
-    than a stub - nodes already route all untrusted text through it, so enabling
-    the guard is a wiring change, not a refactor of every node.
+    Production wiring uses the layered guard; this default exists so a test can
+    isolate a node from screening rather than as a fallback anyone should ship.
     """
     return text
 
@@ -258,10 +258,12 @@ def production_deps(settings: Settings | None = None, today: date | None = None)
         chunk_overlap=settings.chunk_overlap,
     )
     provider = get_provider(settings)
+    guard = build_guard(provider, settings)
     return GraphDeps(
         provider=provider,
         tools=ProductionTools(SupplierRepository(settings.suppliers_file)),
         retriever=KnowledgeRetriever(store, provider, k=settings.retrieval_k),
+        screen_untrusted=guard.screen,
         today=today or date.today(),
         top_matches=settings.top_matches,
         deadline_buffer_days=settings.deadline_buffer_days,

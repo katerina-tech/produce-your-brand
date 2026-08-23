@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     # otherwise reserves the model's full output window, which gateways bill or
     # gate against up front - OpenRouter rejects such a request with HTTP 402
     # even when the actual response would be a few hundred tokens.
-    llm_max_tokens: int = 2048
+    llm_max_tokens: int = 1024
 
     # --- paths (all derived; never user-supplied) ---------------------------
     data_dir: Path = BACKEND_ROOT / "data"

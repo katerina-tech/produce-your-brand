@@ -2,7 +2,7 @@
 
 **AI-powered B2B sourcing and production orchestration.** You already have the product and the design — describe what you want customised, and Produce Your Stuff works out *how* it can be made and *who* can make it.
 
-> **Status: Phase 3 complete.** The full agent works end to end against a live model: natural language → typed brief → clarification → *knowledge-grounded* method recommendation → deterministic supplier matching → RFQ, with four human approval gates. The HTTP API surface and security guard (Phase 4) and the Next.js frontend (Phase 5) are still to come — see [Implementation status](#implementation-status). This README describes only what actually exists; the full approved design lives in [docs/architecture.md](docs/architecture.md).
+> **Status: Phase 4 complete — the backend is done.** The full flow runs over HTTP against a live model: natural language → typed brief → clarification → *knowledge-grounded* method recommendation → deterministic supplier matching → RFQ, with four human approval gates, layered prompt-injection defence and validated uploads. Only the Next.js frontend (Phase 5) remains — see [Implementation status](#implementation-status). This README describes only what actually exists; the full approved design lives in [docs/architecture.md](docs/architecture.md).
 
 ---
 
@@ -229,6 +229,53 @@ cd backend && uv run python scripts/build_index.py
 
 ---
 
+## HTTP API
+
+Five paths, six operations. Only one of them advances the workflow.
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/api/health` | liveness + readiness booleans (no secrets) |
+| `POST` | `/api/projects` | create, run to the first human gate |
+| `GET` | `/api/projects` | dashboard list |
+| `GET` | `/api/projects/{id}` | full current state — the "leave and come back" endpoint |
+| `POST` | `/api/projects/{id}/resume` | answer whichever gate the workflow is paused at |
+| `POST` | `/api/uploads` | validated design file, metadata only |
+
+`resume` takes a discriminated action: `answer_clarification`, `confirm_brief`, `edit_brief`, `confirm_method`, `select_supplier`, `approve_rfq`, `edit_rfq`. One endpoint rather than seven, **because the graph is the authority on where it is** — a client cannot talk it into skipping a human approval by calling a different path. A mismatched action gets `409` naming the action actually expected, so a stale browser tab receives a correctable answer instead of silently resuming the wrong branch.
+
+Every error uses one envelope — `{error: {code, message, stage, recoverable}}` — so the frontend needs exactly one error path. Stack traces and raw model output never cross the boundary.
+
+Interactive docs at `/docs` once the server is running.
+
+---
+
+## Security
+
+Not regex-only. The predecessor project's pattern list was the criticism, and the criticism was right: patterns are defeated by spacing, homoglyphs, zero-width characters or base64, and they produce a boolean where a judgement is needed.
+
+**Five layers, and the two that matter most are not detection at all.**
+
+| # | Layer | What it does |
+|---|---|---|
+| 1 | Normalisation | NFKC, strip invisible and bidi-control characters, fold Cyrillic/Greek homoglyphs, decode base64 blocks for inspection, cap length |
+| 2 | Heuristic signals | Weighted evidence → a **score**, never a verdict. Individually weak signals accumulate |
+| 3 | Model classifier | Consulted only above a threshold, so cost falls on suspicious input rather than every request |
+| 4 | **Structure** | Untrusted content never enters a system message, and fence tokens inside it are neutralised so it cannot escape its own delimiters |
+| 5 | **Output validation** | Every model response is a closed Pydantic schema, so a successful injection still cannot produce a field the system acts on |
+
+Layers 4 and 5 are the ones that must hold. There is a test that disables screening entirely and proves an attack still cannot become an instruction.
+
+**Policy differs by provenance, deliberately.** Customer text is the *subject of analysis*: a brief saying "please ignore the scratches on two of them" must not be rejected, because blocking real work is a worse failure than reading a hostile string that structure already contains. So customer text is logged, never blocked. Uploaded files fail closed. Our own curated knowledge base fails open — it should not be able to take itself offline.
+
+**One thing worth knowing:** an upstream content-policy refusal is treated as *evidence*, not an outage. In practice the most blatant injections are rejected by the provider's own filter rather than classified, so discarding that response would throw away the strongest available signal.
+
+**Uploads.** Extension allowlist ∩ sniffed magic bytes — the name and the content must agree, which is what stops a PDF arriving as `logo.png`. PNG, JPEG and PDF only; **SVG is refused** because it is XML that can carry script. Max 5 MB, stored under a generated name so a crafted filename cannot traverse directories, and nothing parses, renders or executes the body. In this phase only metadata reaches the agent.
+
+**Secrets.** `config.py` alone reads the environment; the key is a `SecretStr`; `.env` is gitignored; the frontend has no model access. No chain-of-thought is exposed — responses carry conclusions and structured `rationale`/`open_questions` fields, never raw reasoning.
+
+---
+
 ## Repository layout
 
 ```
@@ -256,7 +303,9 @@ backend/
       store.py           # THE vector store: load, chunk, embed, index, search
       retriever.py       # retrieval + the routing decision
     repositories/        # SQLite + supplier data access
-    security/            # layered prompt-injection guard           [Phase 4]
+    security/
+      guard.py           # layered injection screening
+      uploads.py         # magic-byte validation, inert storage
   data/
     suppliers.json       # 24 curated records — single source of truth
     knowledge/           # 13 curated documents - the only KB directory
@@ -294,11 +343,11 @@ One logging configuration, JSON by default (`PYS_LOG_FORMAT=console` for local r
 | 1 | Deterministic core: completeness, matching scorer, RFQ builder, repositories | **complete** |
 | 2 | Agent core: LLM factory, prompts, the single LangGraph with 5 interrupts, project service | **complete** |
 | 3 | Agentic RAG: knowledge base, vector store, retrieval router | **complete** |
-| 4 | Security guard + full HTTP API surface | next |
-| 5 | Next.js frontend | planned |
+| 4 | Security guard + full HTTP API surface | **complete** |
+| 5 | Next.js frontend | next |
 | 6 | Documentation and final verification | planned |
 
-Sections still to be written here, as the code that justifies them lands: the security layers and the HTTP API reference. The design for all of it is already fixed in [docs/architecture.md](docs/architecture.md).
+The frontend section will be written when Phase 5 lands. The design for all of it is already fixed in [docs/architecture.md](docs/architecture.md).
 
 ## Deliberately not built
 

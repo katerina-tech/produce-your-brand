@@ -58,6 +58,11 @@ ignore = ["B008"]  # FastAPI Depends() in defaults is idiomatic
 # Every graph node takes (state, deps) so workflow.bind() can wire them
 # identically. Purely deterministic nodes legitimately ignore deps.
 "app/graph/nodes.py" = ["ARG001"]
+# Homoglyphs and invisible characters are the subject matter here: the guard
+# folds them and the tests attack with them. Flagging them as "ambiguous" is
+# exactly backwards.
+"app/security/guard.py" = ["RUF001", "RUF002", "RUF003"]
+"tests/test_security.py" = ["RUF001", "RUF002", "RUF003"]
 "scripts/*" = ["T201"]  # scripts may print
 
 [tool.mypy]
