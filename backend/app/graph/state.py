@@ -54,6 +54,9 @@ class ProductionState(TypedDict, total=False):
     recommended_methods: MethodRecommendation | None
     confirmed_method: ProductionMethod | None
 
+    # Ids that structurally could do the job, before scoring. Kept because the
+    # UI reports the funnel ("7 of 24 partners offer this method"), which is what
+    # makes an empty or surprising result explainable.
     supplier_candidates: list[str]
     supplier_matches: list[MatchResult]
     selected_supplier: str | None
@@ -61,7 +64,6 @@ class ProductionState(TypedDict, total=False):
     rfq: RFQ | None
 
     current_stage: Stage
-    requires_human_review: bool
     errors: list[str]
 
 
@@ -144,6 +146,5 @@ def initial_state(project_id: str, raw_request: str, reference_date: str) -> Pro
         selected_supplier=None,
         rfq=None,
         current_stage=Stage.DRAFT,
-        requires_human_review=False,
         errors=[],
     )

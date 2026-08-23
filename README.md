@@ -370,6 +370,62 @@ The dataset deliberately exercises every branch of the matching algorithm: suppl
 
 ---
 
+## Supplier matching
+
+Pure Python in `backend/app/services/matching.py`. No randomness, no clock reads
+— "today" is a parameter — and **no LLM import at all**, which the architecture
+audit enforces. Identical inputs produce byte-identical output, tie order
+included.
+
+### Hard gates
+
+Structural impossibilities. These produce `eligible: false` and are reported
+separately with a reason, never ranked into the top matches:
+
+1. The confirmed method is not in `supported_methods`.
+2. `customer_owns_product` is true and the partner explicitly refuses external
+   goods.
+3. The product category is not in `product_categories`.
+
+A partner that cannot perform the technique must not surface because it happens
+to be nearby and cheap. In the demo, `syn-005` is in Berlin, handles PVC, accepts
+customer goods and serves sports equipment — and is excluded on the technique
+alone.
+
+### Weighted factors, 100 points
+
+| Factor | Points | Full | Partial | Zero |
+|---|---|---|---|---|
+| Method compatibility | 30 | supported | — | *(hard gate)* |
+| Material compatibility | 20 | in the published list | 10 — material or list unknown ⚠ | not listed |
+| MOQ / quantity | 15 | `moq ≤ qty ≤ max` | 7.5 — limits unpublished ⚠ | outside the bounds ⚠ |
+| Accepts customer-owned | 15 | explicit yes, or N/A | 7.5 — unconfirmed ⚠ | *(hard gate)* |
+| Deadline feasibility | 10 | `lead time + 5d buffer` fits | 5 — lead time unknown, or ≤20% over ⚠ | clearly infeasible ⚠ |
+| Location | 10 | same city | 6 same country · 3 same region or unknown ⚠ | outside |
+
+### Unknown is not No
+
+The distinction the whole design turns on. A partner whose customer-goods policy
+is `null` has *not been asked* — that scores 7.5 with a visible risk flag. A
+partner that has explicitly refused scores nothing and is gated out. Conflating
+the two would either hide a real blocker or discard a viable partner, and it is
+why the dataset stores `null` rather than defaulting to `false`.
+
+### Ties
+
+`(-score, not verified, lead_time ?? 9999, id)` — a total order. The trailing
+`id` is what makes it total: without it two otherwise identical partners could
+swap places between runs.
+
+### What the model does
+
+It receives the finished breakdown and writes one paragraph of prose. It cannot
+produce, adjust or re-weight a score, and the UI says so beside the text. If that
+call fails, matches still render with their Python-generated per-factor reasons —
+degraded prose, not a broken feature.
+
+---
+
 ## Observability
 
 One logging configuration, JSON by default (`PYS_LOG_FORMAT=console` for local reading). Every module uses `logging.getLogger(__name__)`. Event names are a closed enum (`app/logging_config.py`), so logs stay greppable: `project_created`, `requirement_extraction_started/completed`, `clarification_requested`, `rag_called/completed`, `supplier_search_started`, `supplier_candidates_found`, `supplier_matching_completed`, `rfq_generated`, `injection_suspected`, `llm_error`, `tool_error`, and others.
@@ -388,9 +444,197 @@ One logging configuration, JSON by default (`PYS_LOG_FORMAT=console` for local r
 | 3 | Agentic RAG: knowledge base, vector store, retrieval router | **complete** |
 | 4 | Security guard + full HTTP API surface | **complete** |
 | 5 | Next.js frontend: six screens over the pinned API contract | **complete** |
-| 6 | Documentation and final verification | remaining |
+| 6 | Documentation and final verification | **complete** |
 
-Remaining: a final documentation and verification pass (Phase 6). The design for all of it is already fixed in [docs/architecture.md](docs/architecture.md).
+All six phases are complete. The design, and every place the build knowingly departed from it, is recorded in [docs/architecture.md](docs/architecture.md).
+
+---
+
+## Demo walkthrough
+
+The scenario the product was built around. Start both servers, open
+http://localhost:3000, and paste:
+
+> I have 100 black yoga mats. I already own them. I want my gold logo added and
+> need them in Berlin by September 15.
+
+Note what is *not* in that sentence: the material. Watch what happens.
+
+**1 · Extraction.** Product, quantity, ownership, finish, deadline and location
+come out as typed fields. Material stays `null`, because the request never said
+it — a yoga mat does not imply PVC.
+
+**2 · Clarification.** The deterministic completeness check sees the gap and the
+workflow stops:
+
+> *What material are the yoga mats made of?*
+> Material decides whether a technique is technically feasible on this product.
+
+One question, about one field, chosen in code. Answer `They are PVC mats.`
+
+**3 · Production brief.** The answer is merged — fill-only, so it cannot
+overwrite anything you already said. Fields you never mentioned still read
+"Not specified". Confirm, or edit first.
+
+**4 · Method.** The router decides retrieval is needed (a metallic finish on a
+flexible synthetic is not a routine pairing) and grounds the recommendation in
+the knowledge base:
+
+```
+Heat transfer                          alternative: Screen printing
+High confidence
+
+  PVC can soften, gloss, shrink or emboss under heat, so temperature must be
+  carefully controlled.
+  Textured surfaces may give a patchy finish — foil needs contact.
+  Fine detail limited to 1–2 mm line thickness.
+
+Still unverified
+  Exact texture of the mat surface.
+  The specific PVC compound, as it influences heat settings.
+
+Grounding — based on 2 production knowledge documents:
+  PVC must not be laser cut or engraved
+  Heat transfer and metallic foil application
+```
+
+The first citation is the interesting one. Ask for *engraving* on these mats and
+the same corpus explains why no reputable shop will do it — PVC releases
+hydrogen chloride under a laser. That is the knowledge base earning its place: a
+model working from recall might cheerfully suggest engraving.
+
+**5 · Partner matches.** Scores computed in Python from stored capabilities:
+
+```
+100%  Neukoelln Foil and Finish     ✓ all six factors confirmed
+ 96%  Mattenveredelung Brandenburg  ~ in DE but not in Berlin (6/10)
+ 88%  Spandau Sport Finishing       ⚠ customer-goods policy unconfirmed
+                                    ⚠ timeline tight: ~25 days needed, 23 available
+```
+
+Open "Why this score?" on any of them for the full factor breakdown. 17 of 24
+partners were excluded, each with a reason — including one that is in Berlin,
+handles PVC, accepts customer goods and serves sports equipment, and fails only
+because it does not offer the technique.
+
+**6 · RFQ.** Nine questions the partner actually needs to answer, including
+acceptance of customer-owned goods. Generated unapproved. Edit or approve — and
+approving records your decision without sending anything to anyone.
+
+For the same journey in a terminal, against the real model:
+
+```bash
+cd backend && uv run python scripts/demo_run.py
+```
+
+---
+
+## How this maps to the sprint requirements
+
+Each row names the test that proves it, so nothing here is a claim you have to
+take on trust.
+
+| Requirement | Where | Test |
+|---|---|---|
+| AI agent + LangGraph | one `StateGraph`, thin nodes | `test_graph.py` |
+| State management | `ProductionState` + SQLite checkpointer | `test_state_survives_a_fresh_checkpointer_connection` |
+| OpenAI API | one factory, structured outputs only | `test_graph.py`, `scripts/demo_run.py` |
+| Prompt engineering | one prompt module, fenced untrusted data | `test_untrusted_request_is_fenced_into_a_user_message` |
+| Function tools | typed `ProductionTools` | `test_matching.py`, `test_rag.py` |
+| Error handling | controlled failure, typed envelope | `test_provider_outage_returns_a_controlled_error` |
+| User interface | six Next.js screens | `frontend/tests`, browser-verified |
+| Documentation | this file + `docs/architecture.md` | — |
+| **Memory (medium)** | short-term checkpointer + long-term `projects` table | `test_confirmed_state_survives_a_reconnect` |
+| **Security (medium)** | five-layer injection defence, upload validation | `test_security.py` (32 tests) |
+| **Agentic RAG (hard)** | routing that demonstrably varies | `test_technical_question_routes_to_the_knowledge_base`, `test_supplier_lookup_does_not_route_to_the_knowledge_base` |
+| Human-in-the-loop | four gates, enforced by `interrupt()` | `test_workflow_stops_at_all_four_approval_gates` |
+| Structured logging | one config, closed event enum | `test_log_events_are_a_closed_set` |
+
+**213 backend tests, 6 frontend tests.** No test calls a live model: the graph
+runs on a scripted provider and retrieval on a hashing embedder whose similarity
+is real term overlap, so the suite is free, fast and deterministic. Live
+behaviour is verified separately by `scripts/demo_run.py`.
+
+---
+
+## Known limitations
+
+Stated plainly, because a reviewer will find them anyway.
+
+**The supplier data is synthetic.** 24 curated records, labelled as such in every
+row. The matching algorithm is real; the partners are not. Real data is the first
+thing to swap, and the schema does not change when you do.
+
+**The knowledge base is internally authored.** 13 documents, `source_url: null`
+throughout, so no citation points at a document this project did not write. The
+technical content is general trade knowledge and the UI shows confidence and open
+questions — but it is not a substitute for a vendor's own datasheet.
+
+**No authentication.** Projects are addressable by UUID and anyone with the URL
+can act on them. Fine for a single-tenant local build, not for deployment.
+
+**Design uploads are validated and stored, not understood.** There is no image
+analysis, so artwork is never checked against the recommended method. The upload
+endpoint exists and is safe; it just does not read the file.
+
+**The clarification loop asks one question at a time, up to three.** After that
+it proceeds with gaps visible rather than pressing further, which is honest but
+can leave a thinner brief than the user intended.
+
+**Matching is single-currency and price-blind.** No partner in the dataset
+carries pricing, so the score says nothing about cost. `priority: cost` is
+captured and passed to the RFQ but does not influence ranking.
+
+**Location scoring is city/country/region tiers, not distance.** A partner across
+a national border 40 km away scores below one 600 km away in the same country.
+Deliberate — it avoids a network dependency — but it is a simplification.
+
+**Deadline feasibility uses the partner's own typical lead time.** No capacity or
+seasonality model. Two projects racing for the same partner's Q3 slot both look
+feasible.
+
+**No streaming.** Each step is a synchronous request. A method recommendation
+takes a few seconds with no token-by-token feedback, only a pending state.
+
+**Single light theme.** No dark mode.
+
+---
+
+## Roadmap
+
+Ordered by what would most change the product's usefulness, not by ease.
+
+**Real partner data.** Replace `suppliers.json` with verified Berlin partners,
+each field sourced. The `verified` flag and `data_source` already exist for the
+distinction. This is what turns a working prototype into something a buyer can
+act on.
+
+**Send the RFQ.** The document is complete and human-approved; nothing transmits
+it. Real outbound email, per-partner threading, and reply capture is the next
+whole feature — and the point at which "AI recommends, human decides" needs
+auditing much more carefully than it does now.
+
+**Quote comparison.** Once replies exist, the interesting product problem is
+normalising incomparable quotes: setup versus unit cost, MOQ tiers, sample fees.
+
+**Accounts and multi-tenancy.** Required before anyone but you can use it.
+
+**Price-aware matching.** Add cost bands to the partner schema and make
+`priority` actually influence ranking.
+
+**Artwork checking.** Read the uploaded file and check it against the
+recommended method's artwork requirements — minimum line weight for weeded
+vinyl, vector-versus-raster, colour space. The requirements are already
+articulated per method; nothing yet reads the file.
+
+**Evaluation harness.** A fixed set of briefs with expected extractions and
+routing decisions, scored on every change. The suite proves the mechanism works;
+it does not measure whether recommendation quality improves or regresses.
+
+**Observability.** LangSmith or Langfuse tracing, plus token and cost display.
+The structured logs carry the events; nothing aggregates them.
+
+---
 
 ## Deliberately not built
 

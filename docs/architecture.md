@@ -1,6 +1,10 @@
 # Produce Your Stuff — Architecture
 
-Approved design, 21 August 2026. This is the reference document; the README describes only what is implemented. Where the two disagree, this file states the intent and the README states reality.
+Approved design, 21 August 2026. **Built and delivered, 23 August 2026.**
+
+This is the design reference; the README describes the implementation. The
+*Deviations* section at the end records where the build departed from this plan
+and why — those are decisions, not drift.
 
 ## Design rules
 
@@ -69,7 +73,9 @@ No streaming. Each stage is one synchronous request that runs the graph to the n
 
 ## State
 
-`ProductionState` (TypedDict): `messages`, `project_id`, `raw_request`, `production_requirement`, `missing_fields`, `clarification_rounds`, `clarifying_question`, `retrieved_knowledge`, `recommended_methods`, `confirmed_method`, `supplier_candidates`, `supplier_matches`, `selected_supplier`, `rfq`, `current_stage`, `errors`. Nothing duplicated that can be derived.
+`ProductionState` (TypedDict): `messages`, `project_id`, `raw_request`, `reference_date`, `production_requirement`, `missing_fields`, `clarification_rounds`, `clarifying_question`, `retrieval_decision`, `retrieved_knowledge`, `recommended_methods`, `confirmed_method`, `supplier_candidates`, `supplier_matches`, `selected_supplier`, `rfq`, `current_stage`, `errors`. Nothing duplicated that can be derived.
+
+`reference_date` and `retrieval_decision` were added during the build; `requires_human_review` from the original sketch was removed as dead state — the pending interrupt already conveys it.
 
 ## Contracts
 
@@ -157,15 +163,17 @@ No test calls OpenAI. A `FakeLLM` fixture drives the graph; `scripts/demo_run.py
 
 ## Phases
 
-| # | Scope | Gate |
+All six phases are complete.
+
+| # | Scope | Outcome |
 |---|---|---|
-| 0 | Foundations | server boots · `/api/health` 200 · ruff + mypy clean · faiss verified · LangGraph API surface read from the installed package |
-| 1 | Deterministic core (no LLM) | matching/MOQ/customer-owned/determinism tests pass · scorer has zero LLM imports |
-| 2 | Agent core | extraction/clarification/hallucination/HITL/error tests pass · a test interrupts and resumes twice with no UI |
-| 3 | Agentic RAG | routing tests pass · retrieval visibly changes the recommendation |
-| 4 | Security + full API | injection test + API contract tests pass |
-| 5 | Frontend | the demo scenario clicks through end to end |
-| 6 | Docs + verification | full suite green · architecture audit clean · no unreferenced files |
+| 0 | Foundations | done — faiss verified on 3.14, LangGraph API surface read from the installed package rather than from memory |
+| 1 | Deterministic core (no LLM) | done — scorer has zero LLM imports, enforced by the audit |
+| 2 | Agent core | done — one graph, five interrupts, resume proven across a fresh connection |
+| 3 | Agentic RAG | done — routing demonstrably varies, and retrieval measurably changes the recommendation |
+| 4 | Security + full API | done — five layers, structural defence tested with detection disabled |
+| 5 | Frontend | done — the demo scenario clicked through in a browser |
+| 6 | Docs + verification | done — 213 tests, audit clean, two dead state fields found and removed |
 
 Deterministic before agentic, so most tests need no API key. Backend complete before UI, so a defensible product exists before any pixel work.
 
@@ -193,3 +201,47 @@ Payments, checkout, authentication, supplier accounts or portal, real email, aut
 | OpenAI cost during iteration | `FakeLLM` in the suite; real calls only in `scripts/demo_run.py` |
 | Model name validity (`gpt-4o` default) | configurable via `PYS_MODEL_NAME`; confirmed against the account in Phase 2 |
 | OneDrive syncing `.venv`/`node_modules` | exclude both from sync, or move the repo outside OneDrive |
+
+## Deviations from this plan
+
+Recorded because a plan that quietly rewrites itself is worthless. Each of these
+was a decision made against evidence found while building.
+
+**The provider is OpenRouter, not OpenAI.** The available key was an OpenRouter
+key. OpenRouter speaks the OpenAI API including strict JSON-schema structured
+outputs *and* embeddings — verified before committing to it, because a missing
+embeddings endpoint would have forced a different RAG design. Config carries a
+base URL, so switching to a direct OpenAI key is one environment variable.
+
+**`llm_max_tokens` is set explicitly (1024).** The client library otherwise
+reserves the model's full output window, and gateways gate on that up front:
+`gpt-4o` returned HTTP 402 for a request whose response needed a few hundred
+tokens. It is also simply right-sized for these schemas.
+
+**Checkpointed types are declared explicitly.** LangGraph warned on every load
+that our Pydantic and enum types were unregistered, and will refuse them in a
+future release. The allowlist also stops a checkpoint file instantiating
+arbitrary classes. The failure mode was a warning plus a silently downgraded
+value, so it is covered by a round-trip test.
+
+**Injection routing has deterministic fast paths.** The plan described an LLM
+router. Two intents — partner-directory and feasibility questions — are
+unambiguous, so they are settled in code with no model call. The model is
+consulted only for genuinely ambiguous cases. Cheaper, and directly testable.
+
+**An upstream content-policy refusal counts as evidence.** Not in the plan,
+found in practice: the provider's own filter rejects the most blatant injections
+rather than classifying them, so treating that as a neutral outage discarded the
+strongest available signal.
+
+**`requires_human_review` was removed from state.** Written once, never read. The
+pending interrupt already conveys it.
+
+**The frontend uses server actions.** The plan said the browser would call
+FastAPI. Instead reads happen in server components and writes through server
+actions, so the API base URL never reaches the client and CORS stops being a
+configuration. Same architecture, fewer moving parts.
+
+**The project package is not installed into the venv.** `uv` rebuilt and
+reinstalled it on every invocation, which OneDrive intermittently blocked with a
+file lock. The app runs from its directory, so installation bought nothing.

@@ -527,3 +527,23 @@ def test_every_checkpointed_type_round_trips_intact() -> None:
     # And the declared allowlist must cover the types the state actually holds.
     for annotation in (ProductionRequirement, MethodRecommendation, ProductionMethod, Stage):
         assert annotation in CHECKPOINTED_TYPES
+
+
+def test_supplier_funnel_reaches_the_user(tools: ProductionTools, workflow_factory: Any) -> None:
+    """The structural search result must be reported, not computed and discarded.
+
+    It was: search_suppliers wrote supplier_candidates and nothing read it. The
+    count is what makes a short list explainable ("3 of 7 eligible") rather than
+    looking like the system missed partners.
+    """
+    app = workflow_factory(_deps(_scripted(), tools))
+    config = _config("t-funnel")
+
+    app.invoke(initial_state("p20", DEMO_REQUEST, TODAY.isoformat()), config)
+    app.invoke(Command(resume={"confirmed": True}), config)
+    result = app.invoke(Command(resume={"method": "heat_transfer"}), config)
+
+    paused = _interrupt(result)
+    assert paused["candidate_count"] > 0
+    assert paused["candidate_count"] >= len(paused["matches"])
+    assert app.get_state(config).values["supplier_candidates"]

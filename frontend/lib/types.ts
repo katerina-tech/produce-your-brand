@@ -116,6 +116,8 @@ export interface StagePayload {
   recommendation?: MethodRecommendation;
   selectable_methods?: string[];
   matches?: MatchResult[];
+  /** How many partners structurally could do the job, before scoring. */
+  candidate_count?: number;
   rfq?: Rfq;
   rendered?: string;
 }

@@ -211,11 +211,7 @@ def human_review_requirement(state: ProductionState, deps: GraphDeps) -> dict[st
         project_id=state.get("project_id"),
         was_edited=edited is not None,
     )
-    return {
-        "production_requirement": confirmed,
-        "current_stage": Stage.METHOD_REVIEW,
-        "requires_human_review": False,
-    }
+    return {"production_requirement": confirmed, "current_stage": Stage.METHOD_REVIEW}
 
 
 def _requirement_from_decision(decision: object) -> ProductionRequirement | None:
@@ -469,10 +465,13 @@ def human_select_supplier(state: ProductionState, deps: GraphDeps) -> dict[str, 
     if not matches:
         return _fail(Stage.SUPPLIER_SELECTION, "no eligible partners to choose from")
 
+    # The funnel is reported alongside the matches: "3 of 7 eligible, from 24
+    # partners" is what makes a short list explainable rather than suspicious.
     decision = interrupt(
         {
             "stage": Stage.SUPPLIER_SELECTION.value,
             "matches": [match.model_dump(mode="json") for match in matches],
+            "candidate_count": len(state.get("supplier_candidates") or []),
         }
     )
 
