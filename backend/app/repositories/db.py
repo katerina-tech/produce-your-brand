@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS projects (
     thread_id            TEXT NOT NULL UNIQUE,
     stage                TEXT NOT NULL,
     raw_request          TEXT NOT NULL,
+    design_upload_id     TEXT,
     requirement_json     TEXT,
     brief_confirmed      INTEGER NOT NULL DEFAULT 0,
     recommendation_json  TEXT,
@@ -65,8 +66,36 @@ def connect(path: Path | str) -> sqlite3.Connection:
     return connection
 
 
+# Additive migrations for databases created before a column existed.
+# ``CREATE TABLE IF NOT EXISTS`` does nothing once the table is already there,
+# so a new column needs its own idempotent step - the same discipline already
+# applied to LangGraph's checkpointed state, extended to this database.
+# (table, column, full ALTER statement)
+_MIGRATIONS: tuple[tuple[str, str, str], ...] = (
+    (
+        "projects",
+        "design_upload_id",
+        "ALTER TABLE projects ADD COLUMN design_upload_id TEXT",
+    ),
+)
+
+
+def _apply_migrations(connection: sqlite3.Connection) -> None:
+    for table, column, statement in _MIGRATIONS:
+        existing = {row["name"] for row in connection.execute(f"PRAGMA table_info({table})")}
+        if column in existing:
+            continue
+        with connection:
+            connection.execute(statement)
+        logger.info(
+            "applied schema migration",
+            extra={"event": "schema_migrated", "table": table, "column": column},
+        )
+
+
 def initialize_schema(connection: sqlite3.Connection) -> None:
-    """Create tables if absent. Idempotent, so safe on every startup."""
+    """Create tables if absent, then apply any additive migrations. Idempotent."""
     with connection:
         connection.executescript(SCHEMA)
+    _apply_migrations(connection)
     logger.debug("schema ready", extra={"event": "schema_initialised"})

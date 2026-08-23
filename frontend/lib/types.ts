@@ -127,10 +127,31 @@ export interface ProjectState {
   stage: Stage;
   /** From the durable record, so the title is stable across every stage. */
   product: string | null;
+  /** Id of an uploaded or generated design, if one is attached. */
+  design_upload_id: string | null;
   payload: StagePayload | null;
   expected_action: string | null;
   errors: string[];
   is_complete: boolean;
+}
+
+/** Metadata for a stored design file. The body is never returned here. */
+export interface UploadResponse {
+  upload_id: string;
+  filename: string;
+  mime_type: string;
+  size_bytes: number;
+}
+
+/**
+ * An {@link UploadResponse} plus a one-time preview of what was generated.
+ *
+ * `preview_data_url` is returned exactly once, by the generate call itself -
+ * the only moment the user can see what they just paid to generate. Nothing
+ * else (including reloading the project later) returns it again.
+ */
+export interface GeneratedDesign extends UploadResponse {
+  preview_data_url: string;
 }
 
 export interface ProjectSummary {

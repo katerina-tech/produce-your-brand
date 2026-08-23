@@ -185,3 +185,33 @@ class FailingEmbedder:
 
     def embed_query(self, text: str) -> list[float]:
         raise LLMError("simulated embedding outage")
+
+
+# A minimal valid PNG (1x1 pixel), used wherever a test needs bytes that pass
+# the real magic-byte validation without depending on a real image library.
+TINY_PNG = bytes.fromhex(
+    "89504e470d0a1a0a0000000d4948445200000001000000010806000000"
+    "1f15c4890000000a49444154789c6360000002000100ffff03000006000557"
+    "bfabd40000000049454e44ae426082"
+)
+
+
+class ScriptedImageProvider:
+    """Returns fixed bytes, or raises, on every call. Records prompts sent."""
+
+    def __init__(self, image_bytes: bytes | Exception = TINY_PNG) -> None:
+        self._result = image_bytes
+        self.prompts: list[str] = []
+
+    def generate_image(self, prompt: str) -> bytes:
+        self.prompts.append(prompt)
+        if isinstance(self._result, Exception):
+            raise self._result
+        return self._result
+
+
+class FailingImageProvider:
+    """Fails every call, to prove generation outages degrade rather than crash."""
+
+    def generate_image(self, prompt: str) -> bytes:
+        raise LLMError("simulated image provider outage")

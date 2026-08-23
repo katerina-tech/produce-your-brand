@@ -24,6 +24,7 @@ from app.api.dto import ErrorDetail, ErrorResponse
 from app.api.routes import router
 from app.config import Settings, get_settings
 from app.graph.workflow import checkpointer_for, compile_workflow, production_deps
+from app.llm.factory import get_image_provider
 from app.logging_config import Event, configure_logging, log_event
 from app.repositories import db
 from app.repositories.project_repo import ProjectRepository
@@ -58,6 +59,7 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     workflow = compile_workflow(deps, checkpointer_for(settings.checkpoint_db_path))
 
     app.state.project_service = ProjectService(workflow, ProjectRepository(connection))
+    app.state.image_provider = get_image_provider(settings)
 
     # Validate the supplier dataset at startup rather than on the first request:
     # a malformed file should fail loudly here, not surface later as an

@@ -42,6 +42,12 @@ class ProductionState(TypedDict, total=False):
     project_id: str
     raw_request: str
     reference_date: str
+    # Id of an uploaded or generated design, verified to exist before the graph
+    # ever starts. Its only effect is forcing design_available=True in
+    # extract_requirement - the correction has to happen inside the graph,
+    # against checkpointed state, or a later resume would still see whatever
+    # the LLM guessed from text alone.
+    design_upload_id: str | None
 
     production_requirement: ProductionRequirement | None
     missing_fields: list[str]
@@ -126,13 +132,19 @@ CHECKPOINTED_TYPES: tuple[type, ...] = (
 )
 
 
-def initial_state(project_id: str, raw_request: str, reference_date: str) -> ProductionState:
+def initial_state(
+    project_id: str,
+    raw_request: str,
+    reference_date: str,
+    design_upload_id: str | None = None,
+) -> ProductionState:
     """Starting state for a new project."""
     return ProductionState(
         messages=[],
         project_id=project_id,
         raw_request=raw_request,
         reference_date=reference_date,
+        design_upload_id=design_upload_id,
         production_requirement=None,
         missing_fields=[],
         clarification_rounds=0,

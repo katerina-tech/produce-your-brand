@@ -18,6 +18,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+from app.config import Settings
 from app.graph.workflow import GraphDeps, checkpointer_for, compile_workflow
 from app.main import create_app
 from app.repositories import db
@@ -26,6 +27,7 @@ from app.repositories.supplier_repo import SupplierRepository
 from app.services.project_service import ProjectService
 from app.tools.registry import ProductionTools
 from tests.conftest import BACKEND_ROOT, TODAY
+from tests.fakes import ScriptedImageProvider
 from tests.test_graph import DEMO_REQUEST, _scripted
 from tests.test_security import JPEG, PDF, PNG
 
@@ -33,7 +35,13 @@ SHORT_REQUEST = "too short"
 
 
 @pytest.fixture
-def api(tmp_path: Path) -> Iterator[TestClient]:
+def test_settings(tmp_path: Path) -> Settings:
+    """Isolated settings so uploads made in tests never touch a real directory."""
+    return Settings(upload_dir=tmp_path / "uploads")
+
+
+@pytest.fixture
+def api(tmp_path: Path, test_settings: Settings) -> Iterator[TestClient]:
     """A live app whose workflow runs on a scripted provider."""
     connection: sqlite3.Connection = db.connect(tmp_path / "api.db")
     db.initialize_schema(connection)
@@ -45,10 +53,11 @@ def api(tmp_path: Path) -> Iterator[TestClient]:
     )
     workflow = compile_workflow(deps, checkpointer_for(tmp_path / "api_ckpt.db"))
 
-    with TestClient(create_app()) as client:
+    with TestClient(create_app(test_settings)) as client:
         client.app.state.project_service = ProjectService(  # type: ignore[attr-defined]
-            workflow, ProjectRepository(connection), today=TODAY
+            workflow, ProjectRepository(connection), today=TODAY, settings=test_settings
         )
+        client.app.state.image_provider = ScriptedImageProvider()  # type: ignore[attr-defined]
         yield client
 
     connection.close()
@@ -86,6 +95,7 @@ def test_openapi_exposes_exactly_the_intended_surface(api: TestClient) -> None:
         "/api/projects/{project_id}",
         "/api/projects/{project_id}/resume",
         "/api/uploads",
+        "/api/designs/generate",
     }
 
 
@@ -323,3 +333,88 @@ def test_product_travels_on_create_and_resume(api: TestClient) -> None:
         f"/api/projects/{created['project_id']}/resume", json={"action": "confirm_brief"}
     ).json()
     assert resumed["product"] == "black yoga mats"
+
+
+# --------------------------------------------------------------------- designs
+
+
+def test_generate_design_returns_a_preview(api: TestClient) -> None:
+    """The one deliberate exception to 'the file body is never returned'."""
+    response = api.post("/api/designs/generate", json={"prompt": "a gold star logo"})
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["mime_type"] == "image/png"
+    assert body["preview_data_url"].startswith("data:image/png;base64,")
+    assert len(body["upload_id"]) == 32
+
+
+def test_generate_design_rejects_an_empty_prompt(api: TestClient) -> None:
+    response = api.post("/api/designs/generate", json={"prompt": ""})
+    assert response.status_code == 422
+
+
+def test_generate_design_rejects_an_overlong_prompt(api: TestClient) -> None:
+    response = api.post("/api/designs/generate", json={"prompt": "x" * 501})
+    assert response.status_code == 422
+
+
+def test_generate_design_provider_failure_returns_a_typed_error(
+    api: TestClient,
+) -> None:
+    """A provider refusal or outage is the upstream's fault, not the caller's."""
+    from app.llm.factory import LLMError
+
+    api.app.state.image_provider = ScriptedImageProvider(LLMError("refused"))  # type: ignore[attr-defined]
+
+    response = api.post("/api/designs/generate", json={"prompt": "anything"})
+
+    assert response.status_code == 502
+    assert "error" in response.json()
+
+
+def test_project_created_with_a_generated_design_has_design_available_true(
+    api: TestClient,
+) -> None:
+    """The whole point: an attached design is a fact the brief must reflect."""
+    generated = api.post("/api/designs/generate", json={"prompt": "a gold star logo"}).json()
+
+    response = api.post(
+        "/api/projects",
+        json={"request_text": DEMO_REQUEST, "design_upload_id": generated["upload_id"]},
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["design_upload_id"] == generated["upload_id"]
+    assert body["payload"]["requirement"]["design_available"] is True
+
+
+def test_project_created_with_an_uploaded_design_has_design_available_true(
+    api: TestClient,
+) -> None:
+    uploaded = api.post("/api/uploads", files={"file": ("logo.png", PNG, "image/png")}).json()
+
+    response = api.post(
+        "/api/projects",
+        json={"request_text": DEMO_REQUEST, "design_upload_id": uploaded["upload_id"]},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["payload"]["requirement"]["design_available"] is True
+
+
+def test_project_creation_rejects_an_unknown_design_id(api: TestClient) -> None:
+    """A client cannot attach a file that was never uploaded or generated."""
+    response = api.post(
+        "/api/projects",
+        json={"request_text": DEMO_REQUEST, "design_upload_id": "0" * 32},
+    )
+
+    assert response.status_code == 422
+    assert "error" in response.json()
+
+
+def test_project_without_a_design_has_no_design_upload_id(api: TestClient) -> None:
+    response = api.post("/api/projects", json={"request_text": DEMO_REQUEST})
+    assert response.json()["design_upload_id"] is None

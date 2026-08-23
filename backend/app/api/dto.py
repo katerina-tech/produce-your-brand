@@ -125,6 +125,9 @@ class ProjectStateResponse(BaseModel):
     product: str | None = Field(
         default=None, description="Product name, so the client can title the project."
     )
+    design_upload_id: str | None = Field(
+        default=None, description="Id of an attached design, if one was uploaded or generated."
+    )
     payload: dict[str, Any] | None = None
     expected_action: str | None = None
     errors: list[str] = []
@@ -159,3 +162,31 @@ class UploadResponse(BaseModel):
     filename: str
     mime_type: str
     size_bytes: int
+
+
+class GenerateDesignRequest(BaseModel):
+    """A text description of the design the customer wants generated."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    prompt: str = Field(
+        min_length=3,
+        max_length=500,
+        description="What to generate, e.g. 'a minimalist gold star logo on a plain background'.",
+    )
+
+
+class GeneratedDesignResponse(UploadResponse):
+    """An :class:`UploadResponse` plus a one-time preview of what was generated.
+
+    ``preview_data_url`` is the deliberate, narrow exception to "the file body is
+    never returned": for an upload, the browser already holds the bytes the user
+    picked and can preview them locally, but a generated image exists only on
+    the server until this response - the one moment the user can see what they
+    just paid to generate. It is not persisted here and no other endpoint
+    (including a later fetch of the same project) returns it again.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    preview_data_url: str

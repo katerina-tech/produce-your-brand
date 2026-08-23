@@ -63,6 +63,15 @@ class Settings(BaseSettings):
     # even when the actual response would be a few hundred tokens.
     llm_max_tokens: int = 1024
 
+    # --- design generation ---------------------------------------------------
+    # A real per-image cost applies here (roughly a few cents on OpenRouter at
+    # the time this was written), unlike every other model call in this system,
+    # which produces a small structured object. This is the one feature added
+    # beyond the original sprint scope, at explicit user request - see the
+    # README's Design attachment section.
+    image_model: str = "google/gemini-2.5-flash-image"
+    image_max_tokens: int = 2048
+
     # --- paths (all derived; never user-supplied) ---------------------------
     data_dir: Path = BACKEND_ROOT / "data"
     suppliers_file: Path = BACKEND_ROOT / "data" / "suppliers.json"

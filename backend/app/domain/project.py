@@ -44,6 +44,9 @@ class Project(BaseModel):
     thread_id: str
     stage: Stage = Stage.DRAFT
     raw_request: str
+    design_upload_id: str | None = Field(
+        default=None, description="Id of an uploaded or generated design, if one is attached."
+    )
 
     requirement: ProductionRequirement | None = None
     brief_confirmed: bool = False

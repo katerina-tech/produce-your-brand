@@ -16,6 +16,7 @@ exist until its phase - the rule is "never more than one", not "must exist now".
 from __future__ import annotations
 
 import ast
+import re
 import sys
 from pathlib import Path
 
@@ -35,6 +36,20 @@ def files_containing(root: Path, needle: str) -> list[Path]:
         path
         for path in python_files(root)
         if needle in path.read_text(encoding="utf-8", errors="replace")
+    ]
+
+
+def files_matching(root: Path, pattern: re.Pattern[str]) -> list[Path]:
+    """Like :func:`files_containing`, but for a needle a substring can't express.
+
+    Needed for "bare OpenAI(", where a plain substring check on "OpenAI(" would
+    also match inside "ChatOpenAI(" and silently pass regardless of whether a
+    second raw client actually exists.
+    """
+    return [
+        path
+        for path in python_files(root)
+        if pattern.search(path.read_text(encoding="utf-8", errors="replace"))
     ]
 
 
@@ -124,6 +139,16 @@ def main() -> int:
         ("LangGraph StateGraph definitions", len(files_containing(APP, "StateGraph(")), 1),
         ("prompt modules", len(list(APP.rglob("prompts*.py"))), 1),
         ("ChatOpenAI constructions", len(files_containing(APP, "ChatOpenAI(")), 1),
+        # The image provider uses the raw openai client, not ChatOpenAI, because
+        # the image data lives in a message.images field ChatOpenAI's response
+        # parser does not surface. Same singleton discipline applies to it. The
+        # pattern excludes a letter before "OpenAI(" so it does not also match
+        # "ChatOpenAI(" or "AzureOpenAI(" as a false positive.
+        (
+            "raw OpenAI() client constructions",
+            len(files_matching(APP, re.compile(r"(?<![A-Za-z])OpenAI\("))),
+            1,
+        ),
         ("vector-store modules", len(list((APP / "rag").rglob("store.py"))), 1),
         ("FAISS index builders", len(files_containing(APP, "faiss.Index")), 1),
         ("knowledge directories", len(directories_named(BACKEND, "knowledge")), 1),

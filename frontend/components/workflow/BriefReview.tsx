@@ -43,9 +43,13 @@ const FALLBACK_LABELS: Record<string, string> = {
 export function BriefReview({
   projectId,
   payload,
+  designUploadId,
 }: {
   projectId: string;
   payload: StagePayload;
+  /** Whether a design was uploaded or generated, distinct from what the model
+   * inferred about design_available from text alone. */
+  designUploadId?: string | null;
 }) {
   const requirement = payload.requirement;
   const labels = payload.field_labels ?? FALLBACK_LABELS;
@@ -156,6 +160,18 @@ export function BriefReview({
             <Field label={label("preferred_finish")} value={requirement.preferred_finish} />
             <Field label={label("deadline")} value={requirement.deadline} />
             <Field label={label("location")} value={requirement.location} />
+            <Field
+              label={label("design_available")}
+              value={
+                designUploadId
+                  ? "Yes — file attached"
+                  : requirement.design_available === null
+                    ? null
+                    : requirement.design_available
+                      ? "Yes"
+                      : "No"
+              }
+            />
           </dl>
         )}
       </div>

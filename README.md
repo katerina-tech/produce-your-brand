@@ -312,6 +312,22 @@ Frontend tests cover the one place the client has real logic — translating the
 
 ---
 
+## Design attachment
+
+Added beyond the original sprint scope, at explicit user request, on the New Project screen: attach a design either by uploading a file or by generating one from a text prompt.
+
+**This is the one call in the whole system with a real per-image cost.** Every other model call produces a small structured object; generation produces an image and is priced per call — a few cents on OpenRouter via `google/gemini-2.5-flash-image` at the time this was written. The UI says so next to the button rather than looking free, and `POST /api/designs/generate` is a distinct, clearly-costed endpoint rather than folded into project creation.
+
+**Upload is free and entirely local for its preview.** The browser already holds the file the user picked, so it previews it itself via `URL.createObjectURL` — the server is never asked to echo bytes it doesn't need to. Generation is different: the image exists only on the server until the response, so that one response is the deliberate, narrow exception to "the file body is never returned" — see `GeneratedDesignResponse` in `app/api/dto.py`. No other endpoint, including a later fetch of the same project, returns image bytes.
+
+**A verified attachment is a fact, not a guess.** `design_upload_id` is checked against storage before a project is created — an unknown id is refused with `422` rather than silently trusted — and its presence deterministically forces `design_available: true` on the extracted brief, overriding whatever the model inferred from text alone. That correction happens inside the LangGraph node itself, against checkpointed state, because a later resume has to see it too.
+
+**Still no image understanding.** This was and remains out of scope: the attached file is stored and referenced by id, and nothing — not the method recommendation, not the RFQ — ever reads its content. Generating a design does not analyse it once it exists; that boundary is unchanged.
+
+**Reused, not duplicated, security.** A generated image is pushed through the exact same magic-byte validation a client upload receives (`app/security/uploads.py`), so a model returning unusable bytes is rejected the same way a disguised file would be — trusted for what it is, not for where it came from.
+
+---
+
 ## Repository layout
 
 ```
@@ -575,9 +591,13 @@ questions — but it is not a substitute for a vendor's own datasheet.
 **No authentication.** Projects are addressable by UUID and anyone with the URL
 can act on them. Fine for a single-tenant local build, not for deployment.
 
-**Design uploads are validated and stored, not understood.** There is no image
-analysis, so artwork is never checked against the recommended method. The upload
-endpoint exists and is safe; it just does not read the file.
+**A design is stored, not understood.** Whether uploaded or generated, the file
+is validated, saved, and referenced by id — nothing reads its content. Artwork is
+never checked against the recommended method's requirements (minimum line
+weight, vector vs. raster, colour space), and generating an image does not
+analyse the result either. Image *generation* was added at explicit user request
+beyond the original scope; image *understanding* was not, and remains a
+deliberate gap, not an oversight.
 
 **The clarification loop asks one question at a time, up to three.** After that
 it proceeds with gaps visible rather than pressing further, which is honest but
@@ -640,4 +660,6 @@ The structured logs carry the events; nothing aggregates them.
 
 ## Deliberately not built
 
-Payments, checkout, authentication, supplier accounts or portal, real email or supplier contact, logistics, ERP, ordering, a design editor, complex image AI, multi-model support, and a multi-agent architecture. These are out of MVP scope by decision, not omission.
+Payments, checkout, authentication, supplier accounts or portal, real email or supplier contact, logistics, ERP, ordering, a design editor, multi-model support, and a multi-agent architecture. These are out of MVP scope by decision, not omission.
+
+One item from the original scope changed: the original plan excluded "complex image AI" wholesale. Design *generation* was added afterward at explicit user request — see [Design attachment](#design-attachment). Image *understanding* (reading an uploaded or generated file's actual content) was not added and remains out of scope; the distinction is between producing an image and analysing one, and only the first exists here.

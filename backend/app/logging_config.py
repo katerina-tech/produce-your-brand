@@ -53,6 +53,8 @@ class Event(StrEnum):
     INJECTION_SUSPECTED = "injection_suspected"
     UPLOAD_REJECTED = "upload_rejected"
     UPLOAD_ACCEPTED = "upload_accepted"
+    DESIGN_GENERATION_STARTED = "design_generation_started"
+    DESIGN_GENERATION_COMPLETED = "design_generation_completed"
     LLM_ERROR = "llm_error"
     TOOL_ERROR = "tool_error"
     VALIDATION_ERROR = "validation_error"

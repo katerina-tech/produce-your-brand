@@ -23,13 +23,30 @@ from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import Command
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.config import Settings, get_settings
 from app.domain.enums import Stage
 from app.domain.project import Project, ProjectSummary
 from app.graph.state import ProductionState, initial_state
 from app.logging_config import Event, log_event, redact_text
 from app.repositories.project_repo import ProjectRepository
+from app.security.uploads import get_upload
 
 logger = logging.getLogger(__name__)
+
+
+class DesignNotFoundError(ValueError):
+    """A ``design_upload_id`` was given that does not point at a stored upload.
+
+    Raised before the project or the graph is touched: neither the durable
+    record nor checkpointed state must ever hold a reference to a file that does
+    not exist, which is what would happen if a stale or fabricated id were
+    trusted instead of verified.
+    """
+
+    def __init__(self, upload_id: str) -> None:
+        super().__init__(f"No uploaded or generated design found for id '{upload_id}'.")
+        self.upload_id = upload_id
+
 
 # Which resume action each paused stage will accept. A mismatch is reported to
 # the client rather than silently resuming into the wrong branch.
@@ -74,6 +91,9 @@ class ProjectView(BaseModel):
         "stage so a client can title the project consistently - the interrupt "
         "payloads alone do not all carry it.",
     )
+    design_upload_id: str | None = Field(
+        default=None, description="Id of an attached design, if one was uploaded or generated."
+    )
     payload: dict[str, Any] | None = None
     expected_action: str | None = None
     errors: list[str] = []
@@ -88,15 +108,25 @@ class ProjectService:
         workflow: CompiledStateGraph[ProductionState, None, Any, Any],
         projects: ProjectRepository,
         today: date | None = None,
+        settings: Settings | None = None,
     ) -> None:
         self._workflow = workflow
         self._projects = projects
         self._today = today or date.today()
+        self._settings = settings or get_settings()
 
     # ------------------------------------------------------------- creating
 
-    def create(self, raw_request: str) -> ProjectView:
-        """Start a project and run to the first human gate."""
+    def create(self, raw_request: str, design_upload_id: str | None = None) -> ProjectView:
+        """Start a project and run to the first human gate.
+
+        A supplied ``design_upload_id`` is verified before anything else is
+        touched. Neither the durable record nor the graph's checkpointed state
+        may hold a reference to a file that does not exist.
+        """
+        if design_upload_id is not None and get_upload(design_upload_id, self._settings) is None:
+            raise DesignNotFoundError(design_upload_id)
+
         project_id = str(uuid.uuid4())
         thread_id = f"thread-{project_id}"
         now = datetime.now(UTC)
@@ -106,14 +136,26 @@ class ProjectService:
                 id=project_id,
                 thread_id=thread_id,
                 raw_request=raw_request,
+                design_upload_id=design_upload_id,
                 created_at=now,
                 updated_at=now,
             )
         )
-        log_event(logger, Event.PROJECT_CREATED, project_id=project_id, **redact_text(raw_request))
+        log_event(
+            logger,
+            Event.PROJECT_CREATED,
+            project_id=project_id,
+            design_upload_id=design_upload_id,
+            **redact_text(raw_request),
+        )
 
         result = self._workflow.invoke(
-            initial_state(project_id, raw_request, self._today.isoformat()),
+            initial_state(
+                project_id,
+                raw_request,
+                self._today.isoformat(),
+                design_upload_id=design_upload_id,
+            ),
             self._config(thread_id),
         )
         return self._sync(project_id, result)
@@ -197,6 +239,7 @@ class ProjectService:
             project_id=project.id,
             stage=stage,
             product=project.requirement.product if project.requirement else None,
+            design_upload_id=project.design_upload_id,
             payload=payload,
             expected_action=EXPECTED_ACTION.get(stage) if payload else None,
             errors=list(values.get("errors") or []),

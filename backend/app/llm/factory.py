@@ -236,3 +236,94 @@ class OpenAIEmbeddingProvider:
 def get_embedding_provider(settings: Settings | None = None) -> EmbeddingProvider:
     """Return the production embedding provider. The only construction site."""
     return OpenAIEmbeddingProvider(settings)
+
+
+class ImageProvider(Protocol):
+    """What design generation needs from a model.
+
+    Deliberately separate from :class:`LLMProvider`: image generation has a real
+    per-call cost, unlike every other call in this system, and returns raw bytes
+    rather than a validated schema. Keeping the protocol narrow means the cost
+    surface is exactly one method.
+    """
+
+    def generate_image(self, prompt: str) -> bytes:
+        """Return PNG bytes for the prompt, or raise :class:`LLMError`."""
+        ...
+
+
+class OpenRouterImageProvider:
+    """Production image generation.
+
+    Uses the raw ``openai`` client rather than ``langchain_openai.ChatOpenAI``.
+    The image comes back in a ``message.images[0].image_url.url`` data URL - a
+    field the OpenAI chat-completions response shape does not define and
+    LangChain's response parser does not surface, so the plain SDK client is the
+    correct tool here, not a workaround. This is the only place it is
+    constructed; a second construction site would defeat the point of having a
+    single factory.
+    """
+
+    def __init__(self, settings: Settings | None = None) -> None:
+        self._settings = settings or get_settings()
+        self._client: Any = None
+
+    def _openai_client(self) -> Any:
+        if self._client is not None:
+            return self._client
+
+        from openai import OpenAI
+
+        settings = self._settings
+        if not settings.has_api_key:
+            raise LLMError("No API key configured. Set OPENAI_API_KEY in .env - see .env.example.")
+        self._client = OpenAI(
+            api_key=settings.openai_api_key.get_secret_value(),
+            base_url=settings.openai_base_url,
+            timeout=settings.llm_timeout_seconds,
+            max_retries=settings.llm_max_retries,
+        )
+        return self._client
+
+    def generate_image(self, prompt: str) -> bytes:
+        settings = self._settings
+        try:
+            response = self._openai_client().chat.completions.create(
+                model=settings.image_model,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=settings.image_max_tokens,
+                extra_body={"modalities": ["image", "text"]},
+            )
+        except Exception as error:
+            log_event(
+                logger,
+                Event.LLM_ERROR,
+                "image generation failed",
+                level=logging.ERROR,
+                model=settings.image_model,
+                error_type=type(error).__name__,
+                content_filtered=_is_content_filter(error),
+            )
+            raise LLMError(
+                "Image generation failed", content_filtered=_is_content_filter(error)
+            ) from error
+
+        images = getattr(response.choices[0].message, "images", None) or []
+        if not images:
+            # The model answered with text only - most often a content-policy
+            # refusal phrased as prose rather than an HTTP error.
+            raise LLMError("The model did not return an image for this prompt.")
+
+        url = images[0].image_url.url
+        if not url.startswith("data:"):
+            raise LLMError("Image response was not in the expected data URL format.")
+
+        import base64
+
+        _header, encoded = url.split(",", 1)
+        return base64.b64decode(encoded)
+
+
+def get_image_provider(settings: Settings | None = None) -> ImageProvider:
+    """Return the production image provider. The only construction site."""
+    return OpenRouterImageProvider(settings)

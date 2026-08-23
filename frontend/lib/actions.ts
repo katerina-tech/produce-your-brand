@@ -13,8 +13,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { ApiError, createProject, resumeProject } from "./api";
-import type { ResumeAction } from "./types";
+import { ApiError, createProject, generateDesign, resumeProject, uploadDesign } from "./api";
+import type { GeneratedDesign, ResumeAction, UploadResponse } from "./types";
 
 export interface ActionResult {
   error?: string;
@@ -25,6 +25,7 @@ export async function startProject(
   formData: FormData,
 ): Promise<ActionResult> {
   const text = String(formData.get("request_text") ?? "").trim();
+  const designUploadId = String(formData.get("design_upload_id") ?? "").trim();
 
   if (text.length < 10) {
     return { error: "Please describe the job in a little more detail." };
@@ -32,7 +33,7 @@ export async function startProject(
 
   let projectId: string;
   try {
-    const state = await createProject(text);
+    const state = await createProject(text, designUploadId || undefined);
     projectId = state.project_id;
   } catch (error) {
     return {
@@ -45,6 +46,45 @@ export async function startProject(
 
   revalidatePath("/");
   redirect(`/projects/${projectId}`);
+}
+
+export interface DesignActionResult {
+  error?: string;
+  upload?: UploadResponse;
+  /** Only present for a generated design - see {@link GeneratedDesign}. */
+  previewDataUrl?: string;
+}
+
+export async function uploadDesignAction(formData: FormData): Promise<DesignActionResult> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Please choose a file." };
+  }
+
+  try {
+    const upload = await uploadDesign(file);
+    return { upload };
+  } catch (error) {
+    return {
+      error: error instanceof ApiError ? error.message : "The upload failed.",
+    };
+  }
+}
+
+export async function generateDesignAction(prompt: string): Promise<DesignActionResult> {
+  const trimmed = prompt.trim();
+  if (trimmed.length < 3) {
+    return { error: "Describe the design in a few more words." };
+  }
+
+  try {
+    const generated: GeneratedDesign = await generateDesign(trimmed);
+    return { upload: generated, previewDataUrl: generated.preview_data_url };
+  } catch (error) {
+    return {
+      error: error instanceof ApiError ? error.message : "Generation failed.",
+    };
+  }
 }
 
 async function advance(

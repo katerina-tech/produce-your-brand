@@ -23,7 +23,7 @@ export const dynamic = "force-dynamic";
  * expects. That is what makes it replaceable without touching the agent.
  */
 function StageView({ state }: { state: ProjectState }) {
-  const { stage, payload, project_id: projectId } = state;
+  const { stage, payload, project_id: projectId, design_upload_id: designUploadId } = state;
 
   if (!payload) {
     if (stage === "completed") {
@@ -59,7 +59,9 @@ function StageView({ state }: { state: ProjectState }) {
     case "clarifying":
       return <ClarifyPrompt projectId={projectId} payload={payload} />;
     case "brief_review":
-      return <BriefReview projectId={projectId} payload={payload} />;
+      return (
+        <BriefReview projectId={projectId} payload={payload} designUploadId={designUploadId} />
+      );
     case "method_review":
       return <MethodReview projectId={projectId} payload={payload} />;
     case "supplier_selection":

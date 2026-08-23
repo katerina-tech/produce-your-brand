@@ -50,14 +50,15 @@ class ProjectRepository:
             self._connection.execute(
                 """
                 INSERT INTO projects (
-                    id, thread_id, stage, raw_request, requirement_json,
-                    brief_confirmed, recommendation_json, confirmed_method,
-                    matches_json, selected_supplier_id, rfq_json,
-                    created_at, updated_at
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    id, thread_id, stage, raw_request, design_upload_id,
+                    requirement_json, brief_confirmed, recommendation_json,
+                    confirmed_method, matches_json, selected_supplier_id,
+                    rfq_json, created_at, updated_at
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 ON CONFLICT(id) DO UPDATE SET
                     stage                = excluded.stage,
                     raw_request          = excluded.raw_request,
+                    design_upload_id     = excluded.design_upload_id,
                     requirement_json     = excluded.requirement_json,
                     brief_confirmed      = excluded.brief_confirmed,
                     recommendation_json  = excluded.recommendation_json,
@@ -72,6 +73,7 @@ class ProjectRepository:
                     stored.thread_id,
                     stored.stage.value,
                     stored.raw_request,
+                    stored.design_upload_id,
                     stored.requirement.model_dump_json() if stored.requirement else None,
                     int(stored.brief_confirmed),
                     stored.recommendation.model_dump_json() if stored.recommendation else None,
@@ -192,6 +194,7 @@ class ProjectRepository:
                 "thread_id": row["thread_id"],
                 "stage": row["stage"],
                 "raw_request": row["raw_request"],
+                "design_upload_id": row["design_upload_id"],
                 "requirement": json.loads(row["requirement_json"])
                 if row["requirement_json"]
                 else None,

@@ -129,6 +129,45 @@ def test_extraction_produces_a_typed_brief(tools: ProductionTools, workflow_fact
     assert ("ProductionRequirement", "main") in provider.calls
 
 
+def test_attached_design_forces_design_available_true(
+    tools: ProductionTools, workflow_factory: Any
+) -> None:
+    """A verified attachment is a fact, overriding whatever the model guessed.
+
+    The requirement extraction here claims design_available is unknown; the
+    override must win regardless. The correction happens inside the graph,
+    against checkpointed state, because a later resume must see it too - not
+    just the response from this one call.
+    """
+    without_design_claim = _full_requirement().model_copy(update={"design_available": None})
+    provider = _scripted(ProductionRequirement=without_design_claim)
+    app = workflow_factory(_deps(provider, tools))
+    config = _config("t-design")
+
+    result = app.invoke(
+        initial_state("p-design", DEMO_REQUEST, TODAY.isoformat(), design_upload_id="abc123"),
+        config,
+    )
+
+    assert _interrupt(result)["requirement"]["design_available"] is True
+    assert app.get_state(config).values["design_upload_id"] == "abc123"
+
+
+def test_no_attached_design_leaves_design_available_as_extracted(
+    tools: ProductionTools, workflow_factory: Any
+) -> None:
+    """Without an attachment, the field is exactly whatever the model said."""
+    without_design_claim = _full_requirement().model_copy(update={"design_available": None})
+    provider = _scripted(ProductionRequirement=without_design_claim)
+    app = workflow_factory(_deps(provider, tools))
+
+    result = app.invoke(
+        initial_state("p-nodesign", DEMO_REQUEST, TODAY.isoformat()), _config("t-nodesign")
+    )
+
+    assert _interrupt(result)["requirement"]["design_available"] is None
+
+
 def test_unknown_values_are_not_invented(tools: ProductionTools, workflow_factory: Any) -> None:
     """A sparse extraction must stay sparse through the graph.
 

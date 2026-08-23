@@ -76,6 +76,14 @@ def extract_requirement(state: ProductionState, deps: GraphDeps) -> dict[str, An
     except LLMError as error:
         return _fail(Stage.DRAFT, str(error))
 
+    if state.get("design_upload_id"):
+        # A verified attachment is a fact, not a guess: it overrides whatever
+        # the model inferred (or failed to infer) about design_available from
+        # text alone. Deterministic, same as the fill-only merge rule the
+        # clarification loop uses - a known fact is never left to model
+        # discretion.
+        requirement = requirement.model_copy(update={"design_available": True})
+
     log_event(
         logger,
         Event.REQUIREMENT_EXTRACTION_COMPLETED,
