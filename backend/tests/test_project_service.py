@@ -231,3 +231,20 @@ def test_declining_the_rfq_does_not_complete_the_project(
     stored = ProjectRepository(connection).get(view.project_id)
     assert stored is not None
     assert stored.is_complete is False
+
+
+def test_product_is_present_on_every_response(service: ProjectService) -> None:
+    """The product name must not appear on some responses and vanish from others.
+
+    This regressed once: the view was assembled in two places, and only the read
+    path gained the field. The two constructors are now one, and this pins it.
+    """
+    created = service.create(DEMO_REQUEST)
+    assert created.product == "black yoga mats"
+
+    resumed = service.resume(created.project_id, "confirm_brief", {})
+    assert resumed.product == "black yoga mats"
+
+    fetched = service.get(created.project_id)
+    assert fetched is not None
+    assert fetched.product == "black yoga mats"

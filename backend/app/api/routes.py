@@ -51,6 +51,7 @@ def _to_response(view: ProjectView) -> ProjectStateResponse:
     return ProjectStateResponse(
         project_id=view.project_id,
         stage=view.stage,
+        product=view.product,
         payload=view.payload,
         expected_action=view.expected_action,
         errors=view.errors,

@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens.
+ *
+ * The brief was: minimal, premium, calm, European B2B - not childish, not
+ * colourful, not a chatbot. So the palette is warm neutrals with a near-black
+ * primary, and colour is reserved for meaning: a verdict, a risk, a status.
+ * Nothing is coloured for decoration.
+ *
+ * Committed to a single light theme on purpose. A half-considered dark mode
+ * reads worse than a confident light one, and every colour below is set
+ * explicitly so a dark OS preference cannot half-apply.
+ */
+@theme {
+  --color-canvas: #faf9f7;
+  --color-surface: #ffffff;
+  --color-ink: #18181b;
+  --color-ink-soft: #52525b;
+  --color-ink-muted: #8b8b93;
+  --color-line: #e6e4e0;
+  --color-line-strong: #d4d1cb;
+
+  /* Verdict colours. Muted on purpose - a page of saturated badges is noise. */
+  --color-match: #166534;
+  --color-match-bg: #f2f8f3;
+  --color-partial: #92400e;
+  --color-partial-bg: #fdf8f0;
+  --color-unknown: #52525b;
+  --color-unknown-bg: #f7f7f6;
+  --color-mismatch: #991b1b;
+  --color-mismatch-bg: #fdf4f3;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas,
+    monospace;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Scores and quantities line up in columns only if the digits are tabular. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Small-caps field labels: the one typographic flourish, used consistently. */
+.eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

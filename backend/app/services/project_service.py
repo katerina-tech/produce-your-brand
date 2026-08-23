@@ -21,7 +21,7 @@ from typing import Any
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import Command
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.domain.enums import Stage
 from app.domain.project import Project, ProjectSummary
@@ -68,6 +68,12 @@ class ProjectView(BaseModel):
 
     project_id: str
     stage: Stage
+    product: str | None = Field(
+        default=None,
+        description="Product name from the durable record. Present at every "
+        "stage so a client can title the project consistently - the interrupt "
+        "payloads alone do not all carry it.",
+    )
     payload: dict[str, Any] | None = None
     expected_action: str | None = None
     errors: list[str] = []
@@ -124,7 +130,7 @@ class ProjectService:
         if project is None:
             raise KeyError(project_id)
 
-        current = self._current_view(project_id, project.thread_id)
+        current = self._current_view(project)
         expected = current.expected_action
         normalised = ACTION_ALIASES.get(action, action)
         if expected is None or normalised != expected:
@@ -170,14 +176,14 @@ class ProjectService:
         project = self._projects.get(project_id)
         if project is None:
             return None
-        return self._current_view(project_id, project.thread_id)
+        return self._current_view(project)
 
     def list_summaries(self, limit: int = 50) -> list[ProjectSummary]:
         return self._projects.list_summaries(limit)
 
-    def _current_view(self, project_id: str, thread_id: str) -> ProjectView:
+    def _current_view(self, project: Project) -> ProjectView:
         """Rebuild the view from the checkpoint, without advancing anything."""
-        snapshot = self._workflow.get_state(self._config(thread_id))
+        snapshot = self._workflow.get_state(self._config(project.thread_id))
         values: dict[str, Any] = snapshot.values or {}
 
         payload: dict[str, Any] | None = None
@@ -188,8 +194,9 @@ class ProjectService:
 
         stage = self._stage_of(values, payload)
         return ProjectView(
-            project_id=project_id,
+            project_id=project.id,
             stage=stage,
+            product=project.requirement.product if project.requirement else None,
             payload=payload,
             expected_action=EXPECTED_ACTION.get(stage) if payload else None,
             errors=list(values.get("errors") or []),
@@ -199,41 +206,39 @@ class ProjectService:
     # -------------------------------------------------------------- syncing
 
     def _sync(self, project_id: str, result: dict[str, Any]) -> ProjectView:
-        """Mirror confirmed workflow facts into the durable record."""
+        """Mirror confirmed workflow facts into the durable record, then read back.
+
+        The view is built by :meth:`_current_view` rather than assembled here.
+        Two constructors for the same object is how a field ends up present on
+        one response and missing from another - which is exactly what happened
+        before this collapsed into one path.
+        """
         payload = self._interrupt_payload(result)
         stage = self._stage_of(result, payload)
 
         project = self._projects.get(project_id)
-        if project is not None:
-            rfq = result.get("rfq")
-            self._projects.save(
-                project.model_copy(
-                    update={
-                        "stage": stage,
-                        "requirement": result.get("production_requirement"),
-                        "brief_confirmed": stage
-                        not in (Stage.DRAFT, Stage.CLARIFYING, Stage.BRIEF_REVIEW),
-                        "recommendation": result.get("recommended_methods"),
-                        "confirmed_method": result.get("confirmed_method"),
-                        "matches": list(result.get("supplier_matches") or []),
-                        "selected_supplier_id": result.get("selected_supplier"),
-                        "rfq": rfq,
-                    }
-                )
-            )
-            if stage is Stage.COMPLETED:
-                log_event(
-                    logger, Event.PROJECT_PERSISTED, "project completed", project_id=project_id
-                )
+        if project is None:
+            raise KeyError(project_id)
 
-        return ProjectView(
-            project_id=project_id,
-            stage=stage,
-            payload=payload,
-            expected_action=EXPECTED_ACTION.get(stage) if payload else None,
-            errors=list(result.get("errors") or []),
-            is_complete=stage is Stage.COMPLETED,
+        saved = self._projects.save(
+            project.model_copy(
+                update={
+                    "stage": stage,
+                    "requirement": result.get("production_requirement"),
+                    "brief_confirmed": stage
+                    not in (Stage.DRAFT, Stage.CLARIFYING, Stage.BRIEF_REVIEW),
+                    "recommendation": result.get("recommended_methods"),
+                    "confirmed_method": result.get("confirmed_method"),
+                    "matches": list(result.get("supplier_matches") or []),
+                    "selected_supplier_id": result.get("selected_supplier"),
+                    "rfq": result.get("rfq"),
+                }
+            )
         )
+        if stage is Stage.COMPLETED:
+            log_event(logger, Event.PROJECT_PERSISTED, "project completed", project_id=project_id)
+
+        return self._current_view(saved)
 
     @staticmethod
     def _interrupt_payload(result: dict[str, Any]) -> dict[str, Any] | None:

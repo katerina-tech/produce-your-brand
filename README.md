@@ -2,7 +2,7 @@
 
 **AI-powered B2B sourcing and production orchestration.** You already have the product and the design — describe what you want customised, and Produce Your Stuff works out *how* it can be made and *who* can make it.
 
-> **Status: Phase 4 complete — the backend is done.** The full flow runs over HTTP against a live model: natural language → typed brief → clarification → *knowledge-grounded* method recommendation → deterministic supplier matching → RFQ, with four human approval gates, layered prompt-injection defence and validated uploads. Only the Next.js frontend (Phase 5) remains — see [Implementation status](#implementation-status). This README describes only what actually exists; the full approved design lives in [docs/architecture.md](docs/architecture.md).
+> **Status: complete.** The whole product runs end to end in a browser: natural language → typed brief → clarification → *knowledge-grounded* method recommendation → deterministic supplier matching → RFQ, with four human approval gates, layered prompt-injection defence and validated uploads — see [Implementation status](#implementation-status). This README describes only what actually exists; the full approved design lives in [docs/architecture.md](docs/architecture.md).
 
 ---
 
@@ -65,6 +65,14 @@ cd backend && uv run python -m uvicorn app.main:app --reload --port 8000
 ```
 
 Then check readiness at http://localhost:8000/api/health (interactive docs at `/docs`).
+
+Run the frontend, in a second terminal:
+
+```bash
+cd frontend && npm install && npm run dev
+```
+
+Open http://localhost:3000. The frontend reads `API_BASE_URL` (see `frontend/.env.local.example`); the default points at port 8000, so no configuration is needed for local use.
 
 > **Windows note:** use `uv run python -m uvicorn`, not `uv run uvicorn`. Windows Application Control blocks the generated `uvicorn.exe` shim in the virtualenv (`os error 4551`); invoking the module directly avoids it. This was verified on this machine.
 
@@ -276,6 +284,32 @@ Layers 4 and 5 are the ones that must hold. There is a test that disables screen
 
 ---
 
+## Frontend
+
+Next.js App Router, TypeScript, Tailwind. Six screens: dashboard, new project, clarification, production brief, method recommendation, partner matches, RFQ review.
+
+**The client holds no business logic.** It receives `{stage, payload, expected_action}` and switches on `stage`. It does not know which step follows which, when a clarification is needed, what makes a brief complete, or how a score is calculated — all of that is server-side, and duplicating any of it here would create a second source of truth that could drift. The entire client-side "workflow logic" is one `switch` on a value the server produced.
+
+**The browser never talks to FastAPI.** Reads happen in server components, writes go through server actions. So the API base URL stays server-side, no credentials reach the client, and CORS is a non-problem rather than a configuration.
+
+**Design.** Warm neutrals, near-black primary, and colour reserved strictly for meaning — a verdict, a risk, a status. Nothing is coloured for decoration. Committed to a single light theme on purpose: a half-considered dark mode reads worse than a confident light one. Responsive, and verified at 375px.
+
+Three things the UI is deliberate about:
+
+- **Unknown values render as "Not specified", never as blank.** An honest gap is information the user needs before approving.
+- **The score breakdown is on the page, not behind a tooltip.** "Why 92%?" is the question that decides whether a buyer trusts the number. The AI paragraph beside it is labelled as unable to change the score.
+- **Uncertainty is as prominent as the recommendation.** Confidence, open questions and whether the knowledge base was consulted all appear on the method screen.
+
+Verification:
+
+```bash
+cd frontend && npm run typecheck && npm test && npm run build
+```
+
+Frontend tests cover the one place the client has real logic — translating the API error envelope — and deliberately nothing about scoring or stage order, since that would be testing a copy of the server's rules.
+
+---
+
 ## Repository layout
 
 ```
@@ -315,7 +349,16 @@ backend/
     build_index.py       # thin entry point to the one builder
     demo_run.py          # the only code that calls a real model
   tests/
-frontend/                # Next.js app                             [Phase 5]
+frontend/
+  app/                   # dashboard, new project, workflow shell
+  components/
+    ui.tsx               # presentation primitives
+    workflow/            # one component per gate
+  lib/
+    api.ts               # the only contact with the backend
+    actions.ts           # server actions
+    types.ts             # mirrors backend/app/api/dto.py
+  tests/
 docs/architecture.md     # the approved design
 ```
 
@@ -344,10 +387,10 @@ One logging configuration, JSON by default (`PYS_LOG_FORMAT=console` for local r
 | 2 | Agent core: LLM factory, prompts, the single LangGraph with 5 interrupts, project service | **complete** |
 | 3 | Agentic RAG: knowledge base, vector store, retrieval router | **complete** |
 | 4 | Security guard + full HTTP API surface | **complete** |
-| 5 | Next.js frontend | next |
-| 6 | Documentation and final verification | planned |
+| 5 | Next.js frontend: six screens over the pinned API contract | **complete** |
+| 6 | Documentation and final verification | remaining |
 
-The frontend section will be written when Phase 5 lands. The design for all of it is already fixed in [docs/architecture.md](docs/architecture.md).
+Remaining: a final documentation and verification pass (Phase 6). The design for all of it is already fixed in [docs/architecture.md](docs/architecture.md).
 
 ## Deliberately not built
 

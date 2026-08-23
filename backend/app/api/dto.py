@@ -122,6 +122,9 @@ class ProjectStateResponse(BaseModel):
 
     project_id: str
     stage: Stage
+    product: str | None = Field(
+        default=None, description="Product name, so the client can title the project."
+    )
     payload: dict[str, Any] | None = None
     expected_action: str | None = None
     errors: list[str] = []

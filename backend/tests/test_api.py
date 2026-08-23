@@ -312,3 +312,14 @@ def test_all_errors_use_one_envelope(api: TestClient) -> None:
         assert "error" in body, response.text
         assert {"code", "message"} <= set(body["error"])
         assert "Traceback" not in response.text
+
+
+def test_product_travels_on_create_and_resume(api: TestClient) -> None:
+    """The client titles the project from this, so it must be on every response."""
+    created = api.post("/api/projects", json={"request_text": DEMO_REQUEST}).json()
+    assert created["product"] == "black yoga mats"
+
+    resumed = api.post(
+        f"/api/projects/{created['project_id']}/resume", json={"action": "confirm_brief"}
+    ).json()
+    assert resumed["product"] == "black yoga mats"
