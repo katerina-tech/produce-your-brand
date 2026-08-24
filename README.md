@@ -1,10 +1,22 @@
 # Produce Your Stuff
 
+<p align="center">
+  <img src="docs/assets/logo.svg" alt="Produce Your Stuff" width="420">
+</p>
+
 **AI-powered B2B sourcing and production orchestration.** You already have the product and the design — describe what you want customised, and Produce Your Stuff works out *how* it can be made and *who* can make it.
 
 > **Status: complete.** The whole product runs end to end in a browser: natural language → typed brief → clarification → *knowledge-grounded* method recommendation → deterministic supplier matching → RFQ, with four human approval gates, layered prompt-injection defence and validated uploads — see [Implementation status](#implementation-status). This README describes only what actually exists; the full approved design lives in [docs/architecture.md](docs/architecture.md).
 
 **Live:** **[produceyourstuff.up.railway.app](https://produceyourstuff.up.railway.app/)** — the actual product, deployed on Railway from this repository. Setup steps and the reasoning behind them are in [docs/deploy-railway.md](docs/deploy-railway.md).
+
+<p align="center">
+  <img src="docs/assets/homepage-desktop.png" alt="The Produce Your Stuff homepage, desktop" width="820">
+</p>
+<p align="center">
+  <img src="docs/assets/homepage-mobile.png" alt="The Produce Your Stuff homepage, mobile" width="220">
+</p>
+<p align="center"><sub>Both screenshots are of the live deployment above, not mockups.</sub></p>
 
 ---
 
@@ -299,7 +311,7 @@ Next.js App Router, TypeScript, Tailwind. The public marketing page (`/`) and th
 
 **The browser never talks to FastAPI.** Reads happen in server components, writes go through server actions. So the API base URL stays server-side, no credentials reach the client, and CORS is a non-problem rather than a configuration — which is also why the deployed frontend and backend don't need matching CORS origins (see [docs/deploy-railway.md](docs/deploy-railway.md)).
 
-**Design.** A supplied brand system, not an in-house choice: near-black `#191C23`, a single cobalt accent `#3240EB` reserved strictly for meaning — an active step, a selection, a link, a match score — and warm off-white everywhere else. Nothing is coloured for decoration, and the accent is deliberately rare: roughly 75% neutral, 20% charcoal, 5% cobalt on any real screen. One canonical `Logo` component draws the mark everywhere it appears. Committed to a single light theme on purpose: a half-considered dark mode reads worse than a confident light one. Responsive, and verified at 375px.
+**Design.** A supplied brand system, not an in-house choice: near-black `#191C23`, a single cobalt accent `#3240EB` reserved strictly for meaning — an active step, a selection, a link, a match score — and warm off-white everywhere else. Nothing is coloured for decoration, and the accent is deliberately rare: roughly 75% neutral, 20% charcoal, 5% cobalt on any real screen. One canonical `Logo` component (`frontend/components/Logo.tsx`) draws the mark everywhere it appears in the app; [docs/assets/logo.svg](docs/assets/logo.svg) is the same mark exported as a static file, for anywhere outside the app that needs it (like the top of this README). Committed to a single light theme on purpose: a half-considered dark mode reads worse than a confident light one. Responsive, and verified at 375px.
 
 Three things the UI is deliberate about:
 
