@@ -86,7 +86,7 @@ export default function MarketingPage() {
           <div className="space-y-6">
             <p className="eyebrow text-accent">AI-powered production sourcing</p>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-[3.4rem] lg:leading-[1.06]">
-              Turn your product into{" "}
+              Turn any product into{" "}
               <span className="text-accent">your product.</span>
             </h1>
             <p className="text-lg text-ink">
