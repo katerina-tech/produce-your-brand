@@ -22,6 +22,8 @@ from app.api.dto import (
     GeneratedDesignResponse,
     GenerateDesignRequest,
     HealthResponse,
+    NearbyStudioResponse,
+    NearbyStudiosResponse,
     ProjectListResponse,
     ProjectStateResponse,
     ProjectSummaryResponse,
@@ -33,6 +35,7 @@ from app.config import Settings, get_settings
 from app.llm.factory import ImageProvider
 from app.security.uploads import UploadRejectedError, store_upload
 from app.services.design_service import DesignGenerationError, generate_design
+from app.services.osm_search import OSMSearchError, OverpassStudioSearch
 from app.services.project_service import (
     DesignNotFoundError,
     ProjectService,
@@ -85,6 +88,16 @@ def get_image_generation_provider(request: Request) -> ImageProvider:
     if provider is None:
         raise HTTPException(status_code=503, detail="The service is not ready.")
     return provider
+
+
+def get_osm_search_client(request: Request) -> OverpassStudioSearch:
+    """Resolve the OSM search client built once at startup - same reasoning as
+    :func:`get_image_generation_provider`: one production wiring site, and a
+    test can inject a fake instead of reaching the real Overpass API."""
+    client: OverpassStudioSearch | None = getattr(request.app.state, "osm_search", None)
+    if client is None:
+        raise HTTPException(status_code=503, detail="The service is not ready.")
+    return client
 
 
 def _to_response(view: ProjectView) -> ProjectStateResponse:
@@ -192,6 +205,46 @@ def resume_project(
                 f"It expects '{mismatch.expected}'."
             ),
         ) from mismatch
+
+
+@router.get(
+    "/projects/{project_id}/nearby-studios",
+    response_model=NearbyStudiosResponse,
+    tags=["projects"],
+)
+def nearby_studios(
+    project_id: str,
+    service: ProjectService = Depends(get_service),
+    client: OverpassStudioSearch = Depends(get_osm_search_client),
+) -> NearbyStudiosResponse:
+    """Real, unscored Berlin businesses from OpenStreetMap for this project's
+    confirmed method - see app/services/osm_search.py for why these are kept
+    separate from supplier matches rather than merged into them.
+
+    Available once a method is confirmed; before that there is nothing to
+    search for, and the response says so rather than guessing a technique.
+    """
+    project = service.get_record(project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="No such project.")
+
+    if project.confirmed_method is None:
+        return NearbyStudiosResponse(
+            studios=[],
+            note="No production method confirmed yet - nothing to search for.",
+        )
+
+    try:
+        studios = client.search(project.confirmed_method)
+    except OSMSearchError as failure:
+        # 502: our request was fine, OpenStreetMap's public endpoint was not
+        # reachable or timed out. This is a convenience layer, not a gate, so
+        # nothing about the project itself is affected by this failing.
+        raise HTTPException(status_code=502, detail=str(failure)) from failure
+
+    return NearbyStudiosResponse(
+        studios=[NearbyStudioResponse(**studio.model_dump()) for studio in studios]
+    )
 
 
 # -------------------------------------------------------------------- uploads

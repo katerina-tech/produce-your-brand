@@ -29,6 +29,7 @@ from app.logging_config import Event, configure_logging, log_event
 from app.repositories import db
 from app.repositories.project_repo import ProjectRepository
 from app.repositories.supplier_repo import SupplierRepository
+from app.services.osm_search import get_osm_search
 from app.services.project_service import ProjectService
 
 logger = logging.getLogger(__name__)
@@ -60,6 +61,7 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     app.state.project_service = ProjectService(workflow, ProjectRepository(connection))
     app.state.image_provider = get_image_provider(settings)
+    app.state.osm_search = get_osm_search(settings)
 
     # Validate the supplier dataset at startup rather than on the first request:
     # a malformed file should fail loudly here, not surface later as an

@@ -19,15 +19,18 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.config import Settings
+from app.domain.enums import ProductionMethod
+from app.domain.studio import NearbyStudio
 from app.graph.workflow import GraphDeps, checkpointer_for, compile_workflow
 from app.main import create_app
 from app.repositories import db
 from app.repositories.project_repo import ProjectRepository
 from app.repositories.supplier_repo import SupplierRepository
+from app.services.osm_search import OSMSearchError
 from app.services.project_service import ProjectService
 from app.tools.registry import ProductionTools
 from tests.conftest import BACKEND_ROOT, TODAY
-from tests.fakes import ScriptedImageProvider
+from tests.fakes import ScriptedImageProvider, ScriptedOSMSearch
 from tests.test_graph import DEMO_REQUEST, _scripted
 from tests.test_security import JPEG, PDF, PNG
 
@@ -58,6 +61,7 @@ def api(tmp_path: Path, test_settings: Settings) -> Iterator[TestClient]:
             workflow, ProjectRepository(connection), today=TODAY, settings=test_settings
         )
         client.app.state.image_provider = ScriptedImageProvider()  # type: ignore[attr-defined]
+        client.app.state.osm_search = ScriptedOSMSearch()  # type: ignore[attr-defined]
         yield client
 
     connection.close()
@@ -94,6 +98,7 @@ def test_openapi_exposes_exactly_the_intended_surface(api: TestClient) -> None:
         "/api/projects",
         "/api/projects/{project_id}",
         "/api/projects/{project_id}/resume",
+        "/api/projects/{project_id}/nearby-studios",
         "/api/uploads",
         "/api/designs/generate",
     }
@@ -418,3 +423,86 @@ def test_project_creation_rejects_an_unknown_design_id(api: TestClient) -> None:
 def test_project_without_a_design_has_no_design_upload_id(api: TestClient) -> None:
     response = api.post("/api/projects", json={"request_text": DEMO_REQUEST})
     assert response.json()["design_upload_id"] is None
+
+
+# --------------------------------------------------------------- nearby studios
+
+_STUDIO = NearbyStudio(
+    osm_id="node/1",
+    name="Kreuzberg Foil Works",
+    osm_category="craft=printer",
+    address="Skalitzer Str. 1 10999 Berlin",
+    website="https://example.invalid",
+    phone=None,
+    lat=52.5,
+    lon=13.4,
+)
+
+
+def test_nearby_studios_before_a_method_is_confirmed_returns_an_explanatory_empty_list(
+    api: TestClient,
+) -> None:
+    """Nothing to search for yet - the response says so instead of guessing."""
+    project_id = _create(api)
+
+    response = api.get(f"/api/projects/{project_id}/nearby-studios")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["studios"] == []
+    assert "no production method" in body["note"].lower()
+
+
+def test_nearby_studios_returns_results_once_a_method_is_confirmed(api: TestClient) -> None:
+    project_id = _create(api)
+    api.post(f"/api/projects/{project_id}/resume", json={"action": "confirm_brief"})
+    api.post(
+        f"/api/projects/{project_id}/resume",
+        json={"action": "confirm_method", "method": "heat_transfer"},
+    )
+
+    client = ScriptedOSMSearch([_STUDIO])
+    api.app.state.osm_search = client  # type: ignore[attr-defined]
+
+    response = api.get(f"/api/projects/{project_id}/nearby-studios")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["source"] == "openstreetmap"
+    assert body["studios"] == [
+        {
+            "osm_id": "node/1",
+            "name": "Kreuzberg Foil Works",
+            "osm_category": "craft=printer",
+            "address": "Skalitzer Str. 1 10999 Berlin",
+            "website": "https://example.invalid",
+            "phone": None,
+            "lat": 52.5,
+            "lon": 13.4,
+        }
+    ]
+    # Searched by the method the human actually confirmed, not the recommendation.
+    assert client.calls == [ProductionMethod.HEAT_TRANSFER]
+
+
+def test_nearby_studios_provider_failure_returns_a_typed_error(api: TestClient) -> None:
+    """Overpass being unreachable is a 502, and never a stack trace."""
+    project_id = _create(api)
+    api.post(f"/api/projects/{project_id}/resume", json={"action": "confirm_brief"})
+    api.post(
+        f"/api/projects/{project_id}/resume",
+        json={"action": "confirm_method", "method": "heat_transfer"},
+    )
+    api.app.state.osm_search = ScriptedOSMSearch(  # type: ignore[attr-defined]
+        OSMSearchError("simulated Overpass outage")
+    )
+
+    response = api.get(f"/api/projects/{project_id}/nearby-studios")
+
+    assert response.status_code == 502
+    assert "error" in response.json()
+
+
+def test_nearby_studios_on_unknown_project_is_404(api: TestClient) -> None:
+    response = api.get("/api/projects/does-not-exist/nearby-studios")
+    assert response.status_code == 404

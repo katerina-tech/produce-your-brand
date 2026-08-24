@@ -190,3 +190,33 @@ class GeneratedDesignResponse(UploadResponse):
     model_config = ConfigDict(extra="forbid")
 
     preview_data_url: str
+
+
+class NearbyStudioResponse(BaseModel):
+    """One unverified OpenStreetMap lead. See app/services/osm_search.py."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    osm_id: str
+    name: str
+    osm_category: str
+    address: str | None
+    website: str | None
+    phone: str | None
+    lat: float
+    lon: float
+
+
+class NearbyStudiosResponse(BaseModel):
+    """Deliberately separate from :class:`ProjectStateResponse` - these are not
+    supplier matches and are never scored, so they do not belong in the same
+    envelope as ``matches``."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    studios: list[NearbyStudioResponse]
+    source: Literal["openstreetmap"] = "openstreetmap"
+    note: str = (
+        "Unverified leads from OpenStreetMap, not scored or vetted. "
+        "Contact them yourself to confirm they can do this job."
+    )

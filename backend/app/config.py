@@ -72,6 +72,18 @@ class Settings(BaseSettings):
     image_model: str = "google/gemini-2.5-flash-image"
     image_max_tokens: int = 2048
 
+    # --- nearby studios (OpenStreetMap) --------------------------------------
+    # A live, unscored complement to the curated (currently synthetic) supplier
+    # dataset - see app/services/osm_search.py. Free, keyless, no billing
+    # account, unlike the commercial alternatives. Deliberately not folded into
+    # supplier matching: OpenStreetMap has no capability, MOQ or lead-time data,
+    # so these results cannot be scored the way app/services/matching.py scores
+    # a real supplier record - they are presented as unverified leads only.
+    osm_overpass_url: str = "https://overpass-api.de/api/interpreter"
+    osm_request_timeout_seconds: float = 20.0
+    osm_result_limit: int = 12
+    osm_cache_ttl_seconds: int = 3600
+
     # --- paths (all derived; never user-supplied) ---------------------------
     data_dir: Path = BACKEND_ROOT / "data"
     suppliers_file: Path = BACKEND_ROOT / "data" / "suppliers.json"

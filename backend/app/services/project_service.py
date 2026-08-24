@@ -220,6 +220,13 @@ class ProjectService:
             return None
         return self._current_view(project)
 
+    def get_record(self, project_id: str) -> Project | None:
+        """The durable record itself, for integrations that need fields (like
+        ``requirement.location`` or ``confirmed_method``) that :class:`ProjectView`
+        deliberately does not carry - it exists for the workflow, not as a
+        general-purpose read model."""
+        return self._projects.get(project_id)
+
     def list_summaries(self, limit: int = 50) -> list[ProjectSummary]:
         return self._projects.list_summaries(limit)
 

@@ -10,6 +10,7 @@
 import type {
   GeneratedDesign,
   Health,
+  NearbyStudiosResponse,
   ProjectState,
   ProjectSummary,
   ResumeAction,
@@ -138,6 +139,14 @@ export async function generateDesign(prompt: string): Promise<GeneratedDesign> {
     method: "POST",
     body: JSON.stringify({ prompt }),
   });
+}
+
+/**
+ * Real, unscored OpenStreetMap leads for this project's confirmed method.
+ * Never merged with `matches` client-side - see NearbyStudio in ./types.
+ */
+export async function getNearbyStudios(id: string): Promise<NearbyStudiosResponse> {
+  return request<NearbyStudiosResponse>(`/projects/${encodeURIComponent(id)}/nearby-studios`);
 }
 
 export async function resumeProject(

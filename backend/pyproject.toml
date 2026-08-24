@@ -20,13 +20,13 @@ dependencies = [
     "numpy==2.5.2",
     "pyyaml==6.0.3",
     "python-multipart==0.0.32",
+    "httpx==0.28.1",
 ]
 
 [dependency-groups]
 dev = [
     "pytest==9.1.1",
     "pytest-asyncio==1.4.0",
-    "httpx==0.28.1",
     "ruff==0.16.4",
     "mypy==2.3.1",
     "types-pyyaml==6.0.12.20260815",

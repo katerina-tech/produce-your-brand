@@ -154,6 +154,28 @@ export interface GeneratedDesign extends UploadResponse {
   preview_data_url: string;
 }
 
+/**
+ * A real, unscored OpenStreetMap lead - deliberately not a {@link MatchResult}.
+ * OpenStreetMap has no capability, MOQ or lead-time data, so these are never
+ * ranked or compared the way a scored supplier match is.
+ */
+export interface NearbyStudio {
+  osm_id: string;
+  name: string;
+  osm_category: string;
+  address: string | null;
+  website: string | null;
+  phone: string | null;
+  lat: number;
+  lon: number;
+}
+
+export interface NearbyStudiosResponse {
+  studios: NearbyStudio[];
+  source: "openstreetmap";
+  note: string;
+}
+
 export interface ProjectSummary {
   id: string;
   stage: Stage;

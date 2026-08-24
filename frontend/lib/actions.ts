@@ -13,8 +13,15 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { ApiError, createProject, generateDesign, resumeProject, uploadDesign } from "./api";
-import type { GeneratedDesign, ResumeAction, UploadResponse } from "./types";
+import {
+  ApiError,
+  createProject,
+  generateDesign,
+  getNearbyStudios,
+  resumeProject,
+  uploadDesign,
+} from "./api";
+import type { GeneratedDesign, NearbyStudio, ResumeAction, UploadResponse } from "./types";
 
 export interface ActionResult {
   error?: string;
@@ -83,6 +90,29 @@ export async function generateDesignAction(prompt: string): Promise<DesignAction
   } catch (error) {
     return {
       error: error instanceof ApiError ? error.message : "Generation failed.",
+    };
+  }
+}
+
+export interface NearbyStudiosResult {
+  error?: string;
+  studios?: NearbyStudio[];
+  note?: string;
+}
+
+/**
+ * Fetched on demand from a client component (the "show nearby studios"
+ * toggle on the partner-matches screen), not on page load - Overpass is a
+ * shared public service and a project's method rarely changes once
+ * confirmed, so there is no reason to query it every time the page renders.
+ */
+export async function loadNearbyStudios(projectId: string): Promise<NearbyStudiosResult> {
+  try {
+    const response = await getNearbyStudios(projectId);
+    return { studios: response.studios, note: response.note };
+  } catch (error) {
+    return {
+      error: error instanceof ApiError ? error.message : "Could not reach OpenStreetMap.",
     };
   }
 }

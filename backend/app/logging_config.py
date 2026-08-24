@@ -55,6 +55,7 @@ class Event(StrEnum):
     UPLOAD_ACCEPTED = "upload_accepted"
     DESIGN_GENERATION_STARTED = "design_generation_started"
     DESIGN_GENERATION_COMPLETED = "design_generation_completed"
+    OSM_SEARCH_COMPLETED = "osm_search_completed"
     LLM_ERROR = "llm_error"
     TOOL_ERROR = "tool_error"
     VALIDATION_ERROR = "validation_error"

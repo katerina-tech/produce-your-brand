@@ -255,7 +255,7 @@ cd backend && uv run python scripts/build_index.py
 
 ## HTTP API
 
-Five paths, six operations. Only one of them advances the workflow.
+Six paths, seven operations. Only one of them advances the workflow.
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -264,6 +264,7 @@ Five paths, six operations. Only one of them advances the workflow.
 | `GET` | `/api/projects` | dashboard list |
 | `GET` | `/api/projects/{id}` | full current state — the "leave and come back" endpoint |
 | `POST` | `/api/projects/{id}/resume` | answer whichever gate the workflow is paused at |
+| `GET` | `/api/projects/{id}/nearby-studios` | live, unscored OpenStreetMap leads for the confirmed method |
 | `POST` | `/api/uploads` | validated design file, metadata only |
 
 `resume` takes a discriminated action: `answer_clarification`, `confirm_brief`, `edit_brief`, `confirm_method`, `select_supplier`, `approve_rfq`, `edit_rfq`. One endpoint rather than seven, **because the graph is the authority on where it is** — a client cannot talk it into skipping a human approval by calling a different path. A mismatched action gets `409` naming the action actually expected, so a stale browser tab receives a correctable answer instead of silently resuming the wrong branch.
@@ -345,6 +346,18 @@ Added beyond the original sprint scope, at explicit user request, on the New Pro
 
 ---
 
+## Nearby studios (OpenStreetMap)
+
+Added beyond the original sprint scope, at explicit user request: once a method is confirmed, the partner-matches screen can also show real Berlin businesses found live on [OpenStreetMap](https://www.openstreetmap.org/) — free, keyless, no billing account, unlike the commercial alternatives (Google Places, etc.) that were considered and rejected for exactly that reason.
+
+**This is deliberately not a supplier match, and never scored like one.** `app/services/matching.py` scores a supplier from six weighted, published fields — material, MOQ, deadline, and so on. OpenStreetMap has none of that: a business tagged `craft=embroiderer` might have a two-week backlog or refuse customer-owned goods, and there is no way to know from the tag alone. So a `NearbyStudio` is a different shape entirely (see `app/domain/studio.py`) and is presented under its own heading — "unverified leads, not scored or vetted" — never merged into or ranked against `MatchResult`.
+
+**Outside the workflow, on purpose.** `GET /api/projects/{id}/nearby-studios` is a plain, ungated HTTP endpoint, not a LangGraph node — Overpass is a shared, best-effort public service with no uptime guarantee (confirmed live: it returns real results most of the time and a `504`/`429` under its own load some of the time), and a human-approval gate must never be able to stall on a dependency like that. The frontend fetches it lazily, only when a user expands the section on the matches screen — not on page load — and a short in-memory cache (`OverpassStudioSearch`, one hour by default) keeps repeat views of the same project from re-querying a shared service for data that has not changed.
+
+**The tag mapping is approximate, and says so.** OpenStreetMap has no per-technique tag for production methods. `craft=printer` is the one umbrella tag covering screen, digital and pad printing and heat transfer alike; `craft=embroiderer` is the one exact match in the whole table (see `METHOD_TAGS` in `app/services/osm_search.py`). Every result carries the specific tag it matched under, so nothing claims more precision than the data actually has.
+
+---
+
 ## Repository layout
 
 ```
@@ -354,7 +367,7 @@ backend/
     logging_config.py    # the only logging configuration
     api/                 # HTTP boundary (routes + wire DTOs)
     domain/              # Pydantic contracts: requirement, supplier, matching,
-                         #   method, knowledge, rfq, project
+                         #   method, knowledge, rfq, project, studio (OSM)
     llm/
       factory.py         # the only ChatOpenAI construction
       prompts.py         # the only prompt text in the codebase
@@ -368,6 +381,7 @@ backend/
       matching.py        # deterministic scorer (no LLM imports)
       rfq_builder.py     # deterministic RFQ assembly
       project_service.py # graph pause/resume + persistence
+      osm_search.py      # live OpenStreetMap lookup - not a graph tool
     rag/
       store.py           # THE vector store: load, chunk, embed, index, search
       retriever.py       # retrieval + the routing decision
@@ -392,7 +406,7 @@ frontend/
   components/
     ui.tsx               # presentation primitives
     Logo.tsx             # the one place the brand mark is drawn
-    workflow/            # one component per gate
+    workflow/            # one component per gate, plus NearbyStudios.tsx
   lib/
     api.ts               # the only contact with the backend
     actions.ts           # server actions
@@ -594,9 +608,11 @@ take on trust.
 | Human-in-the-loop | four gates, enforced by `interrupt()` | `test_workflow_stops_at_all_four_approval_gates` |
 | Structured logging | one config, closed event enum | `test_log_events_are_a_closed_set` |
 
-**235 backend tests, 10 frontend tests.** No test calls a live model: the graph
-runs on a scripted provider and retrieval on a hashing embedder whose similarity
-is real term overlap, so the suite is free, fast and deterministic. Live
+**249 backend tests, 10 frontend tests.** No test calls a live model, and none
+calls the real Overpass API either - `test_osm_search.py` swaps in
+`httpx.MockTransport`. The graph runs on a scripted provider and retrieval on a
+hashing embedder whose similarity is real term overlap, so the suite is free,
+fast and deterministic. Live
 behaviour is verified separately by `scripts/demo_run.py`.
 
 ---
@@ -608,6 +624,13 @@ Stated plainly, because a reviewer will find them anyway.
 **The supplier data is synthetic.** 24 curated records, labelled as such in every
 row. The matching algorithm is real; the partners are not. Real data is the first
 thing to swap, and the schema does not change when you do.
+
+**OpenStreetMap coverage is uneven, and the public Overpass instance is not
+always up.** Live-tested while building this: real Berlin businesses come back
+correctly most of the time, and a `504`/`429` from the shared public endpoint
+some of the time - the feature degrades to a clear error rather than a crash
+either way, but it is not a substitute for verified supplier data, and many
+small studios simply are not tagged on OpenStreetMap at all.
 
 **The knowledge base is internally authored.** 13 documents, `source_url: null`
 throughout, so no citation points at a document this project did not write. The

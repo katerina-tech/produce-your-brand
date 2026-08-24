@@ -153,6 +153,11 @@ def main() -> int:
         ("FAISS index builders", len(files_containing(APP, "faiss.Index")), 1),
         ("knowledge directories", len(directories_named(BACKEND, "knowledge")), 1),
         ("supplier data files", len(list(BACKEND.rglob("data/suppliers*.json"))), 1),
+        (
+            "OSM/Overpass client constructions",
+            len(files_containing(APP, "class OverpassStudioSearch")),
+            1,
+        ),
         ("logging configurations", len(files_containing(APP, "logging.StreamHandler")), 1),
         ("basicConfig calls (must be 0)", len(files_containing(APP, "basicConfig")), 0),
         ("environment readers", len(code_files_containing(APP, "os.environ")), 1),

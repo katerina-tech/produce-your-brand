@@ -15,6 +15,8 @@ from typing import Any, TypeVar
 from langchain_core.messages import BaseMessage
 from pydantic import BaseModel
 
+from app.domain.enums import ProductionMethod
+from app.domain.studio import NearbyStudio
 from app.llm.factory import LLMError, Purpose
 
 SchemaT = TypeVar("SchemaT", bound=BaseModel)
@@ -215,3 +217,17 @@ class FailingImageProvider:
 
     def generate_image(self, prompt: str) -> bytes:
         raise LLMError("simulated image provider outage")
+
+
+class ScriptedOSMSearch:
+    """Returns fixed studios, or raises, on every call. Never touches the network."""
+
+    def __init__(self, studios: list[NearbyStudio] | Exception | None = None) -> None:
+        self._result: list[NearbyStudio] | Exception = studios if studios is not None else []
+        self.calls: list[ProductionMethod] = []
+
+    def search(self, method: ProductionMethod) -> list[NearbyStudio]:
+        self.calls.append(method)
+        if isinstance(self._result, Exception):
+            raise self._result
+        return self._result
