@@ -145,7 +145,7 @@ export function MethodReview({
               id="method"
               value={choice}
               onChange={(event) => setChoice(event.target.value)}
-              className="rounded-lg border border-line-strong bg-surface px-3 py-2 text-sm focus:border-ink focus:outline-none"
+              className="rounded-lg border border-line-strong bg-surface px-3 py-2 text-sm focus:border-accent focus:outline-none"
             >
               {options.map((option) => (
                 <option key={option} value={option}>

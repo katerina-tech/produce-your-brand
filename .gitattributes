@@ -1,0 +1,4 @@
+# Shell scripts run inside Linux containers via their shebang line. A CRLF
+# line ending there breaks the interpreter path (classic Windows checkout
+# footgun for Docker builds) - force LF regardless of local git config.
+*.sh text eol=lf

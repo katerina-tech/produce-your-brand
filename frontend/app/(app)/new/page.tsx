@@ -19,7 +19,7 @@ export default function NewProjectPage() {
 
   return (
     <div className="space-y-6">
-      <BackLink href="/">← All projects</BackLink>
+      <BackLink href="/dashboard">← All projects</BackLink>
 
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
@@ -50,7 +50,7 @@ export default function NewProjectPage() {
             minLength={10}
             defaultValue=""
             placeholder={EXAMPLE}
-            className="w-full resize-y rounded-lg border border-line-strong bg-surface px-3.5 py-3 text-sm leading-relaxed placeholder:text-ink-muted focus:border-ink focus:outline-none"
+            className="w-full resize-y rounded-lg border border-line-strong bg-surface px-3.5 py-3 text-sm leading-relaxed placeholder:text-ink-muted focus:border-accent focus:outline-none"
           />
 
           <div className="border-t border-line pt-5">

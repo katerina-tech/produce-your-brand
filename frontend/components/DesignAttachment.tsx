@@ -168,7 +168,7 @@ export function DesignAttachment({
             rows={2}
             maxLength={500}
             placeholder="e.g. a minimalist gold star logo on a plain background"
-            className="w-full resize-y rounded-lg border border-line-strong bg-surface px-3.5 py-2.5 text-sm leading-relaxed placeholder:text-ink-muted focus:border-ink focus:outline-none"
+            className="w-full resize-y rounded-lg border border-line-strong bg-surface px-3.5 py-2.5 text-sm leading-relaxed placeholder:text-ink-muted focus:border-accent focus:outline-none"
           />
           <div className="flex items-center justify-between">
             <p className="text-xs text-ink-muted">Costs about $0.04 per image.</p>

@@ -91,7 +91,7 @@ export default async function ProjectPage({
     if (error instanceof ApiError && error.status === 404) notFound();
     return (
       <div className="space-y-6">
-        <BackLink href="/">← All projects</BackLink>
+        <BackLink href="/dashboard">← All projects</BackLink>
         <Notice tone="error" title="Could not load the project">
           {error instanceof ApiError
             ? error.message
@@ -111,7 +111,7 @@ export default async function ProjectPage({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <BackLink href="/">← All projects</BackLink>
+        <BackLink href="/dashboard">← All projects</BackLink>
         <StageStepper current={state.stage} />
       </div>
 

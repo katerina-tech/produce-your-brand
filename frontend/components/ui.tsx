@@ -52,10 +52,10 @@ type ButtonTone = "primary" | "secondary" | "quiet";
 
 const BUTTON_TONES: Record<ButtonTone, string> = {
   primary:
-    "bg-ink text-white hover:bg-ink/90 focus-visible:outline-ink disabled:bg-ink-muted",
+    "bg-ink text-white hover:bg-ink/90 focus-visible:outline-accent disabled:bg-ink-muted",
   secondary:
-    "border border-line-strong bg-surface text-ink hover:bg-canvas focus-visible:outline-ink",
-  quiet: "text-ink-soft hover:text-ink hover:bg-canvas focus-visible:outline-ink",
+    "border border-line-strong bg-surface text-ink hover:bg-canvas focus-visible:outline-accent",
+  quiet: "text-ink-soft hover:text-ink hover:bg-canvas focus-visible:outline-accent",
 };
 
 export function Button({
@@ -153,7 +153,7 @@ export function ScoreBar({ score }: { score: number }) {
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-line">
       <div
-        className="h-full rounded-full bg-ink"
+        className="h-full rounded-full bg-accent"
         style={{ width: `${Math.max(0, Math.min(100, score))}%` }}
       />
     </div>
@@ -186,7 +186,7 @@ export function StageStepper({ current }: { current: Stage }) {
               aria-current={isCurrent ? "step" : undefined}
               className={
                 isCurrent
-                  ? "font-semibold text-ink"
+                  ? "font-semibold text-accent"
                   : isDone
                     ? "text-ink-soft"
                     : "text-ink-muted"

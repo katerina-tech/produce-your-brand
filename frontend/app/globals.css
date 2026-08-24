@@ -1,12 +1,14 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 /*
- * Design tokens.
+ * Design tokens - the Produce Your Stuff brand system.
  *
- * The brief was: minimal, premium, calm, European B2B - not childish, not
- * colourful, not a chatbot. So the palette is warm neutrals with a near-black
- * primary, and colour is reserved for meaning: a verdict, a risk, a status.
- * Nothing is coloured for decoration.
+ * Premium European B2B: warm off-white, a near-black primary, and cobalt
+ * reserved for meaning - active state, selection, a link, a match score.
+ * Never a fill colour, never decoration. Roughly 75% neutral / 20% charcoal
+ * / 5% cobalt across a real screen; if a page reads "blue", something here
+ * was used wrong.
  *
  * Committed to a single light theme on purpose. A half-considered dark mode
  * reads worse than a confident light one, and every colour below is set
@@ -15,24 +17,27 @@
 @theme {
   --color-canvas: #faf9f7;
   --color-surface: #ffffff;
-  --color-ink: #18181b;
-  --color-ink-soft: #52525b;
-  --color-ink-muted: #8b8b93;
-  --color-line: #e6e4e0;
-  --color-line-strong: #d4d1cb;
+  --color-ink: #191c23;
+  --color-ink-soft: #464a54;
+  --color-ink-muted: #6b6f7a;
+  --color-line: #e5e5e7;
+  --color-line-strong: #c9c9cd;
+
+  /* The one accent. Active steps, selection, links, focus, match/progress. */
+  --color-accent: #3240eb;
 
   /* Verdict colours. Muted on purpose - a page of saturated badges is noise. */
-  --color-match: #166534;
-  --color-match-bg: #f2f8f3;
-  --color-partial: #92400e;
-  --color-partial-bg: #fdf8f0;
-  --color-unknown: #52525b;
-  --color-unknown-bg: #f7f7f6;
-  --color-mismatch: #991b1b;
-  --color-mismatch-bg: #fdf4f3;
+  --color-match: #1e8e5a;
+  --color-match-bg: #eaf5ef;
+  --color-partial: #c98a1a;
+  --color-partial-bg: #faf1e2;
+  --color-unknown: #6b6f7a;
+  --color-unknown-bg: #f1f0ed;
+  --color-mismatch: #c94a3b;
+  --color-mismatch-bg: #fbedeb;
 
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas,
     monospace;
 }

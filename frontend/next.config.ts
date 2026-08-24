@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   typedRoutes: true,
+  // Produces a self-contained .next/standalone server (its own minimal
+  // node_modules) so the deploy image doesn't need the full node_modules
+  // tree copied in. Only affects `next build` output, not `next dev`.
+  output: "standalone",
 };
 
 export default nextConfig;
