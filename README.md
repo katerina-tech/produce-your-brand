@@ -4,6 +4,8 @@
 
 > **Status: complete.** The whole product runs end to end in a browser: natural language → typed brief → clarification → *knowledge-grounded* method recommendation → deterministic supplier matching → RFQ, with four human approval gates, layered prompt-injection defence and validated uploads — see [Implementation status](#implementation-status). This README describes only what actually exists; the full approved design lives in [docs/architecture.md](docs/architecture.md).
 
+**Live:** **[produceyourstuff.up.railway.app](https://produceyourstuff.up.railway.app/)** — the actual product, deployed on Railway from this repository. Setup steps and the reasoning behind them are in [docs/deploy-railway.md](docs/deploy-railway.md).
+
 ---
 
 ## Problem
@@ -94,7 +96,7 @@ cd backend && uv run python scripts/audit_architecture.py
 
 That last one is the guard rail against this project's predecessor: it fails the build if a second LangGraph, prompt module, LLM factory, vector store, knowledge directory or supplier data source appears, or if any module under `app/` becomes unreferenced dead code.
 
-### The live demo
+### Exercise the real model
 
 The test suite runs entirely on a scripted provider — no key, no network, no cost. One script exercises the real model:
 
@@ -288,13 +290,16 @@ Layers 4 and 5 are the ones that must hold. There is a test that disables screen
 
 ## Frontend
 
-Next.js App Router, TypeScript, Tailwind. Six screens: dashboard, new project, clarification, production brief, method recommendation, partner matches, RFQ review.
+Next.js App Router, TypeScript, Tailwind. The public marketing page (`/`) and the working product are deliberately separate route trees with their own chrome — a prospective customer and someone mid-project need different navigation, and the split keeps the marketing page from ever depending on the workflow's rules:
 
-**The client holds no business logic.** It receives `{stage, payload, expected_action}` and switches on `stage`. It does not know which step follows which, when a clarification is needed, what makes a brief complete, or how a score is calculated — all of that is server-side, and duplicating any of it here would create a second source of truth that could drift. The entire client-side "workflow logic" is one `switch` on a value the server produced.
+- `app/page.tsx` — the marketing homepage: hero, how-it-works, a live-styled preview of the actual product, use cases, and a CTA into `/new`. Every button on it leads into the real flow below, not a mock of one.
+- `app/(app)/` — the product itself, behind its own header/footer: dashboard (`/dashboard`), new project, clarification, production brief, method recommendation, partner matches, RFQ review.
 
-**The browser never talks to FastAPI.** Reads happen in server components, writes go through server actions. So the API base URL stays server-side, no credentials reach the client, and CORS is a non-problem rather than a configuration.
+**The client holds no business logic.** The product screens receive `{stage, payload, expected_action}` and switch on `stage`. They do not know which step follows which, when a clarification is needed, what makes a brief complete, or how a score is calculated — all of that is server-side, and duplicating any of it here would create a second source of truth that could drift. The entire client-side "workflow logic" is one `switch` on a value the server produced.
 
-**Design.** Warm neutrals, near-black primary, and colour reserved strictly for meaning — a verdict, a risk, a status. Nothing is coloured for decoration. Committed to a single light theme on purpose: a half-considered dark mode reads worse than a confident light one. Responsive, and verified at 375px.
+**The browser never talks to FastAPI.** Reads happen in server components, writes go through server actions. So the API base URL stays server-side, no credentials reach the client, and CORS is a non-problem rather than a configuration — which is also why the deployed frontend and backend don't need matching CORS origins (see [docs/deploy-railway.md](docs/deploy-railway.md)).
+
+**Design.** A supplied brand system, not an in-house choice: near-black `#191C23`, a single cobalt accent `#3240EB` reserved strictly for meaning — an active step, a selection, a link, a match score — and warm off-white everywhere else. Nothing is coloured for decoration, and the accent is deliberately rare: roughly 75% neutral, 20% charcoal, 5% cobalt on any real screen. One canonical `Logo` component draws the mark everywhere it appears. Committed to a single light theme on purpose: a half-considered dark mode reads worse than a confident light one. Responsive, and verified at 375px.
 
 Three things the UI is deliberate about:
 
@@ -367,17 +372,24 @@ backend/
     build_index.py       # thin entry point to the one builder
     demo_run.py          # the only code that calls a real model
   tests/
+  Dockerfile, docker-entrypoint.sh, railway.json   # the deployed backend
 frontend/
-  app/                   # dashboard, new project, workflow shell
+  app/
+    page.tsx             # marketing homepage - full-bleed, its own chrome
+    (app)/                # dashboard, new project, workflow shell
   components/
     ui.tsx               # presentation primitives
+    Logo.tsx             # the one place the brand mark is drawn
     workflow/            # one component per gate
   lib/
     api.ts               # the only contact with the backend
     actions.ts           # server actions
     types.ts             # mirrors backend/app/api/dto.py
   tests/
-docs/architecture.md     # the approved design
+  Dockerfile, railway.json                         # the deployed frontend
+docs/
+  architecture.md        # the approved design
+  deploy-railway.md      # how the live deployment is set up
 ```
 
 ### Supplier data
@@ -470,8 +482,10 @@ All six phases are complete. The design, and every place the build knowingly dep
 
 ## Demo walkthrough
 
-The scenario the product was built around. Start both servers, open
-http://localhost:3000, and paste:
+The scenario the product was built around. Start both servers (or open the
+[live deployment](https://produceyourstuff.up.railway.app/)), go to `/new` —
+click "Start a production project" from the homepage, or open
+http://localhost:3000/new directly — and paste:
 
 > I have 100 black yoga mats. I already own them. I want my gold logo added and
 > need them in Berlin by September 15.
@@ -560,15 +574,15 @@ take on trust.
 | Prompt engineering | one prompt module, fenced untrusted data | `test_untrusted_request_is_fenced_into_a_user_message` |
 | Function tools | typed `ProductionTools` | `test_matching.py`, `test_rag.py` |
 | Error handling | controlled failure, typed envelope | `test_provider_outage_returns_a_controlled_error` |
-| User interface | six Next.js screens | `frontend/tests`, browser-verified |
+| User interface | marketing page + seven-screen product flow | `frontend/tests`, browser-verified |
 | Documentation | this file + `docs/architecture.md` | — |
 | **Memory (medium)** | short-term checkpointer + long-term `projects` table | `test_confirmed_state_survives_a_reconnect` |
-| **Security (medium)** | five-layer injection defence, upload validation | `test_security.py` (32 tests) |
+| **Security (medium)** | five-layer injection defence, upload validation | `test_security.py` (41 tests) |
 | **Agentic RAG (hard)** | routing that demonstrably varies | `test_technical_question_routes_to_the_knowledge_base`, `test_supplier_lookup_does_not_route_to_the_knowledge_base` |
 | Human-in-the-loop | four gates, enforced by `interrupt()` | `test_workflow_stops_at_all_four_approval_gates` |
 | Structured logging | one config, closed event enum | `test_log_events_are_a_closed_set` |
 
-**213 backend tests, 6 frontend tests.** No test calls a live model: the graph
+**235 backend tests, 10 frontend tests.** No test calls a live model: the graph
 runs on a scripted provider and retrieval on a hashing embedder whose similarity
 is real term overlap, so the suite is free, fast and deterministic. Live
 behaviour is verified separately by `scripts/demo_run.py`.
