@@ -79,6 +79,7 @@ class CreateProjectRequest(BaseModel):
 
 ResumeAction = Literal[
     "answer_clarification",
+    "restart_request",
     "confirm_brief",
     "edit_brief",
     "confirm_method",
@@ -100,6 +101,7 @@ class ResumeRequest(BaseModel):
 
     action: ResumeAction
     answer: str | None = Field(default=None, max_length=4000)
+    raw_request: str | None = Field(default=None, min_length=10, max_length=8000)
     requirement: dict[str, Any] | None = None
     method: str | None = None
     supplier_id: str | None = None

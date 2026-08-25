@@ -114,6 +114,17 @@ def route_after_validation(state: ProductionState, max_rounds: int) -> str:
     return "ask_clarifying_question"
 
 
+def route_after_clarification_answer(state: ProductionState) -> str:
+    """A rewritten description re-extracts from scratch; a real answer merges.
+
+    ``restarted_with_new_request`` is set for exactly this one tick by
+    ask_clarifying_question - see its docstring and graph/state.py.
+    """
+    return (
+        "extract_requirement" if state.get("restarted_with_new_request") else "update_requirement"
+    )
+
+
 def route_after_knowledge_assessment(state: ProductionState) -> str:
     """The conditional edge that makes retrieval optional.
 
@@ -179,8 +190,17 @@ def build_graph(deps: GraphDeps) -> StateGraph[ProductionState, None, Any, Any]:
         },
     )
 
-    # The clarification loop: ask, merge, re-validate.
-    graph.add_edge("ask_clarifying_question", "update_requirement")
+    # The clarification loop: ask, merge, re-validate - unless the customer
+    # rewrote the original description, in which case it's back to
+    # extract_requirement instead of merging a nonexistent answer.
+    graph.add_conditional_edges(
+        "ask_clarifying_question",
+        route_after_clarification_answer,
+        {
+            "extract_requirement": "extract_requirement",
+            "update_requirement": "update_requirement",
+        },
+    )
     graph.add_edge("update_requirement", "validate_requirement")
 
     graph.add_edge("human_review_requirement", "assess_knowledge_need")

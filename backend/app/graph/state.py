@@ -53,6 +53,13 @@ class ProductionState(TypedDict, total=False):
     missing_fields: list[str]
     clarification_rounds: int
     clarifying_question: str | None
+    # Transient: true for exactly one tick, set by ask_clarifying_question when
+    # the customer chose to rewrite their original description instead of
+    # answering. The conditional edge right after that node reads it once to
+    # route back to extract_requirement instead of the normal merge step, then
+    # every path that would otherwise leave it stale explicitly resets it to
+    # False - see the comment at its two call sites in graph/nodes.py.
+    restarted_with_new_request: bool
 
     retrieval_decision: RetrievalDecision | None
     retrieved_knowledge: list[KnowledgeSnippet]
@@ -149,6 +156,7 @@ def initial_state(
         missing_fields=[],
         clarification_rounds=0,
         clarifying_question=None,
+        restarted_with_new_request=False,
         retrieval_decision=None,
         retrieved_knowledge=[],
         recommended_methods=None,

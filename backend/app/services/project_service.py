@@ -62,6 +62,7 @@ EXPECTED_ACTION: dict[Stage, str] = {
 ACTION_ALIASES: dict[str, str] = {
     "edit_brief": "confirm_brief",
     "edit_rfq": "approve_rfq",
+    "restart_request": "answer_clarification",
 }
 
 
@@ -198,6 +199,11 @@ class ProjectService:
         """Translate an API action into what the paused node expects."""
         if action == "answer_clarification":
             return str(data.get("answer", ""))
+        if action == "restart_request":
+            return {
+                "restart_with_new_request": True,
+                "raw_request": str(data.get("raw_request", "")),
+            }
         if action == "confirm_brief":
             return {"confirmed": True}
         if action == "edit_brief":
@@ -274,6 +280,10 @@ class ProjectService:
             project.model_copy(
                 update={
                     "stage": stage,
+                    # Only ever differs from what's already stored after a
+                    # restart_request rewrote the description mid-clarification;
+                    # otherwise this is a no-op copy of the same value.
+                    "raw_request": result.get("raw_request", project.raw_request),
                     "requirement": result.get("production_requirement"),
                     "brief_confirmed": stage
                     not in (Stage.DRAFT, Stage.CLARIFYING, Stage.BRIEF_REVIEW),

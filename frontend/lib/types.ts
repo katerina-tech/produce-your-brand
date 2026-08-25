@@ -19,6 +19,7 @@ export type Stage =
 
 export type ResumeAction =
   | "answer_clarification"
+  | "restart_request"
   | "confirm_brief"
   | "edit_brief"
   | "confirm_method"
@@ -110,6 +111,9 @@ export interface StagePayload {
   question?: string;
   field?: string;
   reason?: string | null;
+  /** The original free-text description, offered back for editing - see
+   * ClarifyPrompt's "edit the original request instead" path. */
+  raw_request?: string;
   requirement?: Requirement;
   field_labels?: Record<string, string>;
   still_unknown?: string[];

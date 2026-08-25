@@ -51,7 +51,7 @@ export async function startProject(
     };
   }
 
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   redirect(`/projects/${projectId}`);
 }
 
@@ -131,7 +131,7 @@ async function advance(
     };
   }
   revalidatePath(`/projects/${projectId}`);
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return {};
 }
 
@@ -145,6 +145,18 @@ export async function answerClarification(
     return { error: "Please answer the question to continue." };
   }
   return advance(projectId, "answer_clarification", { answer });
+}
+
+export async function restartRequest(
+  projectId: string,
+  _previous: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  const rawRequest = String(formData.get("raw_request") ?? "").trim();
+  if (rawRequest.length < 10) {
+    return { error: "Please describe the job in a little more detail." };
+  }
+  return advance(projectId, "restart_request", { raw_request: rawRequest });
 }
 
 export async function confirmBrief(projectId: string): Promise<ActionResult> {

@@ -148,12 +148,37 @@ def ask_clarifying_question(state: ProductionState, deps: GraphDeps) -> dict[str
             "field": field,
             "reason": completeness.BLOCKING_REASONS.get(field),
             "requirement": requirement.model_dump(mode="json"),
+            "raw_request": state.get("raw_request"),
         }
     )
+
+    if isinstance(answer, dict) and answer.get("restart_with_new_request"):
+        # The customer chose to rewrite the original description rather than
+        # answer this question. Re-run extraction on the new text instead of
+        # merging an "answer" that was never given - see
+        # route_after_clarification_answer in graph/workflow.py, which reads
+        # restarted_with_new_request to send this back to extract_requirement.
+        new_request = str(answer.get("raw_request", "")).strip()
+        log_event(
+            logger,
+            Event.REQUEST_RESTARTED,
+            project_id=state.get("project_id"),
+            **redact_text(new_request),
+        )
+        return {
+            "raw_request": new_request,
+            "production_requirement": None,
+            "missing_fields": [],
+            "clarification_rounds": 0,
+            "clarifying_question": None,
+            "restarted_with_new_request": True,
+            "messages": [HumanMessage(content=f"[edited original request]\n{new_request}")],
+        }
 
     return {
         "clarifying_question": question,
         "clarification_rounds": rounds,
+        "restarted_with_new_request": False,
         "messages": [AIMessage(content=question), HumanMessage(content=str(answer))],
     }
 

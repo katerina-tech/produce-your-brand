@@ -257,6 +257,42 @@ def test_clarification_loop_is_capped(tools: ProductionTools, workflow_factory: 
     assert "customer_owns_product" in paused["still_unknown"]
 
 
+def test_rewriting_the_request_during_clarification_re_extracts(
+    tools: ProductionTools, workflow_factory: Any
+) -> None:
+    """Editing the original description re-extracts, rather than being merged
+    in as if it were an answer to the clarifying question - and the round
+    counter resets, since a fresh description deserves a fresh budget."""
+    incomplete = ProductionRequirement(
+        product="mats", quantity=50, customization_description="logo"
+    )
+    provider = _scripted(ProductionRequirement=[incomplete, incomplete, _full_requirement()])
+    app = workflow_factory(_deps(provider, tools))
+    config = _config("t-restart")
+
+    result = app.invoke(initial_state("p-restart", "mats", TODAY.isoformat()), config)
+    assert _interrupt(result)["stage"] == Stage.CLARIFYING.value
+
+    # One unanswered round burned, to prove the counter actually resets below.
+    result = app.invoke(Command(resume="not sure"), config)
+    assert _interrupt(result)["stage"] == Stage.CLARIFYING.value
+
+    new_text = "100 black yoga mats, gold logo, PVC, Berlin, we own them"
+    resumed = app.invoke(
+        Command(resume={"restart_with_new_request": True, "raw_request": new_text}), config
+    )
+
+    paused = _interrupt(resumed)
+    assert paused["stage"] == Stage.BRIEF_REVIEW.value
+    snapshot = app.get_state(config).values
+    assert snapshot["raw_request"] == new_text
+    assert snapshot["clarification_rounds"] == 0
+    assert ("ProductionRequirement", "main") in provider.calls
+    # Extraction ran twice from scratch (original text, then the rewrite) -
+    # never merged as an answer to the question that was pending.
+    assert sum(1 for call in provider.calls if call[0] == "ProductionRequirement") == 3
+
+
 # ---------------------------------------------------- human-in-the-loop gates
 
 
