@@ -135,6 +135,9 @@ class OpenAIProvider:
                 schema=schema.__name__,
                 purpose=purpose,
                 error_type=type(error).__name__,
+                status_code=getattr(error, "status_code", None),
+                body=getattr(getattr(error, "response", None), "text", None) or str(error),
+                request_id=getattr(error, "request_id", None),
             )
             raise LLMError(
                 f"{schema.__name__} generation failed",
