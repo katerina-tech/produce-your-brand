@@ -289,6 +289,13 @@ class OpenRouterImageProvider:
         return self._client
 
     def generate_image(self, prompt: str) -> bytes:
+        """Raises :class:`LLMError` on any failure - the API call, an
+        unexpected response shape, or bytes that fail to decode. Nothing here
+        may escape as a different exception type: a raw ``AttributeError`` or
+        ``ValueError`` from parsing a third-party response would otherwise
+        reach the client as an opaque 500 instead of the typed, user-safe
+        error every other failure in this system produces.
+        """
         settings = self._settings
         try:
             response = self._openai_client().chat.completions.create(
@@ -297,6 +304,23 @@ class OpenRouterImageProvider:
                 max_tokens=settings.image_max_tokens,
                 extra_body={"modalities": ["image", "text"]},
             )
+            images = getattr(response.choices[0].message, "images", None) or []
+            if not images:
+                # The model answered with text only - most often a
+                # content-policy refusal phrased as prose rather than an
+                # HTTP error.
+                raise LLMError("The model did not return an image for this prompt.")
+
+            url = images[0].image_url.url
+            if not url.startswith("data:") or "," not in url:
+                raise LLMError("Image response was not in the expected data URL format.")
+
+            import base64
+
+            _header, encoded = url.split(",", 1)
+            return base64.b64decode(encoded)
+        except LLMError:
+            raise
         except Exception as error:
             log_event(
                 logger,
@@ -310,21 +334,6 @@ class OpenRouterImageProvider:
             raise LLMError(
                 "Image generation failed", content_filtered=_is_content_filter(error)
             ) from error
-
-        images = getattr(response.choices[0].message, "images", None) or []
-        if not images:
-            # The model answered with text only - most often a content-policy
-            # refusal phrased as prose rather than an HTTP error.
-            raise LLMError("The model did not return an image for this prompt.")
-
-        url = images[0].image_url.url
-        if not url.startswith("data:"):
-            raise LLMError("Image response was not in the expected data URL format.")
-
-        import base64
-
-        _header, encoded = url.split(",", 1)
-        return base64.b64decode(encoded)
 
 
 def get_image_provider(settings: Settings | None = None) -> ImageProvider:
