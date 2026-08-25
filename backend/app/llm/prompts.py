@@ -83,7 +83,10 @@ will supply them; false only if they ask the partner to source them. Otherwise n
 - customization_description: what should be applied, in their words.
 - design_available: true only if they indicate artwork exists.
 - preferred_finish: a stated finish such as "gold", "matte", "embossed".
-- deadline: an actual date. Resolve relative dates against the reference date given.
+- deadline: an actual date. Resolve relative dates against the reference date \
+given. A month/day with no year (e.g. "by September 15") always means the next \
+occurrence of that date on or after the reference date - never a date that has \
+already passed, even if omitting the year would put it in the current year.
 - location: the delivery location as stated.
 - priority: only if they explicitly prioritise cost, speed or quality.
 - additional_constraints: other stated constraints; empty list if none.
@@ -146,7 +149,9 @@ Constraints:
 - Fill in what the answer provides. Leave everything else exactly as it was.
 - If the answer does not actually resolve the field, leave that field null. Do \
 not force a value.
-- Never change a field the customer already told you, and never invent new detail."""
+- Never change a field the customer already told you, and never invent new detail.
+- If the answer gives a deadline as a month/day with no year, resolve it to the \
+next occurrence on or after the reference date - never a date already passed."""
 
 
 def update_messages(

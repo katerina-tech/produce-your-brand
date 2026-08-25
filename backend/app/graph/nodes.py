@@ -53,6 +53,23 @@ def _reference_date(state: ProductionState) -> str:
     return state.get("reference_date") or date.today().isoformat()
 
 
+def _clear_past_deadline(requirement: ProductionRequirement, today: date) -> ProductionRequirement:
+    """A deadline the model resolved into the past is not a fact.
+
+    The usual cause is a year-less relative date ("by September 15") resolved
+    against the wrong year. Left alone it does not fail loudly: every partner
+    scores 0 of 10 on it identically and the request still reads as an
+    ordinary, matchable one - a 90% score with an impossible deadline buried
+    in one collapsed factor row. Treated the same way an unconfirmed field
+    already is: null it out deterministically rather than trust a date the
+    model cannot actually verify. Applied after both extraction and the
+    clarification merge, since either can introduce one.
+    """
+    if requirement.deadline is not None and requirement.deadline < today:
+        return requirement.model_copy(update={"deadline": None})
+    return requirement
+
+
 # ------------------------------------------------------------------ extraction
 
 
@@ -83,6 +100,7 @@ def extract_requirement(state: ProductionState, deps: GraphDeps) -> dict[str, An
         # clarification loop uses - a known fact is never left to model
         # discretion.
         requirement = requirement.model_copy(update={"design_available": True})
+    requirement = _clear_past_deadline(requirement, deps.today)
 
     log_event(
         logger,
@@ -206,6 +224,7 @@ def update_requirement(state: ProductionState, deps: GraphDeps) -> dict[str, Any
     # The merge is enforced here, not trusted to the prompt: even if the model
     # rewrites a field the customer already gave us, the original wins.
     merged = requirement.merge(proposed)
+    merged = _clear_past_deadline(merged, deps.today)
 
     log_event(
         logger,

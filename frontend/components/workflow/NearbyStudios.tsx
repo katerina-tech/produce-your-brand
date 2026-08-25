@@ -44,7 +44,7 @@ export function NearbyStudios({ projectId }: { projectId: string }) {
         onClick={reveal}
         className="text-sm text-ink-soft underline decoration-line-strong underline-offset-4 transition-colors hover:text-ink"
       >
-        Also see nearby studios on OpenStreetMap →
+        Also see nearby studios in Berlin on OpenStreetMap →
       </button>
     );
   }
@@ -53,7 +53,7 @@ export function NearbyStudios({ projectId }: { projectId: string }) {
     <Card>
       <CardHeader
         title="Nearby studios · OpenStreetMap"
-        hint="Unverified leads, not scored or vetted like the matches above. Contact them yourself to confirm they can do this job."
+        hint="Berlin only for now - more cities as coverage grows. Unverified leads, not scored or vetted like the matches above: contact them yourself to confirm they can do this job."
       />
       <div className="px-5 py-4 sm:px-6">
         {pending ? (
@@ -89,7 +89,13 @@ export function NearbyStudios({ projectId }: { projectId: string }) {
           </ul>
         )}
       </div>
-      <footer className="border-t border-line px-5 py-3 sm:px-6">
+      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3 sm:px-6">
+        <p className="text-xs text-ink-muted">
+          This is a prototype - unlike the synthetic partner matches above,
+          these are real businesses, and nothing here contacts them. Reaching
+          out is a future phase; for now this is just a starting point for
+          your own outreach.
+        </p>
         <Button tone="quiet" onClick={() => setOpen(false)}>
           Hide
         </Button>

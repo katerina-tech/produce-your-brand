@@ -18,6 +18,17 @@ const EDITABLE: { key: keyof Requirement; type: "text" | "number" | "boolean" | 
   { key: "location", type: "text" },
 ];
 
+/** Shown as placeholder text (or, for deadline, a caption below the field) -
+ * what these fields mean is not always obvious from the label alone. */
+const FIELD_HINTS: Partial<Record<keyof Requirement, string>> = {
+  product: "e.g. black yoga mats",
+  material: "e.g. PVC, cotton, aluminium",
+  customization_description: "e.g. gold logo printed on the front",
+  preferred_finish: "e.g. gold, matte, embossed - leave blank if it doesn't matter",
+  deadline: "When the finished goods need to be delivered, not when production starts.",
+  location: "e.g. Berlin - where the finished goods should be delivered",
+};
+
 const FALLBACK_LABELS: Record<string, string> = {
   product: "Product",
   product_category: "Category",
@@ -114,26 +125,32 @@ export function BriefReview({
                   <label htmlFor={`f-${key}`} className="eyebrow">
                     {label(key)}
                   </label>
-                  {type === "boolean" ? (
-                    <select
-                      id={`f-${key}`}
-                      value={value === null || value === undefined ? "" : String(value)}
-                      onChange={(event) => update(key, event.target.value, type)}
-                      className="rounded-lg border border-line-strong bg-surface px-3 py-2 text-sm focus:border-ink focus:outline-none"
-                    >
-                      <option value="">Not specified</option>
-                      <option value="true">I supply the product</option>
-                      <option value="false">The partner sources it</option>
-                    </select>
-                  ) : (
-                    <input
-                      id={`f-${key}`}
-                      type={type === "number" ? "number" : type === "date" ? "date" : "text"}
-                      value={value === null || value === undefined ? "" : String(value)}
-                      onChange={(event) => update(key, event.target.value, type)}
-                      className="rounded-lg border border-line-strong bg-surface px-3 py-2 text-sm focus:border-ink focus:outline-none"
-                    />
-                  )}
+                  <div>
+                    {type === "boolean" ? (
+                      <select
+                        id={`f-${key}`}
+                        value={value === null || value === undefined ? "" : String(value)}
+                        onChange={(event) => update(key, event.target.value, type)}
+                        className="w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-sm focus:border-accent focus:outline-none"
+                      >
+                        <option value="">Not specified</option>
+                        <option value="true">I supply the product</option>
+                        <option value="false">The partner sources it</option>
+                      </select>
+                    ) : (
+                      <input
+                        id={`f-${key}`}
+                        type={type === "number" ? "number" : type === "date" ? "date" : "text"}
+                        value={value === null || value === undefined ? "" : String(value)}
+                        onChange={(event) => update(key, event.target.value, type)}
+                        placeholder={type === "text" ? FIELD_HINTS[key] : undefined}
+                        className="w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-sm placeholder:text-ink-muted focus:border-accent focus:outline-none"
+                      />
+                    )}
+                    {type === "date" && FIELD_HINTS[key] ? (
+                      <p className="mt-1 text-xs text-ink-muted">{FIELD_HINTS[key]}</p>
+                    ) : null}
+                  </div>
                 </div>
               );
             })}

@@ -168,6 +168,51 @@ def test_no_attached_design_leaves_design_available_as_extracted(
     assert _interrupt(result)["requirement"]["design_available"] is None
 
 
+def test_a_deadline_already_in_the_past_is_cleared_not_trusted(
+    tools: ProductionTools, workflow_factory: Any
+) -> None:
+    """A year-less relative date ("by September 15") can resolve into the
+    past against the wrong year. That is not a fact about the customer's
+    request - a request cannot both exist and be due before it existed - so
+    it is nulled out exactly like any other unconfirmed field, rather than
+    silently scoring every partner 0/10 on an already-impossible deadline
+    while the brief still reads as an ordinary, matchable one.
+    """
+    past_deadline = _full_requirement().model_copy(
+        update={"deadline": TODAY.replace(day=TODAY.day - 1)}
+    )
+    provider = _scripted(ProductionRequirement=past_deadline)
+    app = workflow_factory(_deps(provider, tools))
+
+    result = app.invoke(
+        initial_state("p-past-deadline", DEMO_REQUEST, TODAY.isoformat()), _config("t-past")
+    )
+
+    assert _interrupt(result)["requirement"]["deadline"] is None
+
+
+def test_a_deadline_answered_into_the_past_during_clarification_is_also_cleared(
+    tools: ProductionTools, workflow_factory: Any
+) -> None:
+    """The same guard applies when the past date arrives via a clarification
+    answer, not just the initial extraction - it is the same LLM call shape,
+    scripted here as the second (merge) response rather than the first."""
+    incomplete = ProductionRequirement(
+        product="yoga mats", quantity=100, customization_description="gold logo"
+    )
+    past_deadline = _full_requirement().model_copy(
+        update={"deadline": TODAY.replace(day=TODAY.day - 1)}
+    )
+    provider = _scripted(ProductionRequirement=[incomplete, past_deadline])
+    app = workflow_factory(_deps(provider, tools))
+    config = _config("t-past-merge")
+
+    app.invoke(initial_state("p-past-merge", "logo on mats", TODAY.isoformat()), config)
+    resumed = app.invoke(Command(resume="we own them, by August 1"), config)
+
+    assert _interrupt(resumed)["requirement"]["deadline"] is None
+
+
 def test_unknown_values_are_not_invented(tools: ProductionTools, workflow_factory: Any) -> None:
     """A sparse extraction must stay sparse through the graph.
 
