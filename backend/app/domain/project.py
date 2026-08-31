@@ -35,6 +35,31 @@ class ProjectEvent(BaseModel):
     created_at: datetime
 
 
+class FeedbackEntry(BaseModel):
+    """One product-validation response, read back across every project.
+
+    Stored as a ``project_events`` row like any other audit entry (event_type
+    'feedback_submitted') - this model exists only to give the cross-project
+    analytics read (GET /api/analytics/feedback) a typed, flattened shape
+    instead of a raw payload blob. See the README's Product hypothesis
+    section: this is the instrumentation the first customer interview asked
+    for, to gather real evidence for or against the core hypothesis rather
+    than assume it.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    project_id: str
+    found_useful: str = Field(description="'yes', 'partly' or 'no'.")
+    would_contact_supplier: bool
+    alternative_approach: str = Field(
+        description="How they'd normally solve this: 'google', 'chatgpt', "
+        "'existing_platform', 'known_supplier' or 'other'."
+    )
+    missing: str | None = None
+    created_at: datetime
+
+
 class Project(BaseModel):
     """Full durable state of one production project."""
 

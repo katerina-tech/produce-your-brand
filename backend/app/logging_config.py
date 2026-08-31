@@ -57,6 +57,8 @@ class Event(StrEnum):
     DESIGN_GENERATION_COMPLETED = "design_generation_completed"
     OSM_SEARCH_COMPLETED = "osm_search_completed"
     REQUEST_RESTARTED = "request_restarted"
+    OFFERS_LOADED = "offers_loaded"
+    FEEDBACK_SUBMITTED = "feedback_submitted"
     LLM_ERROR = "llm_error"
     TOOL_ERROR = "tool_error"
     VALIDATION_ERROR = "validation_error"

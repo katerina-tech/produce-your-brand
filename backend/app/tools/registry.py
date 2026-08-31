@@ -19,11 +19,13 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.domain.enums import ProductCategory, ProductionMethod
 from app.domain.matching import MatchResult
+from app.domain.recommendation import RecommendationPerspectives
 from app.domain.requirement import ProductionRequirement
 from app.domain.supplier import Supplier, SupplierQuery
 from app.logging_config import Event, log_event
+from app.repositories.offer_repo import OfferRepository
 from app.repositories.supplier_repo import SupplierRepository
-from app.services import matching
+from app.services import matching, recommendations
 
 logger = logging.getLogger(__name__)
 
@@ -80,10 +82,15 @@ class MatchCalculation(BaseModel):
 
 
 class ProductionTools:
-    """The tool surface, bound to a supplier repository."""
+    """The tool surface, bound to a supplier repository (and, optionally, an
+    offer repository - optional so every existing call site that only ever
+    tested supplier matching keeps working unchanged)."""
 
-    def __init__(self, suppliers: SupplierRepository) -> None:
+    def __init__(
+        self, suppliers: SupplierRepository, offers: OfferRepository | None = None
+    ) -> None:
         self._suppliers = suppliers
+        self._offers = offers
 
     def search_suppliers(
         self,
@@ -206,3 +213,26 @@ class ProductionTools:
     def resolve_supplier(self, supplier_id: str) -> Supplier | None:
         """Resolve an id to a full record, or None if we do not have it."""
         return self._suppliers.get(supplier_id)
+
+    def build_recommendation_perspectives(
+        self, matches: list[MatchResult], method: ProductionMethod, today: date
+    ) -> RecommendationPerspectives:
+        """Best match / best price / fastest, over matches already computed by
+        :meth:`calculate_supplier_matches`. No offer repository configured
+        (or none on file) simply means best_price and fastest without an
+        offer fall back to whatever supplier data supports - see
+        :func:`app.services.recommendations.build_perspectives`.
+        """
+        suppliers = {
+            match.supplier_id: supplier
+            for match in matches
+            if (supplier := self._suppliers.get(match.supplier_id)) is not None
+        }
+        offers_by_supplier = (
+            {supplier_id: self._offers.for_supplier(supplier_id) for supplier_id in suppliers}
+            if self._offers is not None
+            else {}
+        )
+        return recommendations.build_perspectives(
+            matches, suppliers, offers_by_supplier, method, today
+        )

@@ -5,10 +5,32 @@ import { useState, useTransition } from "react";
 import { Badge, Button, Card, CardHeader, Field, Notice } from "@/components/ui";
 import { confirmBrief, editBrief } from "@/lib/actions";
 import type { Requirement, StagePayload } from "@/lib/types";
+import { titleise } from "@/lib/types";
+
+// Mirrors backend/app/domain/enums.py's ProductCategory. Duplicated here only
+// as display values for this one dropdown - the server is still the sole
+// validator, so a stale entry here fails on submit rather than silently
+// accepting something the backend would reject.
+const PRODUCT_CATEGORIES = [
+  "sports_equipment",
+  "drinkware",
+  "apparel",
+  "textiles",
+  "bags",
+  "packaging",
+  "stationery",
+  "accessories",
+  "homeware",
+  "promotional_items",
+];
 
 /** Fields the user may edit here, in the order they read naturally. */
-const EDITABLE: { key: keyof Requirement; type: "text" | "number" | "boolean" | "date" }[] = [
+const EDITABLE: {
+  key: keyof Requirement;
+  type: "text" | "number" | "boolean" | "date" | "category";
+}[] = [
   { key: "product", type: "text" },
+  { key: "product_category", type: "category" },
   { key: "material", type: "text" },
   { key: "quantity", type: "number" },
   { key: "customer_owns_product", type: "boolean" },
@@ -137,6 +159,20 @@ export function BriefReview({
                         <option value="true">I supply the product</option>
                         <option value="false">The partner sources it</option>
                       </select>
+                    ) : type === "category" ? (
+                      <select
+                        id={`f-${key}`}
+                        value={value === null || value === undefined ? "" : String(value)}
+                        onChange={(event) => update(key, event.target.value, type)}
+                        className="w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-sm focus:border-accent focus:outline-none"
+                      >
+                        <option value="">Not specified</option>
+                        {PRODUCT_CATEGORIES.map((category) => (
+                          <option key={category} value={category}>
+                            {titleise(category)}
+                          </option>
+                        ))}
+                      </select>
                     ) : (
                       <input
                         id={`f-${key}`}
@@ -158,6 +194,12 @@ export function BriefReview({
         ) : (
           <dl className="sm:grid sm:grid-cols-2 sm:gap-x-10">
             <Field label={label("product")} value={requirement.product} />
+            <Field
+              label={label("product_category")}
+              value={
+                requirement.product_category ? titleise(requirement.product_category) : null
+              }
+            />
             <Field label={label("quantity")} value={requirement.quantity} />
             <Field label={label("material")} value={requirement.material} />
             <Field

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { BackLink, Card, CardHeader, Notice, StageStepper } from "@/components/ui";
 import { BriefReview } from "@/components/workflow/BriefReview";
 import { ClarifyPrompt } from "@/components/workflow/ClarifyPrompt";
+import { FeedbackSurvey } from "@/components/workflow/FeedbackSurvey";
 import { MatchList } from "@/components/workflow/MatchList";
 import { MethodReview } from "@/components/workflow/MethodReview";
 import { RfqReview } from "@/components/workflow/RfqReview";
@@ -28,18 +29,21 @@ function StageView({ state }: { state: ProjectState }) {
   if (!payload) {
     if (stage === "completed") {
       return (
-        <Card>
-          <CardHeader
-            title="Project complete"
-            hint="The quotation request was approved and saved."
-          />
-          <div className="px-5 py-6 text-sm text-ink-soft sm:px-6">
-            <p>
-              Your approval is recorded against this project. Nothing was sent to
-              any partner — the request is yours to send when you choose.
-            </p>
-          </div>
-        </Card>
+        <div className="space-y-4">
+          <Card>
+            <CardHeader
+              title="Project complete"
+              hint="The quotation request was approved and saved."
+            />
+            <div className="px-5 py-6 text-sm text-ink-soft sm:px-6">
+              <p>
+                Your approval is recorded against this project. Nothing was sent to
+                any partner — the request is yours to send when you choose.
+              </p>
+            </div>
+          </Card>
+          <FeedbackSurvey projectId={projectId} />
+        </div>
       );
     }
 

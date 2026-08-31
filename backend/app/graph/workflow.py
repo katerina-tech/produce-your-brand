@@ -34,6 +34,7 @@ from app.graph.state import CHECKPOINTED_TYPES, ProductionState
 from app.llm.factory import LLMProvider, get_embedding_provider, get_provider
 from app.rag.retriever import KnowledgeRetriever
 from app.rag.store import KnowledgeStore
+from app.repositories.offer_repo import OfferRepository
 from app.repositories.supplier_repo import SupplierRepository
 from app.security.guard import build_guard
 from app.tools.registry import ProductionTools
@@ -281,7 +282,9 @@ def production_deps(settings: Settings | None = None, today: date | None = None)
     guard = build_guard(provider, settings)
     return GraphDeps(
         provider=provider,
-        tools=ProductionTools(SupplierRepository(settings.suppliers_file)),
+        tools=ProductionTools(
+            SupplierRepository(settings.suppliers_file), OfferRepository(settings.offers_file)
+        ),
         retriever=KnowledgeRetriever(store, provider, k=settings.retrieval_k),
         screen_untrusted=guard.screen,
         today=today or date.today(),

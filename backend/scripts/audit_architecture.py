@@ -153,6 +153,7 @@ def main() -> int:
         ("FAISS index builders", len(files_containing(APP, "faiss.Index")), 1),
         ("knowledge directories", len(directories_named(BACKEND, "knowledge")), 1),
         ("supplier data files", len(list(BACKEND.rglob("data/suppliers*.json"))), 1),
+        ("offer data files", len(list(BACKEND.rglob("data/offers*.json"))), 1),
         (
             "OSM/Overpass client constructions",
             len(files_containing(APP, "class OverpassStudioSearch")),

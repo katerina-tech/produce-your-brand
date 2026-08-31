@@ -222,3 +222,52 @@ class NearbyStudiosResponse(BaseModel):
         "Unverified leads from OpenStreetMap, not scored or vetted. "
         "Contact them yourself to confirm they can do this job."
     )
+
+
+# ------------------------------------------------------ product validation
+# The instrumentation the first customer-discovery interview asked for - see
+# the README's Product hypothesis section. Not gated to one workflow stage:
+# the frontend decides when it makes sense to ask.
+
+FoundUseful = Literal["yes", "partly", "no"]
+AlternativeApproach = Literal["google", "chatgpt", "existing_platform", "known_supplier", "other"]
+
+
+class FeedbackRequest(BaseModel):
+    """A user's answer to "did this actually help?" - the evidence this
+    product exists to gather, not a feature it happens to have."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    found_useful: FoundUseful
+    would_contact_supplier: bool
+    alternative_approach: AlternativeApproach
+    missing: str | None = Field(default=None, max_length=1000)
+
+
+class FeedbackResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["recorded"] = "recorded"
+
+
+class FeedbackEntryResponse(BaseModel):
+    """One stored response. Mirrors app.domain.project.FeedbackEntry."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    project_id: str
+    found_useful: str
+    would_contact_supplier: bool
+    alternative_approach: str
+    missing: str | None
+    created_at: str
+
+
+class FeedbackListResponse(BaseModel):
+    """The internal read this data is for - a flat list, not a dashboard.
+    There is no aggregate claim to make with only a handful of responses."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    entries: list[FeedbackEntryResponse]

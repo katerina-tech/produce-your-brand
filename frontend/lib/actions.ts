@@ -19,9 +19,16 @@ import {
   generateDesign,
   getNearbyStudios,
   resumeProject,
+  submitFeedback,
   uploadDesign,
 } from "./api";
-import type { GeneratedDesign, NearbyStudio, ResumeAction, UploadResponse } from "./types";
+import type {
+  FeedbackRequest,
+  GeneratedDesign,
+  NearbyStudio,
+  ResumeAction,
+  UploadResponse,
+} from "./types";
 
 export interface ActionResult {
   error?: string;
@@ -115,6 +122,20 @@ export async function loadNearbyStudios(projectId: string): Promise<NearbyStudio
       error: error instanceof ApiError ? error.message : "Could not reach OpenStreetMap.",
     };
   }
+}
+
+export async function submitFeedbackAction(
+  projectId: string,
+  feedback: FeedbackRequest,
+): Promise<ActionResult> {
+  try {
+    await submitFeedback(projectId, feedback);
+  } catch (error) {
+    return {
+      error: error instanceof ApiError ? error.message : "Could not record your answer.",
+    };
+  }
+  return {};
 }
 
 async function advance(

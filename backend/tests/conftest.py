@@ -15,6 +15,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.config import Settings, get_settings
+from app.domain.offer import Offer
 from app.domain.supplier import Supplier
 from app.main import create_app
 
@@ -35,6 +36,13 @@ def suppliers() -> tuple[Supplier, ...]:
     """The real dataset, validated. Matching tests run against production data."""
     raw = json.loads((BACKEND_ROOT / "data" / "suppliers.json").read_text(encoding="utf-8"))
     return tuple(Supplier.model_validate(item) for item in raw["suppliers"])
+
+
+@pytest.fixture(scope="session")
+def offers() -> tuple[Offer, ...]:
+    """The real (demo) offer dataset, validated."""
+    raw = json.loads((BACKEND_ROOT / "data" / "offers.json").read_text(encoding="utf-8"))
+    return tuple(Offer.model_validate(item) for item in raw["offers"])
 
 
 @pytest.fixture

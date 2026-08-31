@@ -15,6 +15,7 @@ from fastapi.testclient import TestClient
 
 from app.config import Settings
 from app.domain.matching import MAX_SCORE, WEIGHTS
+from app.domain.offer import Offer
 from app.domain.project import Project
 from app.domain.requirement import ProductionRequirement
 from app.domain.rfq import RFQ
@@ -135,6 +136,48 @@ def test_supplier_provenance_block_matches_record_count() -> None:
 
     raw = json.loads((BACKEND_ROOT / "data" / "suppliers.json").read_text(encoding="utf-8"))
     assert raw["_provenance"]["record_count"] == len(raw["suppliers"])
+
+
+def test_offer_dataset_validates(offers: tuple[Offer, ...]) -> None:
+    assert len(offers) > 0
+    assert len({o.id for o in offers}) == len(offers), "offer ids must be unique"
+    assert all(o.supplier_id for o in offers)
+
+
+def test_offer_dataset_is_labelled_demo(offers: tuple[Offer, ...]) -> None:
+    """The MVP has zero real supplier offers - every seeded record must say so,
+    and none may simultaneously claim to be verified (see Offer's validator)."""
+    assert all(o.is_demo for o in offers)
+    assert all(o.source == "demo_seed" for o in offers)
+    assert all(not o.verified for o in offers)
+
+
+def test_offer_dataset_preserves_unknown_price(offers: tuple[Offer, ...]) -> None:
+    """Price on request is a real, exercised case - not every offer names a
+    price, and the ones that do not must stay null rather than defaulting to
+    a number that would read as free or arbitrary."""
+    assert any(o.price_from is None for o in offers)
+    assert any(o.price_from is not None for o in offers)
+
+
+def test_offer_dataset_references_real_suppliers(
+    offers: tuple[Offer, ...], suppliers: tuple[Supplier, ...]
+) -> None:
+    supplier_ids = {s.id for s in suppliers}
+    assert all(o.supplier_id in supplier_ids for o in offers)
+
+
+def test_offer_dataset_offers_methods_the_supplier_actually_supports(
+    offers: tuple[Offer, ...], suppliers: tuple[Supplier, ...]
+) -> None:
+    by_id = {s.id: s for s in suppliers}
+    for offer in offers:
+        if offer.production_method is None:
+            continue
+        supplier = by_id[offer.supplier_id]
+        assert offer.production_method in supplier.supported_methods, (
+            f"{offer.id} offers {offer.production_method} but {supplier.id} does not support it"
+        )
 
 
 # ------------------------------------------------------------ secret hygiene

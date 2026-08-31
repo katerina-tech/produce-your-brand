@@ -19,7 +19,7 @@ from datetime import UTC, datetime
 from pydantic import TypeAdapter
 
 from app.domain.matching import MatchResult
-from app.domain.project import Project, ProjectEvent, ProjectSummary
+from app.domain.project import FeedbackEntry, Project, ProjectEvent, ProjectSummary
 from app.logging_config import Event, log_event
 
 logger = logging.getLogger(__name__)
@@ -177,6 +177,32 @@ class ProjectRepository:
                     "event_type": row["event_type"],
                     "actor": row["actor"],
                     "payload": json.loads(row["payload_json"]) if row["payload_json"] else {},
+                    "created_at": row["created_at"],
+                }
+            )
+            for row in rows
+        ]
+
+    def feedback_entries(self, limit: int = 200) -> list[FeedbackEntry]:
+        """Every recorded 'feedback_submitted' event, newest first.
+
+        Across all projects, unlike :meth:`events` - this is the one read
+        this repository does that is not scoped to a single project, because
+        the whole point is comparing responses to each other.
+        """
+        rows = self._connection.execute(
+            """
+            SELECT project_id, payload_json, created_at
+            FROM project_events WHERE event_type = 'feedback_submitted'
+            ORDER BY id DESC LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return [
+            FeedbackEntry.model_validate(
+                {
+                    "project_id": row["project_id"],
+                    **(json.loads(row["payload_json"]) if row["payload_json"] else {}),
                     "created_at": row["created_at"],
                 }
             )

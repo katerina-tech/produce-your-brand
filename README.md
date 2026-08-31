@@ -46,6 +46,24 @@ production-ready RFQ                → human edits and approves
 
 ---
 
+## Product hypothesis
+
+The MVP above shipped, then went through its first customer-discovery interview. Three findings changed what the product is *for*, not what it *is*:
+
+1. **A standard printing request is not the strongest case.** For an ordinary print job, a user can already use Google, an existing printing platform, or ask ChatGPT directly. The product's actual edge shows up on **non-standard requests** — an unusual material, customer-owned goods, an odd quantity, a tight deadline, or several of these at once — the cases where a generic search stops being efficient. Positioning shifted accordingly: from "find a printing company with AI" to **"find the right production option for a complex custom request."**
+2. **ChatGPT itself is a competitor for plain supplier discovery.** Anyone can already ask it "find printing companies in Berlin." The differentiation has to be *structured production intelligence* the model can't fabricate — capabilities, methods, materials, MOQ, lead times, and now current offers — with matching logic over it, not the lookup itself.
+3. **Real supplier pricing cannot be reliably scraped.** Pricing and terms live in each business's own, non-public logic. So the product does not pretend to have solved that: every offer in the dataset is explicit demo data (`is_demo: true`, `source: "demo_seed"`) — see [Offers & recommendation perspectives](#offers--recommendation-perspectives) — until real supplier- or manually-verified data replaces it.
+
+**The key experiment this build exists to run:**
+
+> For complex, non-standard production requests, users get more useful and actionable supplier options through Produce Your Stuff than through Google or a generic ChatGPT search.
+
+The product cannot prove that on its own — it can only collect honest evidence for or against it. That's what [Product validation](#product-validation) is: a short survey after a project completes, stored as ordinary `project_events` rows, readable (not dashboarded) at `GET /api/analytics/feedback`.
+
+**Deliberately not built on this pass** — real per-field capability provenance (today's `verified`/`data_source` are still supplier-level, not per-capability), a `budget` field, a supplier self-service portal, real RFQ sending, and any billing. These are staged in the roadmap below once the first round of validation says which of them are worth building.
+
+---
+
 ## Two principles that shape the whole codebase
 
 **1. AI recommends, humans decide.** Four explicit approval gates — the Production Brief, the production method, the supplier, and the final RFQ. Nothing is ordered, sent, or committed autonomously. No supplier is ever contacted by this system.
@@ -255,7 +273,7 @@ cd backend && uv run python scripts/build_index.py
 
 ## HTTP API
 
-Six paths, seven operations. Only one of them advances the workflow.
+Nine paths, ten operations. Only one of them advances the workflow.
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -266,8 +284,11 @@ Six paths, seven operations. Only one of them advances the workflow.
 | `POST` | `/api/projects/{id}/resume` | answer whichever gate the workflow is paused at |
 | `GET` | `/api/projects/{id}/nearby-studios` | live, unscored OpenStreetMap leads for the confirmed method |
 | `POST` | `/api/uploads` | validated design file, metadata only |
+| `POST` | `/api/designs/generate` | generate a design from a text prompt (real per-image cost) |
+| `POST` | `/api/projects/{id}/feedback` | record one product-validation response (never touches the graph) |
+| `GET` | `/api/analytics/feedback` | flat read of every recorded response, newest first |
 
-`resume` takes a discriminated action: `answer_clarification`, `confirm_brief`, `edit_brief`, `confirm_method`, `select_supplier`, `approve_rfq`, `edit_rfq`. One endpoint rather than seven, **because the graph is the authority on where it is** — a client cannot talk it into skipping a human approval by calling a different path. A mismatched action gets `409` naming the action actually expected, so a stale browser tab receives a correctable answer instead of silently resuming the wrong branch.
+`resume` takes a discriminated action: `answer_clarification`, `restart_request`, `confirm_brief`, `edit_brief`, `confirm_method`, `select_supplier`, `approve_rfq`, `edit_rfq`. One endpoint rather than eight, **because the graph is the authority on where it is** — a client cannot talk it into skipping a human approval by calling a different path. A mismatched action gets `409` naming the action actually expected, so a stale browser tab receives a correctable answer instead of silently resuming the wrong branch.
 
 Every error uses one envelope — `{error: {code, message, stage, recoverable}}` — so the frontend needs exactly one error path. Stack traces and raw model output never cross the boundary.
 
@@ -358,6 +379,34 @@ Added beyond the original sprint scope, at explicit user request: once a method 
 
 ---
 
+## Offers & recommendation perspectives
+
+Added per the first customer-discovery interview (see [Product hypothesis](#product-hypothesis)). A supplier record answers "can they do this?" — an `Offer` (`app/domain/offer.py`) answers "what would it cost, and is there a current deal?", which is the structured intelligence a generic ChatGPT/Google search can't surface.
+
+**`is_demo` is load-bearing, not decoration.** Real supplier pricing is difficult to scrape reliably (interview finding #3), so this MVP does not attempt to — every record in `backend/data/offers.json` carries `is_demo: true` and `source: "demo_seed"`, and a model validator makes a demo offer unable to also claim `verified: true`. The UI labels every demo-backed recommendation "Demo offer" rather than presenting it as real.
+
+**Three perspectives over the same ranked list**, computed by `app/services/recommendations.py` — pure and deterministic, like `matching.py`, with no LLM import and `today` injected rather than read from a clock:
+
+| Perspective | Source | Omitted when |
+|---|---|---|
+| Best match | The already-ranked #1 eligible match | No eligible matches at all |
+| Best price | The cheapest *active* offer's `price_from`, for the confirmed method or method-agnostic offers | No eligible supplier has a matching, currently-valid, priced offer |
+| Fastest | An active offer's own `lead_time_days` if one exists (more specific and fresher than the general figure), else the supplier's `typical_lead_time_days` | No eligible supplier has either signal |
+
+Never invented: an offer outside its `valid_from`/`valid_until` window is ignored, a `price_from` of `null` never becomes a number, and a perspective with nothing real behind it does not render at all — never as a guessed "Price on request" placeholder standing in for a category.
+
+---
+
+## Product validation
+
+The instrumentation the [key experiment](#product-hypothesis) needs. After a project reaches `completed`, the UI asks three questions — did this help find something you couldn't easily find yourself (yes/partly/no), would you contact this supplier (yes/no), and how would you normally solve this (Google/ChatGPT/an existing platform/a known supplier/other) — plus an optional free-text "what was missing?".
+
+**Reuses the existing audit trail rather than adding a new one.** A response is stored as an ordinary `project_events` row (`event_type='feedback_submitted'`), the same table that already records every human approval — no new table, no new persistence concept. `POST /api/projects/{id}/feedback` is not a workflow action: it never touches the graph and does not require the project to be at any particular stage.
+
+**`GET /api/analytics/feedback` is a flat, honest read, not a dashboard.** With a handful of responses there is no aggregate worth computing yet, so it returns the raw entries newest-first rather than a chart that would overstate what a small sample can support.
+
+---
+
 ## Repository layout
 
 ```
@@ -367,7 +416,8 @@ backend/
     logging_config.py    # the only logging configuration
     api/                 # HTTP boundary (routes + wire DTOs)
     domain/              # Pydantic contracts: requirement, supplier, matching,
-                         #   method, knowledge, rfq, project, studio (OSM)
+                         #   method, knowledge, rfq, project, studio (OSM),
+                         #   offer, recommendation
     llm/
       factory.py         # the only ChatOpenAI construction
       prompts.py         # the only prompt text in the codebase
@@ -379,18 +429,20 @@ backend/
     services/
       completeness.py    # deterministic missing-field logic
       matching.py        # deterministic scorer (no LLM imports)
+      recommendations.py # best match/price/fastest over already-scored matches
       rfq_builder.py     # deterministic RFQ assembly
-      project_service.py # graph pause/resume + persistence
+      project_service.py # graph pause/resume + persistence + feedback
       osm_search.py      # live OpenStreetMap lookup - not a graph tool
     rag/
       store.py           # THE vector store: load, chunk, embed, index, search
       retriever.py       # retrieval + the routing decision
-    repositories/        # SQLite + supplier data access
+    repositories/        # SQLite + supplier + offer data access
     security/
       guard.py           # layered injection screening
       uploads.py         # magic-byte validation, inert storage
   data/
     suppliers.json       # 24 curated records — single source of truth
+    offers.json          # demo/seed offers only (is_demo: true) - single source
     knowledge/           # 13 curated documents - the only KB directory
     index/               # generated FAISS index (gitignored, rebuildable)
   scripts/
@@ -407,6 +459,7 @@ frontend/
     ui.tsx               # presentation primitives
     Logo.tsx             # the one place the brand mark is drawn
     workflow/            # one component per gate, plus NearbyStudios.tsx
+                         #   and FeedbackSurvey.tsx
   lib/
     api.ts               # the only contact with the backend
     actions.ts           # server actions
@@ -423,6 +476,8 @@ docs/
 24 records covering all eight production methods across 14 cities in 5 countries. **The dataset is synthetic** and labelled as such: every record carries `data_source: "synthetic"`, `website` is `null` on all of them so no entry points at a real company, and the file's `_provenance` block says so in the data itself. Capabilities are illustrative and do not describe real businesses. Real, source-backed partners replace this file later; the schema does not change.
 
 The dataset deliberately exercises every branch of the matching algorithm: suppliers that refuse customer-owned goods, suppliers whose policy is *unconfirmed* (`null`), MOQs above and below the demo quantity, unknown lead times, and method/category mismatches.
+
+**Offers (`data/offers.json`, 4 records)** are a separate, sibling dataset — see [Offers & recommendation perspectives](#offers--recommendation-perspectives). Every record is `is_demo: true`, `source: "demo_seed"`; a model validator refuses a demo offer that also claims `verified: true`.
 
 ---
 
@@ -608,7 +663,7 @@ take on trust.
 | Human-in-the-loop | four gates, enforced by `interrupt()` | `test_workflow_stops_at_all_four_approval_gates` |
 | Structured logging | one config, closed event enum | `test_log_events_are_a_closed_set` |
 
-**249 backend tests, 10 frontend tests.** No test calls a live model, and none
+**286 backend tests, 10 frontend tests.** No test calls a live model, and none
 calls the real Overpass API either - `test_osm_search.py` swaps in
 `httpx.MockTransport`. The graph runs on a scripted provider and retrieval on a
 hashing embedder whose similarity is real term overlap, so the suite is free,
@@ -652,9 +707,19 @@ deliberate gap, not an oversight.
 it proceeds with gaps visible rather than pressing further, which is honest but
 can leave a thinner brief than the user intended.
 
-**Matching is single-currency and price-blind.** No partner in the dataset
-carries pricing, so the score says nothing about cost. `priority: cost` is
-captured and passed to the RFQ but does not influence ranking.
+**The deterministic score itself is still price-blind.** `Offer.price_from`
+now exists and drives the "Best price" recommendation perspective, but it is
+not one of the six weighted factors `matching.py` scores on - `priority: cost`
+is captured and passed to the RFQ but does not influence ranking. A budget
+field on the requirement itself does not exist yet either.
+
+**Offers are demo data, and verification is still supplier-level, not
+per-field.** All four seeded offers are `is_demo: true` - see [Product
+hypothesis](#product-hypothesis). `Supplier.verified`/`data_source` describe
+a whole record, not the individual capability a buyer is trusting (material
+support vs. lead time vs. customer-owned-goods policy might each have a
+different real source); the interview that motivated the offer layer asked
+for that finer granularity, staged for after the first round of validation.
 
 **Location scoring is city/country/region tiers, not distance.** A partner across
 a national border 40 km away scores below one 600 km away in the same country.
@@ -675,23 +740,44 @@ takes a few seconds with no token-by-token feedback, only a pending state.
 
 Ordered by what would most change the product's usefulness, not by ease.
 
-**Real partner data.** Replace `suppliers.json` with verified Berlin partners,
-each field sourced. The `verified` flag and `data_source` already exist for the
-distinction. This is what turns a working prototype into something a buyer can
-act on.
+**Real partner data and real offers.** Replace `suppliers.json` and
+`offers.json` with verified Berlin partners and their actual current pricing,
+each field sourced. The `verified` flag and `data_source` already exist for
+the distinction at the supplier level; per-field provenance
+(`{value, source, verified, last_updated}` on each capability, not just the
+record as a whole) is what the first interview actually asked for and is
+staged for once validation confirms the offer concept resonates.
+
+**A real analytics view over the feedback + funnel events.** Today
+`GET /api/analytics/feedback` is a flat list. Once there is enough volume to
+say something real, this becomes a proper read - conversion through
+`project_created → brief_confirmed → supplier_matching_completed →
+supplier_selected → rfq_generated → rfq_approved`, cut by "found useful" and
+"would contact".
 
 **Send the RFQ.** The document is complete and human-approved; nothing transmits
 it. Real outbound email, per-partner threading, and reply capture is the next
 whole feature — and the point at which "AI recommends, human decides" needs
-auditing much more carefully than it does now.
+auditing much more carefully than it does now. This is also the prerequisite
+for the `rfq_sent` / `supplier_responded` / `offer_accepted` / `order_confirmed`
+events the lead-based monetization hypothesis (a small qualified-lead fee plus
+a success commission) needs to measure - deliberately not modelled as events
+yet, since an event for an action that cannot happen would not be real
+instrumentation.
 
 **Quote comparison.** Once replies exist, the interesting product problem is
 normalising incomparable quotes: setup versus unit cost, MOQ tiers, sample fees.
 
 **Accounts and multi-tenancy.** Required before anyone but you can use it.
 
-**Price-aware matching.** Add cost bands to the partner schema and make
-`priority` actually influence ranking.
+**Price-aware matching.** `Offer.price_from` exists and drives the "Best
+price" perspective, but the deterministic score itself still doesn't weight
+cost. Add a `budget` field to the requirement and make `priority` actually
+influence ranking.
+
+**Supplier self-service for offers.** The data model and a simple UI
+representation exist; a supplier updating their own offers does not - see
+[Offers & recommendation perspectives](#offers--recommendation-perspectives).
 
 **Artwork checking.** Read the uploaded file and check it against the
 recommended method's artwork requirements — minimum line weight for weeded

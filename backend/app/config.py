@@ -87,6 +87,7 @@ class Settings(BaseSettings):
     # --- paths (all derived; never user-supplied) ---------------------------
     data_dir: Path = BACKEND_ROOT / "data"
     suppliers_file: Path = BACKEND_ROOT / "data" / "suppliers.json"
+    offers_file: Path = BACKEND_ROOT / "data" / "offers.json"
     knowledge_dir: Path = BACKEND_ROOT / "data" / "knowledge"
     index_dir: Path = BACKEND_ROOT / "data" / "index"
     upload_dir: Path = BACKEND_ROOT / "data" / "uploads"

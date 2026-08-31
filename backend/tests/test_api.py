@@ -99,6 +99,8 @@ def test_openapi_exposes_exactly_the_intended_surface(api: TestClient) -> None:
         "/api/projects/{project_id}",
         "/api/projects/{project_id}/resume",
         "/api/projects/{project_id}/nearby-studios",
+        "/api/projects/{project_id}/feedback",
+        "/api/analytics/feedback",
         "/api/uploads",
         "/api/designs/generate",
     }
@@ -505,4 +507,76 @@ def test_nearby_studios_provider_failure_returns_a_typed_error(api: TestClient) 
 
 def test_nearby_studios_on_unknown_project_is_404(api: TestClient) -> None:
     response = api.get("/api/projects/does-not-exist/nearby-studios")
+    assert response.status_code == 404
+
+
+# ------------------------------------------------------- product validation
+
+
+def test_feedback_is_recorded_and_readable(api: TestClient) -> None:
+    project_id = _create(api)
+
+    response = api.post(
+        f"/api/projects/{project_id}/feedback",
+        json={
+            "found_useful": "yes",
+            "would_contact_supplier": True,
+            "alternative_approach": "chatgpt",
+            "missing": "Pricing would have helped.",
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json() == {"status": "recorded"}
+
+    entries = api.get("/api/analytics/feedback").json()["entries"]
+    assert any(
+        entry["project_id"] == project_id
+        and entry["found_useful"] == "yes"
+        and entry["would_contact_supplier"] is True
+        and entry["alternative_approach"] == "chatgpt"
+        and entry["missing"] == "Pricing would have helped."
+        for entry in entries
+    )
+
+
+def test_feedback_does_not_require_the_missing_field(api: TestClient) -> None:
+    project_id = _create(api)
+
+    response = api.post(
+        f"/api/projects/{project_id}/feedback",
+        json={
+            "found_useful": "no",
+            "would_contact_supplier": False,
+            "alternative_approach": "google",
+        },
+    )
+
+    assert response.status_code == 201
+
+
+def test_feedback_rejects_an_invalid_found_useful_value(api: TestClient) -> None:
+    project_id = _create(api)
+
+    response = api.post(
+        f"/api/projects/{project_id}/feedback",
+        json={
+            "found_useful": "definitely",
+            "would_contact_supplier": True,
+            "alternative_approach": "google",
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_feedback_on_unknown_project_is_404(api: TestClient) -> None:
+    response = api.post(
+        "/api/projects/does-not-exist/feedback",
+        json={
+            "found_useful": "yes",
+            "would_contact_supplier": True,
+            "alternative_approach": "other",
+        },
+    )
     assert response.status_code == 404

@@ -31,6 +31,11 @@ export default function NewProjectPage() {
           and where and when you need them — the agent will ask if something
           essential is missing.
         </p>
+        <p className="mt-2 max-w-2xl text-sm text-ink-muted">
+          Most useful for the requests a quick search doesn&apos;t answer:
+          unusual materials, customer-owned goods, odd quantities, tight
+          deadlines, or a combination of these.
+        </p>
       </div>
 
       <Card>

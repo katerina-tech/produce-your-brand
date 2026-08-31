@@ -63,6 +63,41 @@ export interface MatchResult {
   ai_explanation: string | null;
 }
 
+/** One supplier, framed for one specific buyer question ("cheapest?",
+ * "fastest?"). Absent - not filled with a guess - when the data behind it
+ * doesn't exist; see backend/app/services/recommendations.py. */
+export interface RecommendationPerspective {
+  supplier_id: string;
+  supplier_name: string;
+  headline: string;
+  detail: string | null;
+  offer_id: string | null;
+  is_demo: boolean;
+}
+
+export interface RecommendationPerspectives {
+  best_match: RecommendationPerspective | null;
+  best_price: RecommendationPerspective | null;
+  fastest: RecommendationPerspective | null;
+}
+
+/** The product-validation instrumentation - see FeedbackSurvey.tsx and the
+ * README's Product hypothesis section. */
+export type FoundUseful = "yes" | "partly" | "no";
+export type AlternativeApproach =
+  | "google"
+  | "chatgpt"
+  | "existing_platform"
+  | "known_supplier"
+  | "other";
+
+export interface FeedbackRequest {
+  found_useful: FoundUseful;
+  would_contact_supplier: boolean;
+  alternative_approach: AlternativeApproach;
+  missing?: string;
+}
+
 export interface KnowledgeCitation {
   title: string;
   source: string | null;
@@ -122,6 +157,7 @@ export interface StagePayload {
   matches?: MatchResult[];
   /** How many partners structurally could do the job, before scoring. */
   candidate_count?: number;
+  perspectives?: RecommendationPerspectives | null;
   rfq?: Rfq;
   rendered?: string;
 }

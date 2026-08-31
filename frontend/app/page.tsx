@@ -84,18 +84,22 @@ export default function MarketingPage() {
       <section className="mx-auto max-w-6xl px-5 py-16 sm:px-10 sm:py-24">
         <div className="grid gap-14 lg:grid-cols-[1fr_1fr] lg:items-center lg:gap-16">
           <div className="space-y-6">
-            <p className="eyebrow text-accent">AI-powered production sourcing</p>
+            <p className="eyebrow text-accent">
+              For requests a normal search can&apos;t solve
+            </p>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-[3.4rem] lg:leading-[1.06]">
               Turn any product into{" "}
               <span className="text-accent">your product.</span>
             </h1>
             <p className="text-lg text-ink">
-              AI-powered production sourcing for custom physical goods.
+              Find the right production partner for complex, non-standard
+              requests.
             </p>
             <p className="max-w-md text-[15px] leading-relaxed text-ink-soft">
-              Tell us what you have and how you want to customise it. Produce
-              Your Stuff identifies the right production method, finds
-              suitable partners and prepares your request for quotation.
+              Unusual material, a customer-owned product, an odd quantity, a
+              tight deadline, or a few of those at once - describe it, and we
+              compare production capabilities, lead times and available
+              offers to find the right way to make it.
             </p>
             <div className="flex flex-wrap items-center gap-6 pt-2">
               <Link

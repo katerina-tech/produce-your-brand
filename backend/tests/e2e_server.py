@@ -30,6 +30,7 @@ from app.graph.workflow import GraphDeps, checkpointer_for, compile_workflow
 from app.main import _lifespan as _real_lifespan
 from app.main import create_app
 from app.repositories import db
+from app.repositories.offer_repo import OfferRepository
 from app.repositories.project_repo import ProjectRepository
 from app.repositories.supplier_repo import SupplierRepository
 from app.services.project_service import ProjectService
@@ -64,7 +65,9 @@ async def _e2e_lifespan(app: FastAPI) -> AsyncIterator[None]:
         incomplete = _full_requirement().model_copy(update={"customer_owns_product": None})
         deps = GraphDeps(
             provider=_scripted(ProductionRequirement=[incomplete] * 6 + [_full_requirement()]),
-            tools=ProductionTools(SupplierRepository(settings.suppliers_file)),
+            tools=ProductionTools(
+                SupplierRepository(settings.suppliers_file), OfferRepository(settings.offers_file)
+            ),
             today=TODAY,
         )
         workflow = compile_workflow(deps, checkpointer_for(_RUN_DIR / "e2e_ckpt.db"))

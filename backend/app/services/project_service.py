@@ -25,7 +25,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.config import Settings, get_settings
 from app.domain.enums import Stage
-from app.domain.project import Project, ProjectSummary
+from app.domain.project import FeedbackEntry, Project, ProjectSummary
 from app.graph.state import ProductionState, initial_state
 from app.logging_config import Event, log_event, redact_text
 from app.repositories.project_repo import ProjectRepository
@@ -235,6 +235,28 @@ class ProjectService:
 
     def list_summaries(self, limit: int = 50) -> list[ProjectSummary]:
         return self._projects.list_summaries(limit)
+
+    # ------------------------------------------------------- product validation
+
+    def record_feedback(self, project_id: str, data: dict[str, Any]) -> None:
+        """Store one product-validation response against a project.
+
+        Not gated to any particular stage on purpose: a user might answer
+        "would you contact this supplier?" right after seeing matches, or
+        only once the RFQ is generated - the frontend decides when to ask,
+        this just needs the project to exist.
+        """
+        if self._projects.get(project_id) is None:
+            raise KeyError(project_id)
+        self._projects.add_event(project_id, "feedback_submitted", "human", data)
+        log_event(logger, Event.FEEDBACK_SUBMITTED, project_id=project_id, **data)
+
+    def list_feedback(self, limit: int = 200) -> list[FeedbackEntry]:
+        """Every recorded response, newest first - the "internal analytics
+        view" the interview asked for. Deliberately a flat read, not a
+        dashboard: there is no aggregate claim to make yet with only a
+        handful of responses."""
+        return self._projects.feedback_entries(limit)
 
     def _current_view(self, project: Project) -> ProjectView:
         """Rebuild the view from the checkpoint, without advancing anything."""

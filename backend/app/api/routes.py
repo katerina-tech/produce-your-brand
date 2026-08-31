@@ -4,10 +4,11 @@ This layer is deliberately thin: parse, delegate to a service, serialise. No
 business logic lives here, which is what allows the frontend to be replaced (or a
 CLI added) without touching the workflow.
 
-Seven endpoints, and only one of them advances the workflow. ``/resume`` answers
+Ten endpoints, and only one of them advances the workflow. ``/resume`` answers
 whichever gate the graph is paused at, because the graph is the authority on
 where it is - a client cannot talk it into skipping a human approval by calling a
-different path.
+different path. ``/feedback`` and ``/analytics/feedback`` never touch the graph
+at all - they are the product-validation instrumentation, not a workflow step.
 """
 
 from __future__ import annotations
@@ -19,6 +20,10 @@ from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 
 from app.api.dto import (
     CreateProjectRequest,
+    FeedbackEntryResponse,
+    FeedbackListResponse,
+    FeedbackRequest,
+    FeedbackResponse,
     GeneratedDesignResponse,
     GenerateDesignRequest,
     HealthResponse,
@@ -313,4 +318,52 @@ def generate_design_route(
         mime_type=record.mime_type,
         size_bytes=record.size_bytes,
         preview_data_url=preview,
+    )
+
+
+@router.post(
+    "/projects/{project_id}/feedback",
+    response_model=FeedbackResponse,
+    status_code=201,
+    tags=["projects"],
+)
+def submit_feedback(
+    project_id: str,
+    body: FeedbackRequest,
+    service: ProjectService = Depends(get_service),
+) -> FeedbackResponse:
+    """Record one product-validation response. Not a workflow action - it
+    never touches the graph, and it does not require the project to be at
+    any particular stage.
+    """
+    try:
+        service.record_feedback(project_id, body.model_dump())
+    except KeyError as missing:
+        raise HTTPException(status_code=404, detail="No such project.") from missing
+    return FeedbackResponse()
+
+
+@router.get(
+    "/analytics/feedback",
+    response_model=FeedbackListResponse,
+    tags=["analytics"],
+)
+def list_feedback(service: ProjectService = Depends(get_service)) -> FeedbackListResponse:
+    """The internal read this data is for. See README's Product hypothesis
+    section - there is no dashboard here on purpose, only the raw, honest
+    responses, while the sample size is still too small for an aggregate to
+    mean anything."""
+    entries = service.list_feedback()
+    return FeedbackListResponse(
+        entries=[
+            FeedbackEntryResponse(
+                project_id=entry.project_id,
+                found_useful=entry.found_useful,
+                would_contact_supplier=entry.would_contact_supplier,
+                alternative_approach=entry.alternative_approach,
+                missing=entry.missing,
+                created_at=entry.created_at.isoformat(),
+            )
+            for entry in entries
+        ]
     )

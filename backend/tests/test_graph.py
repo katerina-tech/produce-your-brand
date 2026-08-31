@@ -27,6 +27,7 @@ from app.graph.state import (
     initial_state,
 )
 from app.graph.workflow import GraphDeps, checkpointer_for, compile_workflow
+from app.repositories.offer_repo import OfferRepository
 from app.repositories.supplier_repo import SupplierRepository
 from app.tools.registry import ProductionTools
 from tests.conftest import BACKEND_ROOT, DEMO_DEADLINE, TODAY
@@ -81,6 +82,16 @@ def _scripted(**overrides: Any) -> ScriptedProvider:
 @pytest.fixture
 def tools() -> ProductionTools:
     return ProductionTools(SupplierRepository(BACKEND_ROOT / "data" / "suppliers.json"))
+
+
+@pytest.fixture
+def tools_with_offers() -> ProductionTools:
+    """Like ``tools``, plus the real (demo) offer dataset - only the tests
+    that specifically exercise recommendation perspectives need this."""
+    return ProductionTools(
+        SupplierRepository(BACKEND_ROOT / "data" / "suppliers.json"),
+        OfferRepository(BACKEND_ROOT / "data" / "offers.json"),
+    )
 
 
 def _deps(provider: Any, tools: ProductionTools, **kwargs: Any) -> GraphDeps:
@@ -396,6 +407,45 @@ def test_full_run_completes_only_after_rfq_approval(
     assert final["rfq"].approved is True
     assert final["errors"] == []
     assert matches[0]["supplier_id"] == "syn-004"
+
+
+def test_supplier_selection_payload_carries_recommendation_perspectives(
+    tools_with_offers: ProductionTools, workflow_factory: Any
+) -> None:
+    """best_match must agree with the ranked list's own #1 - this checks the
+    wiring (state -> interrupt payload), not the perspective logic itself,
+    which is covered in isolation by test_recommendations.py."""
+    app = workflow_factory(_deps(_scripted(), tools_with_offers))
+    config = _config("t-perspectives")
+
+    app.invoke(initial_state("p-perspectives", DEMO_REQUEST, TODAY.isoformat()), config)
+    app.invoke(Command(resume={"confirmed": True}), config)
+    result = app.invoke(Command(resume={"method": "heat_transfer"}), config)
+    paused = _interrupt(result)
+
+    assert paused["perspectives"] is not None
+    assert (
+        paused["perspectives"]["best_match"]["supplier_id"] == paused["matches"][0]["supplier_id"]
+    )
+
+
+def test_recommendation_perspectives_survive_a_missing_offer_repository(
+    tools: ProductionTools, workflow_factory: Any
+) -> None:
+    """The ``tools`` fixture has no OfferRepository at all - matching how
+    every other graph test in this file is wired. best_match must still work
+    from supplier data alone; the feature must degrade, never crash."""
+    app = workflow_factory(_deps(_scripted(), tools))
+    config = _config("t-perspectives-no-offers")
+
+    app.invoke(initial_state("p-no-offers", DEMO_REQUEST, TODAY.isoformat()), config)
+    app.invoke(Command(resume={"confirmed": True}), config)
+    result = app.invoke(Command(resume={"method": "heat_transfer"}), config)
+    paused = _interrupt(result)
+
+    assert (
+        paused["perspectives"]["best_match"]["supplier_id"] == paused["matches"][0]["supplier_id"]
+    )
 
 
 def test_rfq_requires_approval_to_complete(tools: ProductionTools, workflow_factory: Any) -> None:

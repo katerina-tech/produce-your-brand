@@ -12,10 +12,39 @@ import {
   VerdictMark,
 } from "@/components/ui";
 import { selectSupplier } from "@/lib/actions";
-import type { MatchResult, StagePayload } from "@/lib/types";
+import type { MatchResult, RecommendationPerspective, StagePayload } from "@/lib/types";
 import { titleise } from "@/lib/types";
 
 import { NearbyStudios } from "./NearbyStudios";
+
+/**
+ * One card per recommendation angle a buyer might actually be asking - not
+ * every buyer optimises for the same thing "Best Match" answers. Each card
+ * is omitted entirely rather than shown empty when the underlying data
+ * (an active offer, a lead time) doesn't exist - see backend/app/services/
+ * recommendations.py, which is what decides that, not this component.
+ */
+function PerspectiveCard({
+  label,
+  perspective,
+}: {
+  label: string;
+  perspective: RecommendationPerspective;
+}) {
+  return (
+    <div className="flex-1 rounded-lg border border-line bg-surface px-4 py-3.5">
+      <p className="eyebrow mb-1.5">{label}</p>
+      <p className="text-[15px] font-semibold">{perspective.supplier_name}</p>
+      <p className="mt-0.5 text-sm text-ink-soft">{perspective.headline}</p>
+      {perspective.detail || perspective.is_demo ? (
+        <p className="mt-1 text-xs text-ink-muted">
+          {perspective.is_demo ? "Demo offer" : perspective.detail}
+          {perspective.is_demo && perspective.detail ? ` · ${perspective.detail}` : null}
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 /**
  * Human gate 3: the partner matches.
@@ -132,6 +161,9 @@ export function MatchList({
 }) {
   const matches = payload.matches ?? [];
   const candidateCount = payload.candidate_count;
+  const perspectives = payload.perspectives;
+  const hasPerspectives =
+    perspectives && (perspectives.best_match || perspectives.best_price || perspectives.fastest);
   const [error, setError] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -164,6 +196,19 @@ export function MatchList({
 
   return (
     <div className="space-y-4">
+      {hasPerspectives ? (
+        <div className="flex flex-wrap gap-3">
+          {perspectives?.best_match ? (
+            <PerspectiveCard label="Best match" perspective={perspectives.best_match} />
+          ) : null}
+          {perspectives?.best_price ? (
+            <PerspectiveCard label="Best price" perspective={perspectives.best_price} />
+          ) : null}
+          {perspectives?.fastest ? (
+            <PerspectiveCard label="Fastest" perspective={perspectives.fastest} />
+          ) : null}
+        </div>
+      ) : null}
       <Card>
         <CardHeader
           title="Matched production partners"

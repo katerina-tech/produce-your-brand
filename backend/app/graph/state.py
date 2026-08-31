@@ -28,6 +28,7 @@ from app.domain.enums import (
 from app.domain.knowledge import KnowledgeCitation, KnowledgeSnippet, RetrievalDecision
 from app.domain.matching import FactorScore, MatchFactor, MatchResult, Verdict
 from app.domain.method import MethodRecommendation
+from app.domain.recommendation import RecommendationPerspective, RecommendationPerspectives
 from app.domain.requirement import ProductionRequirement
 from app.domain.rfq import RFQ
 
@@ -72,6 +73,7 @@ class ProductionState(TypedDict, total=False):
     # makes an empty or surprising result explainable.
     supplier_candidates: list[str]
     supplier_matches: list[MatchResult]
+    recommendation_perspectives: RecommendationPerspectives | None
     selected_supplier: str | None
 
     rfq: RFQ | None
@@ -128,6 +130,8 @@ CHECKPOINTED_TYPES: tuple[type, ...] = (
     KnowledgeSnippet,
     RetrievalDecision,
     RFQ,
+    RecommendationPerspective,
+    RecommendationPerspectives,
     # enums
     ProductionMethod,
     ProductCategory,
@@ -163,6 +167,7 @@ def initial_state(
         confirmed_method=None,
         supplier_candidates=[],
         supplier_matches=[],
+        recommendation_perspectives=None,
         selected_supplier=None,
         rfq=None,
         current_stage=Stage.DRAFT,

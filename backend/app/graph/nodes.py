@@ -505,8 +505,20 @@ def calculate_matches(state: ProductionState, deps: GraphDeps) -> dict[str, Any]
                 extra={"event": Event.LLM_ERROR.value, "supplier_id": match.supplier_id},
             )
 
+    try:
+        perspectives = deps.tools.build_recommendation_perspectives(
+            calculation.matches, method, deps.today
+        )
+    except Exception as error:  # presentation only - never blocks the ranking itself
+        logger.warning(
+            "recommendation perspectives unavailable; ranked list still stands",
+            extra={"event": Event.TOOL_ERROR.value, "error_type": type(error).__name__},
+        )
+        perspectives = None
+
     return {
         "supplier_matches": calculation.matches,
+        "recommendation_perspectives": perspectives,
         "current_stage": Stage.SUPPLIER_SELECTION,
     }
 
@@ -519,11 +531,13 @@ def human_select_supplier(state: ProductionState, deps: GraphDeps) -> dict[str, 
 
     # The funnel is reported alongside the matches: "3 of 7 eligible, from 24
     # partners" is what makes a short list explainable rather than suspicious.
+    perspectives = state.get("recommendation_perspectives")
     decision = interrupt(
         {
             "stage": Stage.SUPPLIER_SELECTION.value,
             "matches": [match.model_dump(mode="json") for match in matches],
             "candidate_count": len(state.get("supplier_candidates") or []),
+            "perspectives": perspectives.model_dump(mode="json") if perspectives else None,
         }
     )
 

@@ -8,6 +8,7 @@
  */
 
 import type {
+  FeedbackRequest,
   GeneratedDesign,
   Health,
   NearbyStudiosResponse,
@@ -145,6 +146,13 @@ export async function generateDesign(prompt: string): Promise<GeneratedDesign> {
  * Real, unscored OpenStreetMap leads for this project's confirmed method.
  * Never merged with `matches` client-side - see NearbyStudio in ./types.
  */
+export async function submitFeedback(id: string, feedback: FeedbackRequest): Promise<void> {
+  await request<{ status: string }>(`/projects/${encodeURIComponent(id)}/feedback`, {
+    method: "POST",
+    body: JSON.stringify(feedback),
+  });
+}
+
 export async function getNearbyStudios(id: string): Promise<NearbyStudiosResponse> {
   return request<NearbyStudiosResponse>(`/projects/${encodeURIComponent(id)}/nearby-studios`);
 }
