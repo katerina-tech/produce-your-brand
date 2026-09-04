@@ -140,6 +140,12 @@ cd backend && uv run python scripts/audit_architecture.py
 
 That last one is the guard rail against this project's predecessor: it fails the build if a second LangGraph, prompt module, LLM factory, vector store, knowledge directory or supplier data source appears, or if any module under `app/` becomes unreferenced dead code.
 
+```bash
+cd backend && uv run python scripts/run_eval.py
+```
+
+The behavioural eval: 19 cases over the decision layer — which field gets asked about next, how an impossible deadline or an unsupported material scores, and that `null` is scored differently from `false`. Deterministic, so it needs no key and no network; results and the reasoning behind what it does *not* measure are in [docs/eval.md](docs/eval.md).
+
 ### Exercise the real model
 
 The test suite runs entirely on a scripted provider — no key, no network, no cost. One script exercises the real model:
@@ -461,6 +467,7 @@ backend/
     index/               # generated FAISS index (gitignored, rebuildable)
   scripts/
     audit_architecture.py
+    run_eval.py          # 19-case behavioural eval -> docs/eval.md
     build_index.py       # thin entry point to the one builder
     demo_run.py          # the only code that calls a real model
   tests/
