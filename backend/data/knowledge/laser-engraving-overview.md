@@ -2,7 +2,7 @@
 title: "Laser engraving: how it works and where it fits"
 production_method: laser_engraving
 materials: [aluminium, anodised_aluminium, stainless_steel, wood, bamboo, leather, acrylic, glass]
-source: "Produce Your Stuff curated production note"
+source: "Produce Your Brand curated production note"
 source_url: null
 updated_at: 2026-08-01
 ---

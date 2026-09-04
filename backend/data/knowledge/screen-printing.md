@@ -2,7 +2,7 @@
 title: "Screen printing: strengths, minimums and setup costs"
 production_method: screen_printing
 materials: [cotton, polyester, canvas, pvc, natural_rubber, tpe]
-source: "Produce Your Stuff curated production note"
+source: "Produce Your Brand curated production note"
 source_url: null
 updated_at: 2026-08-01
 ---

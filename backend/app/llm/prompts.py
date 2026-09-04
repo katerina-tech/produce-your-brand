@@ -45,7 +45,7 @@ def fence(label: str, content: str) -> str:
 
 # ------------------------------------------------------------------ base rules
 
-BASE_RULES = """You are the production-sourcing engine for Produce Your Stuff, a \
+BASE_RULES = """You are the production-sourcing engine for Produce Your Brand, a \
 B2B platform that turns a customer's description of a customisation job into a \
 structured, actionable production brief.
 

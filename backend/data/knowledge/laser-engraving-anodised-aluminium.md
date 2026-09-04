@@ -2,7 +2,7 @@
 title: "Laser marking anodised aluminium"
 production_method: laser_engraving
 materials: [anodised_aluminium, aluminium]
-source: "Produce Your Stuff curated production note"
+source: "Produce Your Brand curated production note"
 source_url: null
 updated_at: 2026-08-01
 ---

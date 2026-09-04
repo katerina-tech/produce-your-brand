@@ -95,7 +95,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         lifespan=_lifespan,
-        title="Produce Your Stuff API",
+        title="Produce Your Brand API",
         description=(
             "AI-powered sourcing and production orchestration. All model calls "
             "happen server-side; the frontend never holds credentials."

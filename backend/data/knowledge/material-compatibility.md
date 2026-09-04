@@ -2,7 +2,7 @@
 title: "Material and method compatibility"
 production_method: null
 materials: [pvc, natural_rubber, tpe, cotton, polyester, anodised_aluminium, stainless_steel, wood, cork, glass, cardboard]
-source: "Produce Your Stuff curated production note"
+source: "Produce Your Brand curated production note"
 source_url: null
 updated_at: 2026-08-01
 ---

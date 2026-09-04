@@ -2,7 +2,7 @@
 title: "Printed packaging: cartons and corrugated"
 production_method: packaging_print
 materials: [cardboard, kraft_paper]
-source: "Produce Your Stuff curated production note"
+source: "Produce Your Brand curated production note"
 source_url: null
 updated_at: 2026-08-01
 ---

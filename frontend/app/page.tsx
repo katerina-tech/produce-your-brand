@@ -88,8 +88,8 @@ export default function MarketingPage() {
               For requests a normal search can&apos;t solve
             </p>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-[3.4rem] lg:leading-[1.06]">
-              Turn any product into{" "}
-              <span className="text-accent">your product.</span>
+              You know what you want.{" "}
+              <span className="text-accent">We find who can make it.</span>
             </h1>
             <p className="text-lg text-ink">
               Find the right production partner for complex, non-standard
@@ -191,7 +191,7 @@ export default function MarketingPage() {
             <span className="h-2.5 w-2.5 rounded-full bg-line-strong" />
             <span className="h-2.5 w-2.5 rounded-full bg-line-strong" />
             <span className="flex-1 text-center text-xs font-medium text-ink-muted">
-              app.produceyourstuff.com/projects/1842
+              app.produceyourbrand.com/projects/1842
             </span>
           </div>
 
@@ -311,7 +311,7 @@ export default function MarketingPage() {
           <div className="flex items-center gap-2.5">
             <LogoMark size={18} />
             <span className="text-xs text-ink-muted">
-              &copy; 2026 Produce Your Stuff GmbH · Berlin
+              &copy; 2026 Produce Your Brand GmbH · Berlin
             </span>
           </div>
           <div className="flex flex-wrap gap-12">

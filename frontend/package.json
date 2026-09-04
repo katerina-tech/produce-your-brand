@@ -2,7 +2,7 @@
   "name": "produce-your-stuff-frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "Guided workflow UI for Produce Your Stuff. Contains no business logic - it renders whatever stage the API reports.",
+  "description": "Guided workflow UI for Produce Your Brand. Contains no business logic - it renders whatever stage the API reports.",
   "scripts": {
     "dev": "next dev --port 3000",
     "build": "next build",

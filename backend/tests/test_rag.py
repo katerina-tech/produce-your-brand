@@ -371,7 +371,7 @@ def test_format_snippets_labels_each_source(store: KnowledgeStore) -> None:
     rendered = format_snippets(store.search("foil transfer temperature", k=2))
 
     assert "[1]" in rendered and "[2]" in rendered
-    assert "Produce Your Stuff curated production note" in rendered
+    assert "Produce Your Brand curated production note" in rendered
 
 
 # ------------------------------------------------------------ graph integration

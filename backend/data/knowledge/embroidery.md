@@ -2,7 +2,7 @@
 title: "Embroidery: stitching, digitising and where it fails"
 production_method: embroidery
 materials: [cotton, polyester, canvas, leather]
-source: "Produce Your Stuff curated production note"
+source: "Produce Your Brand curated production note"
 source_url: null
 updated_at: 2026-08-01
 ---

@@ -2,7 +2,7 @@
 title: "Pad printing for small and awkward surfaces"
 production_method: pad_printing
 materials: [acrylic, stainless_steel, aluminium, ceramic, glass]
-source: "Produce Your Stuff curated production note"
+source: "Produce Your Brand curated production note"
 source_url: null
 updated_at: 2026-08-01
 ---

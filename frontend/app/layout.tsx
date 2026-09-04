@@ -4,9 +4,9 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Produce Your Stuff",
+  title: "Produce Your Brand",
   description:
-    "Describe what you want to customise. Produce Your Stuff works out how it can be made and who can make it.",
+    "Describe what you want to customise. Produce Your Brand works out how it can be made and who can make it.",
 };
 
 /**

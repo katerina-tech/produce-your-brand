@@ -2,7 +2,7 @@
 title: "Heat transfer and metallic foil application"
 production_method: heat_transfer
 materials: [pvc, natural_rubber, tpe, polyester, cotton, cardboard]
-source: "Produce Your Stuff curated production note"
+source: "Produce Your Brand curated production note"
 source_url: null
 updated_at: 2026-08-01
 ---

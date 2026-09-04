@@ -2,7 +2,7 @@
 title: "Production limitations, lead times and samples"
 production_method: null
 materials: []
-source: "Produce Your Stuff curated production note"
+source: "Produce Your Brand curated production note"
 source_url: null
 updated_at: 2026-08-01
 ---

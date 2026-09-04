@@ -1,4 +1,4 @@
-# Produce Your Stuff — Architecture
+# Produce Your Brand — Architecture
 
 Approved design, 21 August 2026. **Built and delivered, 23 August 2026.**
 

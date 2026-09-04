@@ -2,7 +2,7 @@
 title: "Digital printing: DTG, DTF and UV"
 production_method: digital_printing
 materials: [cotton, polyester, cardboard, kraft_paper, acrylic, wood]
-source: "Produce Your Stuff curated production note"
+source: "Produce Your Brand curated production note"
 source_url: null
 updated_at: 2026-08-01
 ---

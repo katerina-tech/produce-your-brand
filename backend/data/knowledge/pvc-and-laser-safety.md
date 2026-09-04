@@ -2,7 +2,7 @@
 title: "PVC must not be laser cut or engraved"
 production_method: laser_engraving
 materials: [pvc]
-source: "Produce Your Stuff curated production note"
+source: "Produce Your Brand curated production note"
 source_url: null
 updated_at: 2026-08-01
 ---

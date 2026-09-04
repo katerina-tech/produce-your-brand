@@ -1,9 +1,9 @@
-<svg width="820" height="110" viewBox="0 0 820 110" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Produce Your Stuff">
+<svg width="820" height="110" viewBox="0 0 820 110" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Produce Your Brand">
   <g transform="translate(0, 5)">
     <path d="M0 0 L40 0 L40 35 L65 35 L65 65 L100 65 L100 100 L0 100 Z" fill="#191C23"/>
     <path d="M40 0 L100 0 L100 65 L65 65 L65 35 L40 35 Z" fill="#3240EB"/>
   </g>
   <text x="128" y="70" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="46" letter-spacing="-0.5">
-    <tspan fill="#191C23">PRODUCE </tspan><tspan fill="#3240EB">YOUR </tspan><tspan fill="#191C23">STUFF</tspan>
+    <tspan fill="#191C23">PRODUCE </tspan><tspan fill="#3240EB">YOUR </tspan><tspan fill="#191C23">BRAND</tspan>
   </text>
 </svg>

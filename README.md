@@ -1,20 +1,20 @@
-# Produce Your Stuff
+# Produce Your Brand
 
 <p align="center">
-  <img src="docs/assets/logo.svg" alt="Produce Your Stuff" width="420">
+  <img src="docs/assets/logo.svg" alt="Produce Your Brand" width="420">
 </p>
 
-**AI-powered B2B sourcing and production orchestration.** You already have the product and the design — describe what you want customised, and Produce Your Stuff works out *how* it can be made and *who* can make it.
+**AI-powered B2B sourcing and production orchestration.** You already have the product and the design — describe what you want customised, and Produce Your Brand works out *how* it can be made and *who* can make it.
 
 > **Status: complete.** The whole product runs end to end in a browser: natural language → typed brief → clarification → *knowledge-grounded* method recommendation → deterministic supplier matching → RFQ, with four human approval gates, layered prompt-injection defence and validated uploads — see [Implementation status](#implementation-status). This README describes only what actually exists; the full approved design lives in [docs/architecture.md](docs/architecture.md).
 
 **Live:** **[produceyourstuff.up.railway.app](https://produceyourstuff.up.railway.app/)** — the actual product, deployed on Railway from this repository. Setup steps and the reasoning behind them are in [docs/deploy-railway.md](docs/deploy-railway.md).
 
 <p align="center">
-  <img src="docs/assets/homepage-desktop.png" alt="The Produce Your Stuff homepage, desktop" width="820">
+  <img src="docs/assets/homepage-desktop.png" alt="The Produce Your Brand homepage, desktop" width="820">
 </p>
 <p align="center">
-  <img src="docs/assets/homepage-mobile.png" alt="The Produce Your Stuff homepage, mobile" width="220">
+  <img src="docs/assets/homepage-mobile.png" alt="The Produce Your Brand homepage, mobile" width="220">
 </p>
 <p align="center"><sub>Both screenshots are of the live deployment above, not mockups.</sub></p>
 
@@ -38,7 +38,7 @@ qualified supplier matching         → deterministic score, AI only explains it
 production-ready RFQ                → human edits and approves
 ```
 
-**The core promise:** describe what you want to customise; Produce Your Stuff figures out how and who can produce it.
+**The core promise:** describe what you want to customise; Produce Your Brand figures out how and who can produce it.
 
 **Target user:** Berlin SMEs, startups, creators and agencies needing a relatively small batch of customised physical products — branded yoga mats, engraved bottles, embroidered textiles, packaging, event merch, corporate gifts.
 
@@ -56,7 +56,7 @@ The MVP above shipped, then went through its first customer-discovery interview.
 
 **The key experiment this build exists to run:**
 
-> For complex, non-standard production requests, users get more useful and actionable supplier options through Produce Your Stuff than through Google or a generic ChatGPT search.
+> For complex, non-standard production requests, users get more useful and actionable supplier options through Produce Your Brand than through Google or a generic ChatGPT search.
 
 The product cannot prove that on its own — it can only collect honest evidence for or against it. That's what [Product validation](#product-validation) is: a short survey after a project completes, stored as ordinary `project_events` rows, readable (not dashboarded) at `GET /api/analytics/feedback`.
 

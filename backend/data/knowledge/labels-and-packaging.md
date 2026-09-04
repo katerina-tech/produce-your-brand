@@ -2,7 +2,7 @@
 title: "Labels, tags and simple packaging"
 production_method: label_application
 materials: [kraft_paper, cardboard, polyester]
-source: "Produce Your Stuff curated production note"
+source: "Produce Your Brand curated production note"
 source_url: null
 updated_at: 2026-08-01
 ---
