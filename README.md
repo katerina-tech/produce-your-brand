@@ -6,7 +6,11 @@
 
 **AI-powered B2B sourcing and production orchestration.** You already have the product and the design — describe what you want customised, and Produce Your Brand works out *how* it can be made and *who* can make it.
 
-> **Status: complete.** The whole product runs end to end in a browser: natural language → typed brief → clarification → *knowledge-grounded* method recommendation → deterministic supplier matching → RFQ, with four human approval gates, layered prompt-injection defence and validated uploads — see [Implementation status](#implementation-status). This README describes only what actually exists; the full approved design lives in [docs/architecture.md](docs/architecture.md).
+## What this project is
+
+**Produce Your Brand is an AI agent that turns a plain-English description of a custom production job into a supplier-ready request for quotation.** It solves a specific, unglamorous problem: a business that wants 100 of its own yoga mats printed with a gold logo currently has to work out which customisation technique is even physically possible, hunt for production partners, discover one by one whether any of them accept customer-owned goods or can meet the deadline, and then re-explain the same job to every supplier by hand — days of undifferentiated work before a single quote arrives. It works by running one LangGraph workflow with four human approval gates: an LLM extracts a typed Production Brief from free text and asks about only the fields that genuinely block progress; a retrieval step grounds the production-method recommendation in a curated knowledge base *only when the question actually warrants it*; suppliers are then filtered and scored in **plain Python, never by the model**, against six published weighted factors; and the resulting RFQ is assembled deterministically for a human to edit and approve. The division of labour is the whole design: the model handles language, and code handles every fact and every number — which is why a supplier capability can never be invented and a match score can never be argued up by phrasing.
+
+> **Status: complete.** The whole product runs end to end in a browser: natural language → typed brief → clarification → *knowledge-grounded* method recommendation → deterministic supplier matching → RFQ, with four human approval gates, layered prompt-injection defence and validated uploads — see [Implementation status](#implementation-status). This README describes only what actually exists; the full approved design lives in [docs/architecture.md](docs/architecture.md), and the ethical reasoning — data integrity, injection defence, scoring bias, privacy, and where each is *partial* — in [ETHICS.md](ETHICS.md).
 
 **Live:** **[produceyourstuff.up.railway.app](https://produceyourstuff.up.railway.app/)** — the actual product, deployed on Railway from this repository. Setup steps and the reasoning behind them are in [docs/deploy-railway.md](docs/deploy-railway.md).
 
@@ -86,7 +90,17 @@ Add your API key to `.env`. It is read by exactly one module (`app/config.py`), 
 
 `PYS_LLM_MAX_TOKENS` defaults to 1024 and is deliberately explicit: the client library otherwise reserves the model's full output window, and gateways gate on that up front — OpenRouter returns HTTP 402 for a request that would actually have cost a few hundred tokens.
 
-> **Troubleshooting `ProductionRequirement generation failed`.** This means the model provider refused the request. On OpenRouter's free tier it is almost always a `402`: the remaining balance no longer affords even the reserved token budget, and the affordable ceiling keeps shrinking as credit drains. Confirm from the backend log, then either add credits or set `PYS_MODEL_NAME=openai/gpt-4o-mini` — far cheaper, and it extracts correctly. The workflow handles the failure cleanly either way: nothing is committed, no partner is contacted, and the project records the error rather than crashing.
+> **Troubleshooting `ProductionRequirement generation failed`.** This means the model provider refused the request — it is not a bug in the extraction code. On OpenRouter it is almost always a `402`, and the backend log now names the exact cause and remedy, because the failing structured call logs `status_code` and the provider's raw `body` (see `app/llm/factory.py`):
+>
+> ```
+> [llm_error] structured call failed  schema=ProductionRequirement status_code=402
+> body={"error":{"message":"This request requires more credits, or fewer max_tokens.
+>       You requested up to 1024 tokens, but can only afford 881", ...}}
+> ```
+>
+> Two remedies, and the log tells you which you need. Either **add credit**, or **fit under the affordable ceiling** — `PYS_LLM_MAX_TOKENS` defaults to 1024, so `PYS_LLM_MAX_TOKENS=700` was enough to run the entire flow end to end on a balance that could afford 881. The second is a stopgap, not a fix: the ceiling shrinks as credit drains, and squeezing it too far risks truncating the larger schemas (`MethodRecommendation`, `RFQProse`) rather than failing cleanly. `PYS_MODEL_NAME=openai/gpt-4o-mini` also costs far less than `gpt-4o` and extracts correctly.
+>
+> Whichever applies, the workflow degrades honestly: nothing is committed, no partner is contacted, and the project records the error rather than crashing.
 
 ```bash
 cd backend && uv sync
