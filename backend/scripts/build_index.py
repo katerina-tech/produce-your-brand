@@ -29,15 +29,19 @@ def main() -> int:
     configure_logging(level="INFO", fmt="console")
     settings = get_settings()
 
-    if not settings.has_api_key:
+    # Only the hosted backend needs a key; the local one embeds on-device, and
+    # refusing to build without a key would make PYS_EMBEDDING_BACKEND=local
+    # useless for exactly the case it exists to serve.
+    if settings.embedding_backend == "openai" and not settings.has_api_key:
         print("No API key configured. Copy .env.example to .env and set OPENAI_API_KEY.")
+        print("Alternatively set PYS_EMBEDDING_BACKEND=local to embed on-device.")
         return 1
 
     store = KnowledgeStore(
         knowledge_dir=settings.knowledge_dir,
         index_dir=settings.index_dir,
         embeddings=get_embedding_provider(settings),
-        embedding_model=settings.embedding_model,
+        embedding_model=settings.active_embedding_model,
         chunk_size=settings.chunk_size,
         chunk_overlap=settings.chunk_overlap,
     )
@@ -45,7 +49,8 @@ def main() -> int:
     documents = len(list(settings.knowledge_dir.glob("*.md")))
     print(f"knowledge : {settings.knowledge_dir}  ({documents} documents)")
     print(f"index     : {settings.index_dir}")
-    print(f"model     : {settings.embedding_model}")
+    print(f"backend   : {settings.embedding_backend}")
+    print(f"model     : {settings.active_embedding_model}")
     print(f"stale     : {store.is_stale()}")
 
     chunks = store.build()

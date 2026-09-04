@@ -236,9 +236,102 @@ class OpenAIEmbeddingProvider:
         return vector
 
 
+class LocalEmbeddingProvider:
+    """On-device embeddings via fastembed. No API key, no network at call time.
+
+    Chosen over ``sentence-transformers`` deliberately: fastembed runs the
+    model through ONNX Runtime rather than PyTorch, which keeps the deployed
+    image around 80 MB heavier instead of 2-3 GB heavier. On a container host
+    that difference is the whole decision.
+
+    The model weights are downloaded once, on first use, and cached. That is
+    the one moment this provider touches the network - see the note on
+    ``PYS_EMBEDDING_BACKEND`` in the README about pre-warming it so a cold
+    start does not pay for the download mid-request.
+    """
+
+    def __init__(self, settings: Settings | None = None) -> None:
+        self._settings = settings or get_settings()
+        self._model: Any = None
+
+    def _embeddings(self) -> Any:
+        if self._model is not None:
+            return self._model
+
+        try:
+            from fastembed import TextEmbedding
+        except ImportError as error:  # pragma: no cover - dependency is pinned
+            raise LLMError(
+                "The local embedding backend needs the 'fastembed' package. "
+                "Run `uv sync`, or set PYS_EMBEDDING_BACKEND=openai."
+            ) from error
+
+        name = self._settings.local_embedding_model
+        try:
+            self._model = TextEmbedding(model_name=name)
+        except Exception as error:
+            log_event(
+                logger,
+                Event.LLM_ERROR,
+                "local embedding model failed to load",
+                level=logging.ERROR,
+                model=name,
+                error_type=type(error).__name__,
+            )
+            raise LLMError(f"could not load local embedding model '{name}'") from error
+        return self._model
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        try:
+            # fastembed yields numpy arrays lazily; the vector store and the
+            # JSON manifest both want plain lists, so materialise here rather
+            # than leaking an ndarray into either.
+            vectors = [vector.tolist() for vector in self._embeddings().embed(texts)]
+        except LLMError:
+            raise
+        except Exception as error:
+            log_event(
+                logger,
+                Event.LLM_ERROR,
+                "local document embedding failed",
+                level=logging.ERROR,
+                count=len(texts),
+                error_type=type(error).__name__,
+            )
+            raise LLMError("document embedding failed") from error
+        return vectors
+
+    def embed_query(self, text: str) -> list[float]:
+        try:
+            vectors = list(self._embeddings().query_embed(text))
+        except LLMError:
+            raise
+        except Exception as error:
+            log_event(
+                logger,
+                Event.LLM_ERROR,
+                "local query embedding failed",
+                level=logging.ERROR,
+                error_type=type(error).__name__,
+            )
+            raise LLMError("query embedding failed") from error
+        if not vectors:
+            raise LLMError("local embedding model returned no vector for the query")
+        vector: list[float] = vectors[0].tolist()
+        return vector
+
+
 def get_embedding_provider(settings: Settings | None = None) -> EmbeddingProvider:
-    """Return the production embedding provider. The only construction site."""
-    return OpenAIEmbeddingProvider(settings)
+    """Return the production embedding provider. The only construction site.
+
+    Which backend is a configuration choice, not a code path callers pick -
+    see ``PYS_EMBEDDING_BACKEND`` in ``app/config.py``. Everything downstream
+    depends on the protocol, so the RAG pipeline is unchanged either way.
+    """
+    resolved = settings or get_settings()
+    if resolved.embedding_backend == "local":
+        return LocalEmbeddingProvider(resolved)
+    return OpenAIEmbeddingProvider(resolved)
 
 
 class ImageProvider(Protocol):

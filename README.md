@@ -289,6 +289,27 @@ Build the index explicitly (it also builds lazily on first use):
 cd backend && uv run python scripts/build_index.py
 ```
 
+### Embeddings can run on-device
+
+Retrieval is the one part of this system that does not need a hosted model, so it can be switched to embed locally:
+
+```bash
+PYS_EMBEDDING_BACKEND=local uv run python scripts/build_index.py
+```
+
+This uses [fastembed](https://github.com/qdrant/fastembed) with `BAAI/bge-small-en-v1.5`. Three reasons it is worth having:
+
+- **It removes the one recurring cost in the RAG path.** When the provider balance runs out, the knowledge base keeps working — which is the failure this project actually hit.
+- **fastembed, not `sentence-transformers`.** fastembed runs the model through ONNX Runtime instead of PyTorch: about 80 MB heavier in the image rather than 2–3 GB. On a container host that is the whole decision.
+- **The corpus is ~21 KB across 13 documents**, so the quality cost of a 384-dimension local model over a 1536-dimension hosted one is negligible *here*. That would not be true of a large corpus, which is why the hosted backend stays the default.
+
+Reasoning and extraction stay hosted on purpose — structured-output reliability is the core value path, and small local models are not dependable at strict JSON schemas.
+
+Two things to know:
+
+- **The first run downloads the model (~130 MB) and caches it**, so it needs one-time network access to `huggingface.co`. Build the index during deployment rather than letting a cold start pay for the download mid-request.
+- **Switching backend rebuilds the index, by design.** The vector dimensionality changes, so an index built by the other backend is not stale but unusable; `Settings.active_embedding_model` feeds the effective model name into the index fingerprint precisely so that becomes a rebuild instead of a silent wrong-shape read.
+
 ---
 
 ## HTTP API
@@ -684,7 +705,7 @@ take on trust.
 | Human-in-the-loop | four gates, enforced by `interrupt()` | `test_workflow_stops_at_all_four_approval_gates` |
 | Structured logging | one config, closed event enum | `test_log_events_are_a_closed_set` |
 
-**286 backend tests, 10 frontend tests.** No test calls a live model, and none
+**298 backend tests, 10 frontend tests.** No test calls a live model, and none
 calls the real Overpass API either - `test_osm_search.py` swaps in
 `httpx.MockTransport`. The graph runs on a scripted provider and retrieval on a
 hashing embedder whose similarity is real term overlap, so the suite is free,

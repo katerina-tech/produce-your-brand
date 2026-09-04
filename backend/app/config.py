@@ -53,6 +53,22 @@ class Settings(BaseSettings):
     model_name: str = "openai/gpt-4o"
     classifier_model_name: str = "openai/gpt-4o-mini"
     embedding_model: str = "openai/text-embedding-3-small"
+
+    # --- embedding backend ---------------------------------------------------
+    # Retrieval is the one part of this system that can run entirely on-device.
+    # "local" embeds with fastembed (ONNX, no torch) instead of billing the
+    # gateway per call, which is what lets the knowledge base work when the
+    # provider balance is exhausted - the failure mode this project actually
+    # hit. The corpus is ~21 KB across 13 documents, so the quality cost of a
+    # 384-dimension local model over a 1536-dimension hosted one is negligible
+    # here; that would not be true of a large corpus.
+    #
+    # Reasoning and extraction stay hosted on purpose. Structured-output
+    # reliability is the core value path, and small local models are not
+    # dependable at strict JSON schemas.
+    embedding_backend: Literal["openai", "local"] = "openai"
+    local_embedding_model: str = "BAAI/bge-small-en-v1.5"
+
     llm_temperature: float = 0.0
     llm_timeout_seconds: float = 60.0
     llm_max_retries: int = 2
@@ -143,6 +159,21 @@ class Settings(BaseSettings):
         """
         key = self.openai_api_key.get_secret_value().strip()
         return bool(key) and key not in _PLACEHOLDER_KEYS and not key.endswith("...")
+
+    @property
+    def active_embedding_model(self) -> str:
+        """The embedding model actually in use, whichever backend is selected.
+
+        This, not ``embedding_model``, is what must reach the index
+        fingerprint. Switching backends changes the vector dimensionality
+        (1536 -> 384), so an index built by the other backend is not merely
+        out of date - it is unusable, and reusing it would either crash the
+        search or silently return nonsense. Feeding the effective name into
+        the fingerprint makes that a rebuild rather than a bug.
+        """
+        if self.embedding_backend == "local":
+            return f"local/{self.local_embedding_model}"
+        return self.embedding_model
 
 
 @lru_cache(maxsize=1)

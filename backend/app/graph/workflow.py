@@ -274,7 +274,7 @@ def production_deps(settings: Settings | None = None, today: date | None = None)
         knowledge_dir=settings.knowledge_dir,
         index_dir=settings.index_dir,
         embeddings=get_embedding_provider(settings),
-        embedding_model=settings.embedding_model,
+        embedding_model=settings.active_embedding_model,
         chunk_size=settings.chunk_size,
         chunk_overlap=settings.chunk_overlap,
     )
