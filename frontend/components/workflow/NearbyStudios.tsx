@@ -1,10 +1,24 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState, useTransition } from "react";
 
 import { Button, Card, CardHeader, Notice } from "@/components/ui";
 import { loadNearbyStudios } from "@/lib/actions";
 import type { NearbyStudio } from "@/lib/types";
+
+/**
+ * Loaded lazily and never prerendered: Leaflet touches `window` on import,
+ * so it cannot be server-rendered, and there is no reason to ship a mapping
+ * library to anyone who never expands this section. `ssr: false` is valid
+ * here because this file is itself a Client Component.
+ */
+const StudioMap = dynamic(() => import("./StudioMap").then((m) => m.StudioMap), {
+  ssr: false,
+  loading: () => (
+    <div className="h-72 w-full animate-pulse rounded-lg border border-line bg-canvas" />
+  ),
+});
 
 /**
  * A live, unscored complement to the partner matches above - real businesses
@@ -63,30 +77,36 @@ export function NearbyStudios({ projectId }: { projectId: string }) {
         ) : studios.length === 0 ? (
           <p className="text-sm text-ink-soft">{note ?? "No nearby businesses found for this method."}</p>
         ) : (
-          <ul className="space-y-4">
-            {studios.map((studio) => (
-              <li key={studio.osm_id} className="border-b border-line pb-3 last:border-0 last:pb-0">
-                <p className="text-[15px] font-semibold">{studio.name}</p>
-                <p className="mt-0.5 text-xs text-ink-muted">{studio.osm_category}</p>
-                {studio.address ? (
-                  <p className="mt-1 text-sm text-ink-soft">{studio.address}</p>
-                ) : null}
-                <p className="mt-1 flex flex-wrap gap-3 text-sm">
-                  {studio.website ? (
-                    <a
-                      href={studio.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-ink underline decoration-line-strong underline-offset-4 hover:no-underline"
-                    >
-                      Website
-                    </a>
+          <div className="space-y-4">
+            <StudioMap studios={studios} />
+            <ul className="space-y-4">
+              {studios.map((studio) => (
+                <li
+                  key={studio.osm_id}
+                  className="border-b border-line pb-3 last:border-0 last:pb-0"
+                >
+                  <p className="text-[15px] font-semibold">{studio.name}</p>
+                  <p className="mt-0.5 text-xs text-ink-muted">{studio.osm_category}</p>
+                  {studio.address ? (
+                    <p className="mt-1 text-sm text-ink-soft">{studio.address}</p>
                   ) : null}
-                  {studio.phone ? <span className="text-ink-soft">{studio.phone}</span> : null}
-                </p>
-              </li>
-            ))}
-          </ul>
+                  <p className="mt-1 flex flex-wrap gap-3 text-sm">
+                    {studio.website ? (
+                      <a
+                        href={studio.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-ink underline decoration-line-strong underline-offset-4 hover:no-underline"
+                      >
+                        Website
+                      </a>
+                    ) : null}
+                    {studio.phone ? <span className="text-ink-soft">{studio.phone}</span> : null}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3 sm:px-6">

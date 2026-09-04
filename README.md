@@ -418,6 +418,14 @@ Added beyond the original sprint scope, at explicit user request: once a method 
 
 **The tag mapping is approximate, and says so.** OpenStreetMap has no per-technique tag for production methods. `craft=printer` is the one umbrella tag covering screen, digital and pad printing and heat transfer alike; `craft=embroiderer` is the one exact match in the whole table (see `METHOD_TAGS` in `app/services/osm_search.py`). Every result carries the specific tag it matched under, so nothing claims more precision than the data actually has.
 
+**And they appear on a map** (`components/workflow/StudioMap.tsx`), because "which of these is actually near my office" is a question a list answers badly. Note *why only these results are mapped*: an OSM element carries `lat`/`lon`, while a `Supplier` record carries only `{city, country, region}` — so mapping the scored supplier matches would mean geocoding them first, which is in the Roadmap rather than done. Three implementation choices worth knowing:
+
+- **Plain Leaflet, not `react-leaflet`** — one dependency instead of two, no peer coupling to React 19, and explicit control of the map lifecycle, which the next point needs.
+- **The map is created and destroyed by the same effect.** `reactStrictMode` double-invokes effects in development and Leaflet throws *"Map container is already initialized"* on a second init against the same node; cleaning up unconditionally is what makes the remount safe.
+- **Markers are `divIcon`s, and popup text is hand-escaped.** The default Leaflet marker resolves its PNGs relative to the stylesheet, which bundlers routinely break, so a styled div avoids image assets entirely. And OSM text is user-editable third-party content injected as popup HTML — untrusted input in exactly the sense [ETHICS.md](ETHICS.md) describes — so it is escaped explicitly, since `bindPopup` takes an HTML string and React's automatic escaping does not apply.
+
+Tiles come from `tile.openstreetmap.org` with the attribution their usage policy requires, and the mapping library is lazy-loaded (`ssr: false`) so it never reaches anyone who does not expand the section.
+
 ---
 
 ## Offers & recommendation perspectives
@@ -500,7 +508,8 @@ frontend/
   components/
     ui.tsx               # presentation primitives
     Logo.tsx             # the one place the brand mark is drawn
-    workflow/            # one component per gate, plus NearbyStudios.tsx
+    workflow/            # one component per gate, plus NearbyStudios.tsx,
+                         #   StudioMap.tsx (Leaflet, lazy + no SSR)
                          #   and FeedbackSurvey.tsx
   lib/
     api.ts               # the only contact with the backend
