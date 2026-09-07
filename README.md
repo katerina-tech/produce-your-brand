@@ -14,6 +14,8 @@
 
 **Live:** **[produceyourstuff.up.railway.app](https://produceyourstuff.up.railway.app/)** — the actual product, deployed on Railway from this repository. Setup steps and the reasoning behind them are in [docs/deploy-railway.md](docs/deploy-railway.md).
 
+**Showcase:** `TODO — paste the showcase.turingcollege.com URL here before booking the capstone review.` Ready-to-paste submission text is in [docs/showcase.md](docs/showcase.md).
+
 <p align="center">
   <img src="docs/assets/homepage-desktop.png" alt="The Produce Your Brand homepage, desktop" width="820">
 </p>
@@ -520,6 +522,9 @@ frontend/
 docs/
   architecture.md        # the approved design
   deploy-railway.md      # how the live deployment is set up
+  eval.md                # generated behavioural eval results
+  presentation.md        # capstone presentation (SCR) + anticipated questions
+  showcase.md            # copy/paste text for the showcase submission
 ```
 
 ### Supplier data
