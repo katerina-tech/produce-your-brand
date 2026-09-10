@@ -10,6 +10,80 @@
 
 ---
 
+# 0 — Selection round: run of show
+
+**5 minutes, 3 speakers.** The judges are choosing *who goes to Berlin*, not whether
+this is a good business. That rewards two things: they understand it instantly, and
+they believe you will perform there. Almost nobody else arrives with something already
+deployed — lead with that.
+
+## The one sentence — open with it, close with it
+
+> **You describe what you want made. We tell you if it&rsquo;s possible, how to make it,
+> and who can make it.**
+>
+> Today that&rsquo;s a week of emails. We do it in 30 seconds.
+
+## Katerina · 0:00–1:10 · what it is, why it&rsquo;s hard
+
+- **0:00** The sentence above. Then stop for a beat.
+- **0:20** Draw the boundary — it answers half the questions before they are asked:
+  *&ldquo;500 hoodies with a logo? Google solves that, and always will. 100 yoga mats you
+  already own, printed in gold? Nobody can tell you if that&rsquo;s even possible.&rdquo;*
+- **0:40** The four unknowns, fast, as a list: can it physically be made · who accepts
+  goods you already own · does the minimum order fit · is the deadline real.
+  *&ldquo;Each one is knowable. You just discover them one at a time, by email, over a week.&rdquo;*
+- **0:55** *&ldquo;We interviewed a Berlin print shop. Their words: ChatGPT macht keine
+  Bewertungen — it can&rsquo;t evaluate suppliers. That&rsquo;s the gap we build in.&rdquo;*
+
+**Handoff:** &ldquo;Stefan will show you it working.&rdquo;
+
+## Stefan · 1:10–2:40 · live demo, the biggest block on purpose
+
+Four beats. **Say nothing about architecture** — no graph, no nodes, no RAG.
+
+1. Paste: **&ldquo;100 black yoga mats, PVC, I own them, gold logo, Berlin&rdquo;**
+2. Brief appears — point at **&ldquo;Not specified&rdquo;**: *&ldquo;it tells you what it doesn&rsquo;t know
+   instead of guessing.&rdquo;*
+3. Method and the citation: *&ldquo;it refuses laser on PVC, because that releases hydrogen
+   chloride — and it cites the document it got that from.&rdquo;*
+4. Open one supplier&rsquo;s score breakdown: *&ldquo;six factors, each with a reason. This is the
+   screen ChatGPT cannot produce.&rdquo;*
+
+**Handoff:** &ldquo;[name] will tell you why this holds up.&rdquo;
+
+## Third engineer · 2:40–3:30 · why it holds, and the money
+
+- *&ldquo;The model only handles language. Every number and every fact is owned by code — our
+  scorer has zero AI imports, and that is checked automatically on every build. Same
+  input, same answer, every time.&rdquo;*
+- *&ldquo;That is not a purity thing. A supplier will only pay for leads from a system that
+  cannot misrepresent what they can do.&rdquo;*
+- The money in **one** line: *&ldquo;€3 per lead plus a 3% success fee. Compute costs under a
+  cent per run. That is a 99.9% margin.&rdquo;* Do not go deeper unless asked.
+
+**Handoff:** &ldquo;Katerina — what we would do in Berlin.&rdquo;
+
+## Katerina · 3:30–4:20 · the hackathon plan (the part most teams forget)
+
+> *&ldquo;We are not bringing an idea. The hard part is built, deployed and covered by 309
+> tests. In 48 hours we close the loop: real Berlin suppliers in the database, RFQs
+> actually sent, replies parsed back into one comparison. That turns this from advice
+> into a transaction.&rdquo;*
+
+Then the team in one breath: **three engineers and a data engineer.** Name them, and say
+who does what in the 48 hours — judges are betting on execution, and a named split reads
+as a team that has already thought about it.
+
+**Close:** repeat the one sentence, word for word. Repetition is what survives the room.
+
+> **Three speakers in four minutes is the real risk.** Each handoff costs about five
+> seconds, and handoffs are where teams stall. Rehearse only the handoff lines, twice.
+> One laptop, one browser, nobody switching machines. If a speaker drops out, Katerina
+> takes 0:00–1:10 and 2:40–4:20 and the structure still stands.
+
+---
+
 # 1 — The hook
 
 ## Produce Your Brand
@@ -250,9 +324,9 @@ Live product, not a mockup: **produceyourstuff.up.railway.app**
 ---
 ---
 
-# HACKATHON CUT — 3 minutes, 5 slides
+# FALLBACK — 3 minutes, one speaker
 
-Judges reward clarity and a working demo, not completeness.
+The same argument with no handoffs, for a shorter slot or if you end up presenting alone.
 
 ### H1 — Hook (20s)
 *"Your customer wants 100 of their own yoga mats printed in gold. Which shop can even do it — and who accepts goods they didn't sell you? Today: days of emails. With us: 30 seconds."*
