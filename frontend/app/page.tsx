@@ -19,6 +19,24 @@ const USE_CASES = [
   "Promotional products",
 ];
 
+const PRICING = [
+  {
+    label: "Buyers",
+    price: "Free",
+    body: "Production brief, feasibility check and partner matching. No account fee, no commitment.",
+  },
+  {
+    label: "Partners",
+    price: "€3 / lead",
+    body: "Charged only when a qualified, feasibility-checked request actually reaches you. No listing fee.",
+  },
+  {
+    label: "On success",
+    price: "1.5–5%",
+    body: "A success fee on completed orders only. We earn when our partners win the work.",
+  },
+];
+
 const STEPS = [
   {
     n: "01",
@@ -53,14 +71,11 @@ export default function MarketingPage() {
             <a href="#how-it-works" className="text-sm font-medium hover:text-accent">
               How it works
             </a>
-            <a href="#" className="text-sm font-medium hover:text-accent">
-              For businesses
+            <a href="#use-cases" className="text-sm font-medium hover:text-accent">
+              What we solve
             </a>
-            <a href="#" className="text-sm font-medium hover:text-accent">
-              Partners
-            </a>
-            <a href="#" className="text-sm font-medium hover:text-accent">
-              About
+            <a href="#pricing" className="text-sm font-medium hover:text-accent">
+              Pricing
             </a>
           </nav>
           <div className="flex items-center gap-4">
@@ -246,7 +261,7 @@ export default function MarketingPage() {
       </section>
 
       {/* USE CASES */}
-      <section className="border-t border-line bg-surface">
+      <section id="use-cases" className="border-t border-line bg-surface">
         <div className="mx-auto max-w-6xl px-5 py-16 sm:px-10 sm:py-20">
           <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
@@ -282,7 +297,41 @@ export default function MarketingPage() {
           <p className="text-sm font-semibold sm:px-6">
             Human approval at every step
           </p>
-          <p className="text-sm font-semibold sm:px-6">Vetted European partners</p>
+          <p className="text-sm font-semibold sm:px-6">Every offer shows its source</p>
+        </div>
+      </section>
+
+      {/* BUSINESS MODEL */}
+      <section id="pricing" className="border-t border-line bg-surface">
+        <div className="mx-auto max-w-6xl px-5 py-16 sm:px-10 sm:py-20">
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              Free to source. Partners pay for results.
+            </h2>
+            <p className="eyebrow">Pricing</p>
+          </div>
+          <div className="grid grid-cols-1 gap-px overflow-hidden border border-line bg-line sm:grid-cols-3">
+            {PRICING.map((tier) => (
+              <div key={tier.label} className="bg-surface p-8">
+                <p className="mb-3.5 text-sm font-semibold text-accent">
+                  {tier.label}
+                </p>
+                <p className="mb-2.5 text-[26px] font-bold tracking-tight">
+                  {tier.price}
+                </p>
+                <p className="text-[15px] leading-relaxed text-ink-soft">
+                  {tier.body}
+                </p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-6 max-w-2xl text-sm leading-relaxed text-ink-muted">
+            <span className="font-semibold text-ink-soft">Pilot status:</span>{" "}
+            partner records in this demo are sample data and every one of them
+            is labelled as such in the app. Onboarding of real Berlin
+            production partners is in progress &mdash; the matching logic,
+            feasibility checks and scoring you see are the production ones.
+          </p>
         </div>
       </section>
 
