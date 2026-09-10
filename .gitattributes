@@ -2,3 +2,8 @@
 # line ending there breaks the interpreter path (classic Windows checkout
 # footgun for Docker builds) - force LF regardless of local git config.
 *.sh text eol=lf
+
+# Presentation deliverables. Marked explicitly so no future `text=auto`
+# setting can corrupt them through line-ending normalisation.
+*.pdf  binary
+*.pptx binary
