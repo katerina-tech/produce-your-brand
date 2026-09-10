@@ -198,6 +198,12 @@ TINY_PNG = bytes.fromhex(
 )
 
 
+# A minimal JPEG. Validation sniffs magic bytes rather than decoding, so this
+# only needs a real SOI marker and an EOI - enough to prove the generated-design
+# path stores whatever format the provider actually returned, not an assumed one.
+TINY_JPEG = bytes.fromhex("ffd8ffe000104a46494600010100000100010000ffd9")
+
+
 class ScriptedImageProvider:
     """Returns fixed bytes, or raises, on every call. Records prompts sent."""
 

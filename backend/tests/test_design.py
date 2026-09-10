@@ -16,7 +16,7 @@ from app.config import Settings
 from app.llm.factory import LLMError
 from app.security.uploads import get_upload, store_upload
 from app.services.design_service import DesignGenerationError, generate_design
-from tests.fakes import TINY_PNG, FailingImageProvider, ScriptedImageProvider
+from tests.fakes import TINY_JPEG, TINY_PNG, FailingImageProvider, ScriptedImageProvider
 
 
 @pytest.fixture
@@ -67,6 +67,19 @@ def test_generate_design_stores_the_image_like_any_upload(settings: Settings) ->
 
     assert provider.prompts == ["a minimalist gold star logo"]
     assert record.mime_type == "image/png"
+    assert get_upload(record.upload_id, settings) is not None
+
+
+def test_generate_design_stores_a_jpeg_the_provider_returns(settings: Settings) -> None:
+    """Regression: the filename used to hardcode ".png", so a provider that
+    returned JPEG was rejected by the name-versus-content check and surfaced as
+    "could not be saved". Nothing in the protocol promises PNG.
+    """
+    provider = ScriptedImageProvider(TINY_JPEG)
+
+    record = generate_design("a star logo", provider, settings)
+
+    assert record.mime_type == "image/jpeg"
     assert get_upload(record.upload_id, settings) is not None
 
 

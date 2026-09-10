@@ -51,7 +51,12 @@ def generate_design(
         raise DesignGenerationError(str(error)) from error
 
     try:
-        record = store_upload("generated-design.png", image_bytes, settings)
+        # Deliberately no extension. store_upload only compares a declared
+        # extension against the sniffed bytes when one is given, so omitting it
+        # lets the stored file take the extension its content actually proves.
+        # Hardcoding ".png" would reject any provider that returns JPEG - and
+        # nothing in the ImageProvider protocol promises PNG.
+        record = store_upload("generated-design", image_bytes, settings)
     except UploadRejectedError as rejection:
         # A model returning unusable bytes is a provider failure from the
         # caller's point of view, not a validation mistake the user made -
