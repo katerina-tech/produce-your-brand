@@ -12,7 +12,11 @@
 
 # 0 — Selection round: run of show
 
-**Thursday 16:30 · 5 minutes · 3 speakers — Katerina, Sebastian, Stefan.**
+**Thursday 16:30 · 5 minutes · 3 speakers — Katerina (AI engineer), Sebastian (data scientist), Stefan (AI engineer).**
+
+Two AI engineers and a data scientist is exactly the shape of a team that ships a
+data product in a weekend, so each introduction names the role and then the part of
+the 48 hours it owns.
 
 The judges are picking *a team to send to Berlin*, not grading a business plan.
 They are asking two things: do I understand this in the first twenty seconds, and
@@ -36,10 +40,15 @@ Nobody says "agent", "graph", "RAG", "pipeline" or "LLM" on stage. Not once.
 | 0:00 | Katerina | What it is — the sentence, then the boundary line | 30 s |
 | 0:30 | Katerina | Why it is hard — four unknowns, then the print shop quote | 30 s |
 | 1:00 | Katerina | **Live demo** — four beats on the deployed product | 90 s |
-| 2:30 | Sebastian | Who I am — strength, proof, what I own in the 48 hours | 30 s |
-| 3:00 | Stefan | Who I am — same beats, different ownership | 30 s |
-| 3:30 | Sebastian *or* Stefan | The concept and the close — ends on the one sentence | 60 s |
-| 4:30 | — | Buffer, deliberately empty | 30 s |
+| 2:30 | Sebastian | Who I am, then: the moat is the supplier data and I own it | 30 s |
+| 3:00 | Stefan | Who I am → why the model never owns a fact → Berlin → the close | 80 s |
+| 4:20 | — | Buffer, deliberately empty | 40 s |
+
+**Stefan speaks twice in a row on purpose.** His introduction runs straight into the
+closing argument, so the pitch has **two handoffs instead of three** — and handoffs are
+where three-person pitches stall. It also puts each argument with the person whose job
+it is: Sebastian on why the data is defensible, Stefan on why the system cannot invent
+a fact.
 
 ## The lines
 
@@ -60,22 +69,29 @@ that releases hydrogen chloride, and it cites the document."* Then one supplier'
 score breakdown — *"six factors, each with a reason. This is the screen ChatGPT
 cannot produce."* Handoff: *"The two people who built this with me — Sebastian."*
 
-**Sebastian and Stefan, 30 s each.** Three beats, ten seconds each: what you are
-strong at, one concrete thing that proves it (with a number if you have one), and
-**what you own in the 48 hours**. The third beat matters most and the two of you must
-not overlap. Not a CV, not a stack list, nothing that any engineer in the room could
-also say.
+**Both introductions.** Three beats, ten seconds each: what you are strong at, one
+concrete thing that proves it (with a number if you have one), and **what you own in
+the 48 hours**. Not a CV, not a stack list, nothing that any engineer in the room could
+also say. The split is assigned, so the two cannot collide:
 
-**The close, 3:30–4:30.** Why it holds: *"the model only handles language. Every
+- **Sebastian — data scientist** owns real Berlin supplier data. He closes his 30
+  seconds with the argument only he can make: *"that data is the whole moat. The print
+  shop we interviewed told us their pricing cannot be scraped — it sits in business
+  logic that is not public. So whoever collects it properly, by hand, owns it."*
+- **Stefan — AI engineer** owns sending the requests for quotation and parsing the
+  free-text replies back into structure.
+
+**Stefan, 3:00–4:20.** After his introduction, why it holds — his territory as the
+AI engineer, so he says it as such: *"the model only handles language. Every
 number and every fact is owned by code — our scoring has zero AI in it, checked
 automatically on every build. Same input, same answer, every time. That is not about
 purity: a supplier will only pay for leads from a system that cannot misrepresent
 what they can do."* Then the hackathon plan, which is the strongest thing we say in a
 round about execution: *"We are not bringing an idea. The hard part is built,
 deployed, and covered by 309 tests. In 48 hours we close the loop: real Berlin
-suppliers in the database, requests for quotation actually sent, replies parsed back
-into one comparison. Right now we give you an answer. After Berlin we give you a
-quote."* Then the final line, and then stop:
+Sebastian gets real Berlin suppliers in, I get requests for quotation going out and
+the replies parsed back into one comparison. Right now we give you an answer. After
+Berlin we give you a quote."* Then the final line, and then stop:
 
 > *"You describe what you want made. We tell you if it is possible, how to make it,
 > and who can make it. Send us to Berlin and we will make it a transaction."*
@@ -85,10 +101,10 @@ quote."* Then the final line, and then stop:
 1. **Rehearse the two handoffs, twice.** Non-negotiable — handoffs are where
    three-person pitches stall, and each costs about five seconds.
 2. **One laptop, one browser.** Katerina drives throughout; the demo never changes hands.
-3. **Decide who closes at 3:30** — one name, and that person says the final sentence
-   out loud three times beforehand.
-4. **Agree the 48-hour split** so the two introductions do not overlap. Suggested: one
-   owns real supplier data, one owns sending RFQs and parsing replies.
+3. **Stefan says the final sentence out loud three times.** He closes, so the last
+   line has to come out clean without looking at anything.
+4. **Both engineers confirm the 48-hour split out loud**, phrased the same way, so the
+   two introductions match rather than merely avoid each other.
 5. **Second tab with a finished project open**, in case the demo stalls. Never debug
    in front of judges.
 6. **One warm-up run from the venue**, 15 minutes before.
