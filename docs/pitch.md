@@ -166,13 +166,13 @@ Live product, not a mockup: **produceyourstuff.up.railway.app**
 
 ### Path to €5,000 MRR
 
-**€5,000 ÷ €45 ≈ 111 orders/month → ~555 qualified leads → ~18 leads per working day.**
+**€5,000 ÷ €45 ≈ 111 orders/month → ~555 qualified leads/month → ~25 per working day** (22 working days).
 
-**This is the number to remember.** Not thousands of leads — **18 a day**, because the success fee carries roughly two-thirds of the revenue.
+**This is the number to remember.** Not thousands of leads — **about 25 a working day**, because the success fee carries roughly two-thirds of the revenue.
 
 **Compute never becomes the constraint.** At $0.0011 per request, €5,000 of monthly revenue consumes about **€5 of inference**. The constraint is supplier data and distribution — which is what we would use an accelerator for.
 
-*Speaker: slide 7 is the deck. If you only get one slide, make it this one. Lead with "18 leads a day".*
+*Speaker: slide 7 is the deck. If you only get one slide, make it this one. Lead with "25 leads a working day".*
 
 ---
 
@@ -267,7 +267,7 @@ Judges reward clarity and a working demo, not completeness.
 *"ChatGPT explains techniques. It cannot rate a supplier, cannot tell you a minimum order, and answers differently every time you rephrase. Our scoring is arithmetic — same input, same answer, every factor auditable. That quote is from a real print shop we interviewed."*
 
 ### H5 — The money (20s)
-**€3 per lead + 3% success fee. Compute costs $0.0011 per request — about 99.9% gross margin. €5,000 a month is 18 qualified leads a day.**
+**€3 per lead + 3% success fee. Compute costs $0.0011 per request — about 99.9% gross margin. €5,000 a month is ~25 qualified leads a working day.**
 
 **Fallback:** have a completed project open in a second tab. If the API stalls, switch and keep talking. **Never debug in front of judges.**
 
@@ -277,5 +277,5 @@ Judges reward clarity and a working demo, not completeness.
 
 1. **⚠️ Put $5 on OpenRouter.** The demo works right now on a free daily allowance that can run out mid-pitch. This is the single largest avoidable risk today
 2. **Pre-load a completed project** in a second browser tab as a fallback
-3. **Rehearse slide 7 out loud.** "18 leads a day" is the line that has to land
+3. **Rehearse slide 7 out loud.** "25 leads a working day" is the line that has to land
 4. **Practise saying "we have no paying customers yet"** without flinching — it is followed by "and here is the 30-day plan to change that"
