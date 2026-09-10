@@ -58,7 +58,7 @@ Live product, not a mockup: **produceyourstuff.up.railway.app**
 **Two things changed and made this buildable now:**
 
 1. **Language models can finally turn messy free text into a reliable typed brief** — the step that used to require a human account manager.
-2. **Structured feasibility reasoning is now cheap.** Our full pipeline costs **$0.0011 per request** **[M][D]**. Two years ago that arithmetic did not work.
+2. **Structured feasibility reasoning is now cheap.** Our full pipeline costs **$0.0096 per request on gpt-4o** — the model the live demo runs — or **$0.0011 on gpt-4o-mini** **[M][D]**. Two years ago that arithmetic did not work.
 
 **The direct quote from our interview, on the differentiator:**
 
@@ -155,14 +155,15 @@ Live product, not a mockup: **produceyourstuff.up.railway.app**
 | Leads per converted order | 5 (20% conversion) |
 | Average order value | €1,000 |
 | Commission taken | 3% (midpoint of the quoted range) |
+| Model priced | gpt-4o — the deployed default, not the cheap one |
 
 | Per 5 leads delivered | |
 |---|---|
 | Lead fees — 5 × €3 | €15 |
 | Success fee — 1 × €1,000 × 3% | €30 |
 | **Revenue** | **€45** |
-| **Our compute cost** — 5 × $0.0011 | **≈ €0.005** |
-| **Gross margin** | **~99.9%** |
+| **Our compute cost** — 5 × $0.0096 (gpt-4o, as deployed) | **≈ €0.044** |
+| **Gross margin** | **99.90%** |
 
 ### Path to €5,000 MRR
 
@@ -170,7 +171,9 @@ Live product, not a mockup: **produceyourstuff.up.railway.app**
 
 **This is the number to remember.** Not thousands of leads — **about 25 a working day**, because the success fee carries roughly two-thirds of the revenue.
 
-**Compute never becomes the constraint.** At $0.0011 per request, €5,000 of monthly revenue consumes about **€5 of inference**. The constraint is supplier data and distribution — which is what we would use an accelerator for.
+**Compute never becomes the constraint.** At the deployed gpt-4o price, €5,000 of monthly revenue consumes about **€4.90 of inference** — and about **€0.56** if we switch to gpt-4o-mini, which the code already supports. The constraint is supplier data and distribution — which is what we would use an accelerator for.
+
+*We quote the expensive model on purpose. The margin survives it, so nobody has to take the cheap number on trust.*
 
 *Speaker: slide 7 is the deck. If you only get one slide, make it this one. Lead with "25 leads a working day".*
 
@@ -267,7 +270,7 @@ Judges reward clarity and a working demo, not completeness.
 *"ChatGPT explains techniques. It cannot rate a supplier, cannot tell you a minimum order, and answers differently every time you rephrase. Our scoring is arithmetic — same input, same answer, every factor auditable. That quote is from a real print shop we interviewed."*
 
 ### H5 — The money (20s)
-**€3 per lead + 3% success fee. Compute costs $0.0011 per request — about 99.9% gross margin. €5,000 a month is ~25 qualified leads a working day.**
+**€3 per lead + 3% success fee. Compute costs $0.0096 per request on the model you just watched — 99.9% gross margin. €5,000 a month is ~25 qualified leads a working day.**
 
 **Fallback:** have a completed project open in a second tab. If the API stalls, switch and keep talking. **Never debug in front of judges.**
 
@@ -275,7 +278,7 @@ Judges reward clarity and a working demo, not completeness.
 
 # Before you present — 15 minutes of work
 
-1. **⚠️ Put $5 on OpenRouter.** The demo works right now on a free daily allowance that can run out mid-pitch. This is the single largest avoidable risk today
+1. **Run the demo once from the venue, ~15 minutes before.** The API budget is confirmed healthy ($34.50 of $35 left, paid model verified serving), so the real risks are venue wifi and a cold container — one warm-up run removes both
 2. **Pre-load a completed project** in a second browser tab as a fallback
 3. **Rehearse slide 7 out loud.** "25 leads a working day" is the line that has to land
 4. **Practise saying "we have no paying customers yet"** without flinching — it is followed by "and here is the 30-day plan to change that"
