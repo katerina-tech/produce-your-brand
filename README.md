@@ -202,6 +202,8 @@ flowchart TB
     GRAPH --> CKPT
 ```
 
+Five Mermaid views of the system - the workflow graph, layer dependencies, LLM-vs-code ownership, the retrieval decision, and the pause/resume mechanics - are in [docs/diagrams.md](docs/diagrams.md).
+
 **Import direction is one-way and enforced:** `api → services → {graph, repositories}`, `graph → {tools, llm, services, security}`, `tools → {services, rag, repositories}`. Nothing imports upward, `graph/` never imports `api/`, and `services/matching.py` imports no LLM code at all (audited). This is what makes the frontend replaceable without touching the agent.
 
 ### Agent vs. deterministic code
@@ -522,6 +524,7 @@ frontend/
 docs/
   architecture.md        # the approved design
   deploy-railway.md      # how the live deployment is set up
+  diagrams.md            # 5 Mermaid views of the system
   eval.md                # generated behavioural eval results
   presentation.md        # capstone presentation (SCR) + anticipated questions
   showcase.md            # copy/paste text for the showcase submission
