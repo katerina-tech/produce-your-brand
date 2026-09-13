@@ -360,7 +360,7 @@ export default function MarketingPage() {
           <div className="flex items-center gap-2.5">
             <LogoMark size={18} />
             <span className="text-xs text-ink-muted">
-              &copy; 2026 Produce Your Brand GmbH · Berlin
+              &copy; 2026 Produce Your Brand · Berlin
             </span>
           </div>
           <div className="flex flex-wrap gap-12">
