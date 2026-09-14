@@ -103,6 +103,14 @@ def test_openapi_exposes_exactly_the_intended_surface(api: TestClient) -> None:
         "/api/analytics/feedback",
         "/api/uploads",
         "/api/designs/generate",
+        # Accounts. Deliberately four and no more: sign in, sign up, sign out,
+        # and ask who you are. There is no endpoint to list users, change an
+        # address or delete an account, because nothing in this product needs
+        # one yet and an unused endpoint is only an attack surface.
+        "/api/auth/register",
+        "/api/auth/login",
+        "/api/auth/logout",
+        "/api/auth/me",
     }
 
 

@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS projects (
     stage                TEXT NOT NULL,
     raw_request          TEXT NOT NULL,
     design_upload_id     TEXT,
+    owner_id             TEXT,
     requirement_json     TEXT,
     brief_confirmed      INTEGER NOT NULL DEFAULT 0,
     recommendation_json  TEXT,
@@ -33,6 +34,13 @@ CREATE TABLE IF NOT EXISTS projects (
     rfq_json             TEXT,
     created_at           TEXT NOT NULL,
     updated_at           TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS users (
+    id            TEXT PRIMARY KEY,
+    email         TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at    TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS project_events (
@@ -77,6 +85,14 @@ _MIGRATIONS: tuple[tuple[str, str, str], ...] = (
         "design_upload_id",
         "ALTER TABLE projects ADD COLUMN design_upload_id TEXT",
     ),
+    # Nullable on purpose. Projects created before accounts existed, and every
+    # project created anonymously afterwards, simply have no owner - signing in
+    # is optional, so ownership has to be too.
+    (
+        "projects",
+        "owner_id",
+        "ALTER TABLE projects ADD COLUMN owner_id TEXT",
+    ),
 )
 
 
@@ -98,4 +114,8 @@ def initialize_schema(connection: sqlite3.Connection) -> None:
     with connection:
         connection.executescript(SCHEMA)
     _apply_migrations(connection)
+    # Indexes over migrated columns come last: on a database created before the
+    # column existed, the column is only there once migrations have run.
+    with connection:
+        connection.execute("CREATE INDEX IF NOT EXISTS idx_projects_owner ON projects(owner_id)")
     logger.debug("schema ready", extra={"event": "schema_initialised"})

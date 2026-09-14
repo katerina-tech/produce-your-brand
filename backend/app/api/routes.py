@@ -16,10 +16,12 @@ from __future__ import annotations
 import base64
 import logging
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
 
 from app.api.dto import (
+    AccountResponse,
     CreateProjectRequest,
+    CredentialsRequest,
     FeedbackEntryResponse,
     FeedbackListResponse,
     FeedbackRequest,
@@ -38,7 +40,18 @@ from app.api.dto import (
 )
 from app.config import Settings, get_settings
 from app.llm.factory import ImageProvider
+from app.repositories.user_repo import EmailAlreadyRegistered, UserRepository
 from app.security.uploads import UploadRejectedError, store_upload
+from app.services.auth import (
+    SESSION_COOKIE,
+    AuthError,
+    hash_password,
+    issue_session,
+    normalise_email,
+    read_session,
+    validate_credentials,
+    verify_password,
+)
 from app.services.design_service import DesignGenerationError, generate_design
 from app.services.osm_search import OSMSearchError, OverpassStudioSearch
 from app.services.project_service import (
@@ -63,6 +76,25 @@ def get_service(request: Request) -> ProjectService:
     if service is None:
         raise HTTPException(status_code=503, detail="The service is not ready.")
     return service
+
+
+def get_users(request: Request) -> UserRepository:
+    """Resolve the account repository built at startup."""
+    repository: UserRepository | None = getattr(request.app.state, "user_repository", None)
+    if repository is None:
+        raise HTTPException(status_code=503, detail="The service is not ready.")
+    return repository
+
+
+def current_user_id(request: Request) -> str | None:
+    """Who is signed in, if anyone.
+
+    Returns ``None`` rather than refusing, because signing in is optional here:
+    an anonymous visitor following a link must reach exactly the product a
+    signed-in one does. Ownership, not access, is what an account buys.
+    """
+    settings: Settings = request.app.state.settings
+    return read_session(request.cookies.get(SESSION_COOKIE), settings)
 
 
 def get_app_settings(request: Request) -> Settings:
@@ -366,4 +398,93 @@ def list_feedback(service: ProjectService = Depends(get_service)) -> FeedbackLis
             )
             for entry in entries
         ]
+    )
+
+
+# ------------------------------------------------------------------ accounts
+
+
+@router.post("/auth/register", response_model=AccountResponse, status_code=201, tags=["auth"])
+def register(
+    body: CredentialsRequest,
+    response: Response,
+    users: UserRepository = Depends(get_users),
+    settings: Settings = Depends(get_app_settings),
+) -> AccountResponse:
+    """Create an account and sign in straight away.
+
+    Registering then being asked to sign in again is a pointless second step,
+    and the credentials were just proven correct by definition.
+    """
+    email = normalise_email(body.email)
+    try:
+        validate_credentials(email, body.password)
+        user = users.create(email, hash_password(body.password))
+    except AuthError as invalid:
+        raise HTTPException(status_code=422, detail=str(invalid)) from invalid
+    except EmailAlreadyRegistered as taken:
+        raise HTTPException(
+            status_code=409, detail="That address already has an account. Sign in instead."
+        ) from taken
+
+    _set_session_cookie(response, user.id, settings)
+    return AccountResponse(id=user.id, email=user.email)
+
+
+@router.post("/auth/login", response_model=AccountResponse, tags=["auth"])
+def login(
+    body: CredentialsRequest,
+    response: Response,
+    users: UserRepository = Depends(get_users),
+    settings: Settings = Depends(get_app_settings),
+) -> AccountResponse:
+    """Sign in. A wrong password and an unknown address answer identically.
+
+    Distinguishing them would tell an attacker which addresses are registered,
+    which is a free list of targets for credential stuffing elsewhere.
+    """
+    email = normalise_email(body.email)
+    found = users.password_hash_for(email)
+    if found is None or not verify_password(body.password, found[1]):
+        raise HTTPException(status_code=401, detail="Wrong email or password.")
+
+    user_id, _ = found
+    _set_session_cookie(response, user_id, settings)
+    user = users.get(user_id)
+    assert user is not None  # the row was just read
+    return AccountResponse(id=user.id, email=user.email)
+
+
+@router.post("/auth/logout", status_code=204, tags=["auth"])
+def logout(response: Response) -> None:
+    """Clear the cookie. Sessions are stateless, so this is the whole of it."""
+    response.delete_cookie(SESSION_COOKIE, path="/")
+
+
+@router.get("/auth/me", response_model=AccountResponse | None, tags=["auth"])
+def me(
+    user_id: str | None = Depends(current_user_id),
+    users: UserRepository = Depends(get_users),
+) -> AccountResponse | None:
+    """Who is signed in. ``null`` for nobody, which is a normal answer here."""
+    if user_id is None:
+        return None
+    user = users.get(user_id)
+    if user is None:
+        # A valid signature for a deleted account. Treat as signed out.
+        return None
+    return AccountResponse(id=user.id, email=user.email)
+
+
+def _set_session_cookie(response: Response, user_id: str, settings: Settings) -> None:
+    """HttpOnly so script cannot read it; Lax so a link from elsewhere still
+    arrives signed in; Secure whenever the deployment is not plain local."""
+    response.set_cookie(
+        SESSION_COOKIE,
+        issue_session(user_id, settings),
+        max_age=settings.session_ttl_seconds,
+        httponly=True,
+        samesite="lax",
+        secure=settings.session_cookie_secure,
+        path="/",
     )

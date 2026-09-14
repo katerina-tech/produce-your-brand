@@ -116,6 +116,15 @@ class Settings(BaseSettings):
     suppliers_file: Path = BACKEND_ROOT / "data" / "suppliers.json"
     offers_file: Path = BACKEND_ROOT / "data" / "offers.json"
     track_records_file: Path = BACKEND_ROOT / "data" / "track_records.json"
+
+    # Accounts. Signing in is optional by design - the demo must stay openable
+    # by anyone following a link - so an unset secret disables sign-in rather
+    # than breaking the app.
+    session_secret: SecretStr = SecretStr("")
+    session_ttl_seconds: int = 60 * 60 * 24 * 14
+    # Off locally so http://localhost keeps working; on everywhere else, because
+    # a session cookie sent over plain http is a session cookie somebody else has.
+    session_cookie_secure: bool = False
     knowledge_dir: Path = BACKEND_ROOT / "data" / "knowledge"
     index_dir: Path = BACKEND_ROOT / "data" / "index"
     upload_dir: Path = BACKEND_ROOT / "data" / "uploads"

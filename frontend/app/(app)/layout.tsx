@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { Logo } from "@/components/Logo";
+import { getAccount } from "@/lib/auth";
 
 /**
  * Chrome for the working app (new project, project detail, dashboard) - as
@@ -9,7 +10,9 @@ import { Logo } from "@/components/Logo";
  * this. Kept as its own layout (route group `(app)`) so the two never fight
  * over the same header/footer.
  */
-export default function AppLayout({ children }: { children: ReactNode }) {
+export default async function AppLayout({ children }: { children: ReactNode }) {
+  const account = await getAccount();
+
   return (
     <>
       <header className="border-b border-line bg-surface">
@@ -26,6 +29,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               className="hidden text-sm font-medium text-ink-soft transition-colors hover:text-ink sm:inline"
             >
               My projects
+            </Link>
+            <Link
+              href="/account"
+              className="hidden text-sm font-medium text-ink-soft transition-colors hover:text-ink sm:inline"
+              title={account ? account.email : "Sign in - optional"}
+            >
+              {account ? account.email.split("@")[0] : "Sign in"}
             </Link>
             <Link
               href="/new"

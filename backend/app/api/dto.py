@@ -271,3 +271,25 @@ class FeedbackListResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     entries: list[FeedbackEntryResponse]
+
+
+class CredentialsRequest(BaseModel):
+    """Sign-in and registration take the same two fields."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    email: str = Field(max_length=320)
+    password: str = Field(max_length=256)
+
+
+class AccountResponse(BaseModel):
+    """What the client is told about the signed-in account.
+
+    The password hash is not here, and there is nothing else on a user record
+    that could leak - the model holds an id, an address and a date.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    email: str
