@@ -35,6 +35,19 @@ from your machine.
    - `PYS_MODEL_NAME` = `openai/gpt-4o-mini` (matches what you're running
      locally - cheaper and enough for structured extraction; the code
      defaults to full `gpt-4o` if you don't set this).
+   - `PYS_SESSION_SECRET` — any long random string. Generate one with
+     `python -c "import secrets; print(secrets.token_urlsafe(32))"`.
+
+     This is what signs session cookies. Leave it unset and the product
+     works exactly as it did before accounts existed - browsing, projects
+     and the whole workflow are untouched - but registering answers 503 and
+     nobody can sign in. `GET /api/health` reports which you have under
+     `checks.sign_in_configured`.
+
+     Changing it later signs everybody out, which is the only thing it
+     breaks; it is not stored anywhere and does not need to be memorable.
+   - `PYS_SESSION_COOKIE_SECURE` = `true` on any deployment served over
+     https, so the session cookie is never sent in clear.
    - Leave everything else at its default for now.
 4. **Settings → Volumes → New Volume**:
    - **Mount path**: `/app/data`
