@@ -65,9 +65,20 @@ ENDPOINTS = (
 USER_AGENT = "produce-your-brand/0.1 (dataset build; contact via the repository)"
 
 
+class TagUnavailableError(RuntimeError):
+    """Every mirror refused this tag. Not the same as the tag being empty."""
+
+
 def _fetch(key: str, value: str) -> list[dict[str, Any]]:
     """One tag, from whichever mirror answers. Overpass is volunteer-run, so
-    this waits between attempts rather than hammering a free service."""
+    this waits between attempts rather than hammering a free service.
+
+    Raises rather than returning an empty list when every mirror fails. The two
+    outcomes look identical in a result set and mean opposite things: "Berlin
+    has no sign makers" is a finding, and "Overpass rate-limited us" is a gap.
+    A survey that reports the second as the first is worse than one that admits
+    it came back short.
+    """
     query = (
         f"[out:json][timeout:90];"
         f'(node["{key}"="{value}"]({BERLIN_BBOX});way["{key}"="{value}"]({BERLIN_BBOX}););'
@@ -88,7 +99,7 @@ def _fetch(key: str, value: str) -> list[dict[str, Any]]:
             except Exception as error:
                 print(f"  {key}={value} via {url.split('/')[2]}: {error}", file=sys.stderr)
                 time.sleep(15)
-    return []
+    raise TagUnavailableError(f"{key}={value}")
 
 
 def _tag(tags: dict[str, str], *keys: str) -> str | None:
@@ -135,8 +146,16 @@ def _record(element: dict[str, Any], method: str) -> dict[str, Any] | None:
 def main() -> int:
     collected: dict[str, dict[str, Any]] = {}
 
+    missed: list[str] = []
+
     for (key, value), method in TAG_MEANS.items():
-        elements = _fetch(key, value)
+        try:
+            elements = _fetch(key, value)
+        except TagUnavailableError:
+            missed.append(f"{key}={value}")
+            print(f"{key}={value:14} -> NOT FETCHED", file=sys.stderr)
+            time.sleep(8)
+            continue
         for element in elements:
             record = _record(element, method)
             if record is None:
@@ -157,6 +176,7 @@ def main() -> int:
                 "source": "https://overpass-api.de",
                 "area": "Berlin",
                 "verified": False,
+                "incomplete_categories": missed,
                 "note": (
                     "Real businesses with the contact details they published "
                     "themselves. Capabilities are NOT included: OpenStreetMap "
@@ -173,6 +193,12 @@ def main() -> int:
 
     print(f"\n{len(partners)} real Berlin businesses", file=sys.stderr)
     print(f"{len(contactable)} of them publish an email address", file=sys.stderr)
+    if missed:
+        print(
+            f"INCOMPLETE: {', '.join(missed)} could not be fetched and are missing "
+            "from this file entirely - re-run later rather than reading a gap as a finding.",
+            file=sys.stderr,
+        )
     print(f"written to {OUTPUT}", file=sys.stderr)
     return 0
 
