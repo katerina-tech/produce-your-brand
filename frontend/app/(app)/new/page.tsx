@@ -1,10 +1,12 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 
 import { BackLink, Button, Card, CardHeader, Notice } from "@/components/ui";
 import { DesignAttachment } from "@/components/DesignAttachment";
+import { VoiceDictation } from "@/components/VoiceDictation";
 import { startProject } from "@/lib/actions";
+import { appendDictation } from "@/lib/dictation";
 import type { ActionResult } from "@/lib/actions";
 
 const EXAMPLE =
@@ -16,6 +18,23 @@ export default function NewProjectPage() {
     {},
   );
   const [designUploadId, setDesignUploadId] = useState<string | null>(null);
+  const request = useRef<HTMLTextAreaElement>(null);
+
+  /**
+   * Put a dictated phrase into the box.
+   *
+   * Written through the ref rather than by making the textarea controlled:
+   * the form reads its value from FormData on submit, and turning it into
+   * React state would mean re-rendering the whole form on every keystroke to
+   * buy nothing. Dictation appends to whatever is already there, so speaking
+   * and typing can be mixed in either order.
+   */
+  function dictate(fragment: string) {
+    const box = request.current;
+    if (!box) return;
+    box.value = appendDictation(box.value, fragment);
+    box.scrollTop = box.scrollHeight;
+  }
 
   return (
     <div className="space-y-6">
@@ -48,6 +67,7 @@ export default function NewProjectPage() {
             Describe the job
           </label>
           <textarea
+            ref={request}
             id="request_text"
             name="request_text"
             rows={6}
@@ -57,6 +77,8 @@ export default function NewProjectPage() {
             placeholder={EXAMPLE}
             className="w-full resize-y rounded-lg border border-line-strong bg-surface px-3.5 py-3 text-sm leading-relaxed placeholder:text-ink-muted focus:border-accent focus:outline-none"
           />
+
+          <VoiceDictation onText={dictate} label="Dictate your request" />
 
           <div className="border-t border-line pt-5">
             <DesignAttachment onChange={setDesignUploadId} />
