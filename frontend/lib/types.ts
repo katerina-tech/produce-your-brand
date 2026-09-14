@@ -52,6 +52,26 @@ export interface FactorScore {
   explanation: string;
 }
 
+/** A supplier's demonstrated history: ratings and completed orders.
+ *
+ * Shown next to the score and deliberately not inside it. A rating resting on
+ * three reviews must not be able to reorder a ranking whose whole claim is that
+ * six stated capability factors explain it - so the server attaches this after
+ * scoring and the client renders it as separate evidence.
+ *
+ * Every field is nullable because "no history yet" is a real state for a new
+ * partner and has to read as information, never as a bad score. */
+export interface TrackRecord {
+  supplier_id: string;
+  average_rating: number | null;
+  rating_count: number;
+  completed_orders: number;
+  last_completed_on: string | null;
+  is_demo: boolean;
+  source: string | null;
+  last_updated: string | null;
+}
+
 export interface MatchResult {
   supplier_id: string;
   supplier_name: string;
@@ -61,6 +81,7 @@ export interface MatchResult {
   factors: FactorScore[];
   risk_flags: string[];
   ai_explanation: string | null;
+  track_record: TrackRecord | null;
 }
 
 /** One supplier, framed for one specific buyer question ("cheapest?",

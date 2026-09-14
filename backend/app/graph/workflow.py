@@ -38,6 +38,7 @@ from app.rag.retriever import KnowledgeRetriever
 from app.rag.store import KnowledgeStore
 from app.repositories.offer_repo import OfferRepository
 from app.repositories.supplier_repo import SupplierRepository
+from app.repositories.track_record_repo import TrackRecordRepository
 from app.security.guard import build_guard
 from app.tools.registry import ProductionTools
 
@@ -308,7 +309,9 @@ def production_deps(settings: Settings | None = None, today: date | None = None)
     return GraphDeps(
         provider=provider,
         tools=ProductionTools(
-            SupplierRepository(settings.suppliers_file), OfferRepository(settings.offers_file)
+            SupplierRepository(settings.suppliers_file),
+            OfferRepository(settings.offers_file),
+            TrackRecordRepository(settings.track_records_file),
         ),
         retriever=KnowledgeRetriever(store, provider, k=settings.retrieval_k),
         screen_untrusted=guard.screen,

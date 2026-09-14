@@ -25,6 +25,7 @@ from app.domain.supplier import Supplier, SupplierQuery
 from app.logging_config import Event, log_event
 from app.repositories.offer_repo import OfferRepository
 from app.repositories.supplier_repo import SupplierRepository
+from app.repositories.track_record_repo import TrackRecordRepository
 from app.services import matching, recommendations
 
 logger = logging.getLogger(__name__)
@@ -87,10 +88,14 @@ class ProductionTools:
     tested supplier matching keeps working unchanged)."""
 
     def __init__(
-        self, suppliers: SupplierRepository, offers: OfferRepository | None = None
+        self,
+        suppliers: SupplierRepository,
+        offers: OfferRepository | None = None,
+        track_records: TrackRecordRepository | None = None,
     ) -> None:
         self._suppliers = suppliers
         self._offers = offers
+        self._track_records = track_records
 
     def search_suppliers(
         self,
@@ -205,10 +210,25 @@ class ProductionTools:
             top_score=outcome.top[0].score if outcome.top else None,
         )
         return MatchCalculation(
-            matches=outcome.top,
+            matches=[self._with_track_record(match) for match in outcome.top],
             excluded=outcome.excluded,
             considered_count=outcome.considered_count,
         )
+
+    def _with_track_record(self, match: MatchResult) -> MatchResult:
+        """Attach the supplier's history to an already-scored result.
+
+        Deliberately after ranking rather than during it. The score and the
+        order come from :mod:`app.services.matching`, which never sees this
+        data, so attaching a track record cannot change who came first - it
+        only adds something for the reader to weigh for themselves.
+        """
+        if self._track_records is None:
+            return match
+        record = self._track_records.for_supplier(match.supplier_id)
+        if record is None:
+            return match
+        return match.model_copy(update={"track_record": record})
 
     def resolve_supplier(self, supplier_id: str) -> Supplier | None:
         """Resolve an id to a full record, or None if we do not have it."""

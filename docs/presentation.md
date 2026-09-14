@@ -23,7 +23,7 @@ Nothing in this deck is rounded in the project's favour. Where a figure is weak,
 ### An AI agent that turns a plain-English production request into a supplier-ready quotation — without inventing a single supplier fact
 
 Ekaterina Kuznetsova · AI Engineering Capstone · Turing College
-Live: produceyourstuff.up.railway.app · 46 commits · 322 tests
+Live: produceyourstuff.up.railway.app · 46 commits · 336 tests
 
 *Design note: full-bleed charcoal `#191C23`, cobalt `#3240EB` accent on "without inventing". Logo top-left. Nothing else on this slide.*
 
@@ -39,7 +39,7 @@ Live: produceyourstuff.up.railway.app · 46 commits · 322 tests
 
 **What was built.** One LangGraph workflow, five human interrupt points, four approval gates. An LLM extracts a typed brief and reasons about production method against a curated knowledge base. **Supplier filtering and scoring run in pure Python with zero LLM imports** — enforced by an automated architecture audit.
 
-**Why it holds up.** 322 automated tests, none calling a live model. A 19-case behavioural eval, all passing, whose results table is machine-generated and refuses to publish while any case fails.
+**Why it holds up.** 336 automated tests, none calling a live model. A 19-case behavioural eval, all passing, whose results table is machine-generated and refuses to publish while any case fails.
 
 **What it costs to run.** **$0.0011 per complete project** — roughly 929 projects per dollar. Total development spend across the entire build: **$0.199**. **[M][D]**
 
@@ -340,7 +340,7 @@ Arithmetic shown so it can be checked.
 
 ---
 
-# SLIDE 11 — Evidence: 322 tests, 19/19 behavioural cases, and a machine-generated results table
+# SLIDE 11 — Evidence: 336 tests, 19/19 behavioural cases, and a machine-generated results table
 
 ## Verification designed so a published claim cannot drift from the code
 

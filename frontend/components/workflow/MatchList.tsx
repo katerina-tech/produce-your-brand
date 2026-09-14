@@ -12,7 +12,12 @@ import {
   VerdictMark,
 } from "@/components/ui";
 import { selectSupplier } from "@/lib/actions";
-import type { MatchResult, RecommendationPerspective, StagePayload } from "@/lib/types";
+import type {
+  MatchResult,
+  RecommendationPerspective,
+  StagePayload,
+  TrackRecord,
+} from "@/lib/types";
 import { titleise } from "@/lib/types";
 
 import { NearbyStudios } from "./NearbyStudios";
@@ -54,6 +59,67 @@ function PerspectiveCard({
  * number. Every value shown here was computed server-side in plain Python; the
  * model only wrote the prose paragraph, and that is labelled as such.
  */
+/** A supplier's history, rendered beside the score and never folded into it.
+ *
+ * Three states, all of them real and all of them different:
+ *   - ratings and completed orders, shown with the count they rest on, because
+ *     "4.9" from two reviews and from two hundred are not the same claim;
+ *   - a partner with no history yet, said in words rather than as zeroes,
+ *     which would read as a bad supplier rather than a new one;
+ *   - no record at all, which renders nothing.
+ *
+ * Built after the customer interview in which the print shop named ratings and
+ * proven past quotes as the two things that would make this worth using. */
+function TrackRecordRow({ record }: { record: TrackRecord | null }) {
+  if (!record) return null;
+
+  const hasRatings = record.average_rating !== null && record.rating_count > 0;
+  const isEmpty = !hasRatings && record.completed_orders === 0;
+
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-3.5">
+      {hasRatings ? (
+        <span className="flex items-baseline gap-1.5">
+          <span aria-hidden className="text-accent">★</span>
+          <span className="tabular text-sm font-semibold">
+            {record.average_rating!.toFixed(1)}
+            <span className="font-normal text-ink-muted">/5</span>
+          </span>
+          <span className="text-xs text-ink-muted">
+            from {record.rating_count} {record.rating_count === 1 ? "rating" : "ratings"}
+          </span>
+        </span>
+      ) : null}
+
+      {record.completed_orders > 0 ? (
+        <span className="text-sm">
+          <span className="tabular font-semibold">{record.completed_orders}</span>{" "}
+          <span className="text-ink-muted">
+            completed {record.completed_orders === 1 ? "order" : "orders"}
+          </span>
+        </span>
+      ) : null}
+
+      {isEmpty ? (
+        <span className="text-sm text-ink-muted">
+          New partner &mdash; no completed orders yet
+        </span>
+      ) : null}
+
+      {record.is_demo ? (
+        <span className="rounded border border-line px-1.5 py-0.5 text-[11px] uppercase tracking-wide text-ink-muted">
+          Sample data
+        </span>
+      ) : null}
+
+      <span className="w-full text-xs text-ink-muted">
+        Shown for context. Ratings never affect the score above &mdash; the ranking
+        stays explainable from the six capability factors alone.
+      </span>
+    </div>
+  );
+}
+
 function MatchCard({
   match,
   rank,
@@ -92,6 +158,8 @@ function MatchCard({
             {pending ? "Selecting…" : "Select partner"}
           </Button>
         </div>
+
+        <TrackRecordRow record={match.track_record} />
 
         {match.risk_flags.length > 0 ? (
           <ul className="mt-4 space-y-1.5">

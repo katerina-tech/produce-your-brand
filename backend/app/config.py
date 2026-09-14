@@ -115,6 +115,7 @@ class Settings(BaseSettings):
     data_dir: Path = BACKEND_ROOT / "data"
     suppliers_file: Path = BACKEND_ROOT / "data" / "suppliers.json"
     offers_file: Path = BACKEND_ROOT / "data" / "offers.json"
+    track_records_file: Path = BACKEND_ROOT / "data" / "track_records.json"
     knowledge_dir: Path = BACKEND_ROOT / "data" / "knowledge"
     index_dir: Path = BACKEND_ROOT / "data" / "index"
     upload_dir: Path = BACKEND_ROOT / "data" / "uploads"

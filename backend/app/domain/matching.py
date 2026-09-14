@@ -11,6 +11,8 @@ from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.domain.track_record import TrackRecord
+
 
 class MatchFactor(StrEnum):
     """The six weighted factors, with their maximum point values in WEIGHTS."""
@@ -71,6 +73,14 @@ class MatchResult(BaseModel):
     exclusion_reason: str | None = None
     factors: tuple[FactorScore, ...]
     risk_flags: tuple[str, ...] = ()
+    track_record: TrackRecord | None = Field(
+        default=None,
+        description=(
+            "The supplier's demonstrated history. Displayed beside the score and "
+            "deliberately absent from it - see app.domain.track_record for why a "
+            "rating must not be able to reorder a ranking."
+        ),
+    )
     ai_explanation: str | None = Field(
         default=None,
         description="Optional LLM prose. The only LLM-written field on this model.",

@@ -1,0 +1,217 @@
+{
+  "_provenance": {
+    "data_source": "synthetic",
+    "note": "Curated SYNTHETIC track records for the MVP. No real customer has rated any supplier and no order has been completed through the platform yet. Every record carries is_demo=true and the interface says so wherever a rating is shown. Added after the customer-discovery interview, in which the print shop named ratings ('ChatGPT macht keine Bewertungen') and proven past quotes ('erfolgreiche Angebote') as the signals that would make the product worth using.",
+    "generated_by": "deterministic seed, see git history"
+  },
+  "track_records": [
+    {
+      "supplier_id": "syn-001",
+      "average_rating": 4.8,
+      "rating_count": 34,
+      "completed_orders": 52,
+      "last_completed_on": "2026-08-11",
+      "is_demo": true,
+      "source": "seeded sample - no real order history exists yet",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-002",
+      "average_rating": 4.6,
+      "rating_count": 21,
+      "completed_orders": 38,
+      "last_completed_on": "2026-08-12",
+      "is_demo": true,
+      "source": "seeded sample - no real order history exists yet",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-003",
+      "average_rating": 4.9,
+      "rating_count": 17,
+      "completed_orders": 29,
+      "last_completed_on": "2026-08-13",
+      "is_demo": true,
+      "source": "seeded sample - no real order history exists yet",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-004",
+      "average_rating": 4.4,
+      "rating_count": 28,
+      "completed_orders": 44,
+      "last_completed_on": "2026-08-14",
+      "is_demo": true,
+      "source": "seeded sample - no real order history exists yet",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-005",
+      "average_rating": 4.7,
+      "rating_count": 12,
+      "completed_orders": 23,
+      "last_completed_on": "2026-08-15",
+      "is_demo": true,
+      "source": "seeded sample - no real order history exists yet",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-006",
+      "average_rating": 4.5,
+      "rating_count": 19,
+      "completed_orders": 31,
+      "last_completed_on": "2026-08-16",
+      "is_demo": true,
+      "source": "seeded sample - no real order history exists yet",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-007",
+      "average_rating": 4.3,
+      "rating_count": 26,
+      "completed_orders": 40,
+      "last_completed_on": "2026-08-17",
+      "is_demo": true,
+      "source": "seeded sample - no real order history exists yet",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-008",
+      "average_rating": 4.9,
+      "rating_count": 11,
+      "completed_orders": 18,
+      "last_completed_on": "2026-08-18",
+      "is_demo": true,
+      "source": "seeded sample - no real order history exists yet",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-009",
+      "average_rating": 4.5,
+      "rating_count": 3,
+      "completed_orders": 4,
+      "last_completed_on": "2026-07-14",
+      "is_demo": true,
+      "source": "seeded sample - no real order history exists yet",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-010",
+      "average_rating": 5.0,
+      "rating_count": 1,
+      "completed_orders": 1,
+      "last_completed_on": "2026-07-15",
+      "is_demo": true,
+      "source": "seeded sample - no real order history exists yet",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-011",
+      "average_rating": 4.0,
+      "rating_count": 2,
+      "completed_orders": 3,
+      "last_completed_on": "2026-07-16",
+      "is_demo": true,
+      "source": "seeded sample - no real order history exists yet",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-012",
+      "average_rating": 3.8,
+      "rating_count": 4,
+      "completed_orders": 6,
+      "last_completed_on": "2026-07-17",
+      "is_demo": true,
+      "source": "seeded sample - no real order history exists yet",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-013",
+      "average_rating": 4.7,
+      "rating_count": 3,
+      "completed_orders": 5,
+      "last_completed_on": "2026-07-18",
+      "is_demo": true,
+      "source": "seeded sample - no real order history exists yet",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-014",
+      "average_rating": 4.2,
+      "rating_count": 2,
+      "completed_orders": 2,
+      "last_completed_on": "2026-07-19",
+      "is_demo": true,
+      "source": "seeded sample - no real order history exists yet",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-015",
+      "average_rating": 5.0,
+      "rating_count": 2,
+      "completed_orders": 3,
+      "last_completed_on": "2026-07-20",
+      "is_demo": true,
+      "source": "seeded sample - no real order history exists yet",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-016",
+      "average_rating": 3.9,
+      "rating_count": 5,
+      "completed_orders": 7,
+      "last_completed_on": "2026-07-21",
+      "is_demo": true,
+      "source": "seeded sample - no real order history exists yet",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-017",
+      "is_demo": true,
+      "source": "seeded sample - no history recorded",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-018",
+      "is_demo": true,
+      "source": "seeded sample - no history recorded",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-019",
+      "is_demo": true,
+      "source": "seeded sample - no history recorded",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-020",
+      "is_demo": true,
+      "source": "seeded sample - no history recorded",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-021",
+      "is_demo": true,
+      "source": "seeded sample - no history recorded",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-022",
+      "is_demo": true,
+      "source": "seeded sample - no history recorded",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-023",
+      "is_demo": true,
+      "source": "seeded sample - no history recorded",
+      "last_updated": "2026-09-01"
+    },
+    {
+      "supplier_id": "syn-024",
+      "is_demo": true,
+      "source": "seeded sample - no history recorded",
+      "last_updated": "2026-09-01"
+    }
+  ]
+}
