@@ -17,6 +17,7 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
+from langgraph.errors import GraphInterrupt
 
 from app.config import Settings
 from app.observability import tracing
@@ -157,3 +158,127 @@ def test_the_eu_host_is_the_default() -> None:
     """Traces from a Berlin product describing Berlin businesses should not
     leave the EU without somebody deciding that on purpose."""
     assert Settings().langfuse_host == "https://cloud.langfuse.com"
+
+
+# ------------------------------------------- a provider that actually works
+
+# Everything above this line exercises tracing while it is off or while the
+# provider is broken. Neither state can catch the failure these tests exist
+# for, because when tracing is off the wrapper is a passthrough - which is
+# exactly how a swallowed GraphInterrupt reached production while
+# test_an_exception_inside_a_span_still_propagates sat here passing.
+
+
+class RecordingObservation:
+    def update(self, **_: Any) -> None:
+        return None
+
+
+class RecordingClient:
+    """A Langfuse-shaped client that works, and records how it was closed."""
+
+    def __init__(self, *, suppresses: bool = False, fails_to_close: bool = False) -> None:
+        self.opened: list[str] = []
+        self.closed_with: list[type[BaseException] | None] = []
+        self._suppresses = suppresses
+        self._fails_to_close = fails_to_close
+
+    def start_as_current_observation(self, *, name: str, as_type: str, **_: Any) -> Any:
+        self.opened.append(f"{as_type}:{name}")
+        client = self
+
+        class _Manager:
+            def __enter__(self) -> RecordingObservation:
+                return RecordingObservation()
+
+            def __exit__(self, kind: Any, value: Any, traceback: Any) -> bool:
+                client.closed_with.append(kind)
+                if client._fails_to_close:
+                    raise RuntimeError("langfuse failed while closing the span")
+                return client._suppresses
+
+        return _Manager()
+
+    def flush(self) -> None:
+        return None
+
+
+def _with_tracing(monkeypatch: pytest.MonkeyPatch, client: RecordingClient) -> RecordingClient:
+    settings = Settings(langfuse_public_key="pk-lf-x", langfuse_secret_key="sk-lf-x")
+    monkeypatch.setattr(tracing, "get_settings", lambda: settings)
+    monkeypatch.setattr(tracing, "_resolve_client", lambda _settings: client)
+    return client
+
+
+def test_a_live_span_opens_and_closes_cleanly(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = _with_tracing(monkeypatch, RecordingClient())
+
+    with tracing.span("extract_requirement") as observation:
+        assert observation is not None
+
+    assert client.opened == ["span:extract_requirement"]
+    assert client.closed_with == [None]
+
+
+def test_a_graph_interrupt_passes_straight_through_a_live_span(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The failure this module was shipped with.
+
+    ``interrupt()`` raises ``GraphInterrupt`` to pause at a human gate - it is
+    how the product asks a question, not a thing that went wrong. Catching it
+    here reported a healthy pause as a tracing failure and yielded a second
+    time, and Python answers a second yield with "generator didn't stop after
+    throw()". Every question the agent asked became a 500, wherever tracing
+    was configured.
+    """
+    client = _with_tracing(monkeypatch, RecordingClient())
+    raised = GraphInterrupt(())
+
+    with pytest.raises(GraphInterrupt) as caught, tracing.span("ask_clarifying_question"):
+        raise raised
+
+    assert caught.value is raised, "the same exception, not a replacement"
+    assert client.closed_with == [GraphInterrupt], "and the span was still closed"
+
+
+def test_an_ordinary_exception_passes_through_a_live_span(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = _with_tracing(monkeypatch, RecordingClient())
+
+    with pytest.raises(ValueError, match="node failed"), tracing.span("match_suppliers"):
+        raise ValueError("node failed")
+
+    assert client.closed_with == [ValueError]
+
+
+def test_a_provider_may_not_suppress_the_body_s_exception(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A provider whose __exit__ returns True is asking to swallow the error.
+    No tracing library gets to decide that the application's exception did not
+    happen."""
+    _with_tracing(monkeypatch, RecordingClient(suppresses=True))
+
+    with pytest.raises(ValueError, match="node failed"), tracing.span("match_suppliers"):
+        raise ValueError("node failed")
+
+
+def test_a_provider_failing_to_close_does_not_replace_the_real_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Two things going wrong at once must not lose the one that matters."""
+    _with_tracing(monkeypatch, RecordingClient(fails_to_close=True))
+
+    with pytest.raises(ValueError, match="node failed"), tracing.span("match_suppliers"):
+        raise ValueError("node failed")
+
+
+def test_a_provider_failing_to_close_a_successful_span_is_invisible(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _with_tracing(monkeypatch, RecordingClient(fails_to_close=True))
+
+    with tracing.span("extract_requirement"):
+        pass  # a failure to close is the provider's problem, not the caller's

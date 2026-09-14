@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from typing import Any
 
 from app.config import Settings, get_settings
@@ -78,34 +78,63 @@ def tracing_active(settings: Settings | None = None) -> bool:
     return _resolve_client(settings or get_settings()) is not None
 
 
+def _note_failure(name: str, error: BaseException) -> None:
+    log_event(
+        logger,
+        Event.TOOL_ERROR,
+        "tracing span failed",
+        level=logging.WARNING,
+        span_name=name,
+        error_type=type(error).__name__,
+    )
+
+
 @contextmanager
 def _observation(name: str, as_type: str, **fields: Any) -> Iterator[Any]:
     """One observation, or nothing at all - the caller cannot tell the difference.
 
     Yields the live span when tracing is on so a caller may attach an output or
-    usage figures, and ``None`` when it is off. Any failure inside the provider
-    is logged once and swallowed; the body of the ``with`` still runs.
+    usage figures, and ``None`` when it is off.
+
+    The distinction this makes is the whole correctness of the module: a
+    failure *of the provider* is swallowed, and a failure *of the body* is not
+    touched at all. Wrapping the ``yield`` in ``except Exception`` collapses
+    those two, and collapsing them broke the product - ``interrupt()`` raises
+    ``GraphInterrupt`` to pause at a human gate, which is control flow rather
+    than an error. Catching it here reported a healthy pause as a tracing
+    failure and then yielded a second time, which Python answers with
+    ``RuntimeError: generator didn't stop after throw()``. Every question the
+    agent asked became a 500, but only where tracing was configured - which is
+    to say only in production.
     """
     client = _resolve_client(get_settings())
     if client is None:
         yield None
         return
 
+    # Entered by hand rather than with ``with``, so that opening, closing and
+    # the body each get the handling they need instead of one shared blanket.
     try:
-        with client.start_as_current_observation(name=name, as_type=as_type, **fields) as obs:
-            yield obs
+        manager = client.start_as_current_observation(name=name, as_type=as_type, **fields)
+        observation = manager.__enter__()
     except Exception as error:
-        # The observation failed to open or to close. The work it wrapped has
-        # either already run or is about to; either way it must not be affected.
-        log_event(
-            logger,
-            Event.TOOL_ERROR,
-            "tracing span failed",
-            level=logging.WARNING,
-            span_name=name,
-            error_type=type(error).__name__,
-        )
+        _note_failure(name, error)
         yield None
+        return
+
+    try:
+        yield observation
+    except BaseException as error:
+        # Close the observation, then let the exception continue exactly as it
+        # was. Its type, message and traceback all survive, and a provider that
+        # returns True from __exit__ does not get to suppress it: no tracing
+        # library may decide that the application's exception did not happen.
+        with suppress(Exception):
+            manager.__exit__(type(error), error, error.__traceback__)
+        raise
+    else:
+        with suppress(Exception):
+            manager.__exit__(None, None, None)
 
 
 @contextmanager

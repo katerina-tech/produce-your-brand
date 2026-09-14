@@ -19,6 +19,7 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.base import empty_checkpoint
 from langgraph.types import Command
 
+from app.config import Settings
 from app.domain.enums import Confidence, ProductCategory, ProductionMethod, Stage
 from app.domain.method import MethodRecommendation
 from app.domain.requirement import ProductionRequirement
@@ -29,6 +30,7 @@ from app.graph.state import (
     initial_state,
 )
 from app.graph.workflow import GraphDeps, checkpointer_for, compile_workflow
+from app.observability import tracing
 from app.repositories.offer_repo import OfferRepository
 from app.repositories.supplier_repo import SupplierRepository
 from app.tools.registry import ProductionTools
@@ -787,3 +789,92 @@ def test_a_file_that_is_not_a_database_is_rebuilt_too(tmp_path: Path) -> None:
 
     assert saver.get_tuple({"configurable": {"thread_id": "x", "checkpoint_ns": ""}}) is None
     assert (tmp_path / "checkpoints.db.unreadable").is_file()
+
+
+# ------------------------------------------------- the gates, while traced
+
+
+def test_the_graph_still_pauses_at_a_gate_while_tracing_is_live(
+    tools: ProductionTools, workflow_factory: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Every node runs inside a tracing span, and a gate leaves that span by
+    raising ``GraphInterrupt``. If the span handles that as a failure, asking a
+    question becomes a crash - which is what shipped, because the whole suite
+    ran with tracing switched off and the wrapper is a passthrough when it is.
+
+    So this runs the real graph with a live recording client: the only
+    arrangement in which the production failure was reachable.
+    """
+    spans: list[str] = []
+
+    class _Observation:
+        def update(self, **_: Any) -> None:
+            return None
+
+    class _Manager:
+        def __init__(self, name: str) -> None:
+            self._name = name
+
+        def __enter__(self) -> _Observation:
+            spans.append(self._name)
+            return _Observation()
+
+        def __exit__(self, *_: Any) -> bool:
+            return False
+
+    class _Client:
+        def start_as_current_observation(self, *, name: str, **_: Any) -> _Manager:
+            return _Manager(name)
+
+        def flush(self) -> None:
+            return None
+
+    settings = Settings(langfuse_public_key="pk-lf-x", langfuse_secret_key="sk-lf-x")
+    monkeypatch.setattr(tracing, "get_settings", lambda: settings)
+    monkeypatch.setattr(tracing, "_resolve_client", lambda _settings: _Client())
+
+    app = workflow_factory(_deps(_scripted(), tools))
+    result = app.invoke(
+        initial_state("p-traced", DEMO_REQUEST, TODAY.isoformat()), _config("t-traced")
+    )
+
+    paused = _interrupt(result)
+    assert paused["stage"] == Stage.BRIEF_REVIEW.value
+    assert spans, "the nodes really did run inside spans"
+
+
+def test_a_traced_clarifying_question_pauses_rather_than_crashing(
+    tools: ProductionTools, workflow_factory: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The exact production path: an incomplete request, so the graph asks."""
+
+    class _Manager:
+        def __enter__(self) -> None:
+            return None
+
+        def __exit__(self, *_: Any) -> bool:
+            return False
+
+    class _Client:
+        def start_as_current_observation(self, **_: Any) -> _Manager:
+            return _Manager()
+
+        def flush(self) -> None:
+            return None
+
+    settings = Settings(langfuse_public_key="pk-lf-x", langfuse_secret_key="sk-lf-x")
+    monkeypatch.setattr(tracing, "get_settings", lambda: settings)
+    monkeypatch.setattr(tracing, "_resolve_client", lambda _settings: _Client())
+
+    incomplete = ProductionRequirement(
+        product="tshirts", quantity=100, customization_description="logo"
+    )
+    app = workflow_factory(_deps(_scripted(ProductionRequirement=[incomplete, incomplete]), tools))
+    result = app.invoke(
+        initial_state("p-traced-q", "i have 100 tshirts with logo", TODAY.isoformat()),
+        _config("t-traced-q"),
+    )
+
+    paused = _interrupt(result)
+    assert paused["stage"] == Stage.CLARIFYING.value
+    assert paused["question"], "and it is a real question, not an empty pause"
