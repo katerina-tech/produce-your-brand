@@ -128,10 +128,16 @@ export default function PrivacyPage() {
           and returned, which includes your project text.
         </p>
         <p>
-          <strong className="font-medium text-ink">OpenStreetMap — but not about you.</strong>{" "}
-          Searches for nearby businesses are made by this site&rsquo;s server, not
-          by your browser, so your IP address is never sent to OpenStreetMap. The
-          fonts are served from this site for the same reason.
+          <strong className="font-medium text-ink">OpenStreetMap, only if you open the map.</strong>{" "}
+          Searches for nearby businesses are made by this site&rsquo;s server, so
+          looking at the list sends nothing about you anywhere. The map is
+          different: opening it makes your browser fetch tiles from
+          OpenStreetMap, which means they see your IP address. It loads only
+          when you ask for it, and the panel says so at that moment.
+        </p>
+        <p>
+          Fonts are served from this site rather than from Google, so simply
+          opening a page contacts nobody but us.
         </p>
       </Section>
 

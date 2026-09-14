@@ -79,6 +79,16 @@ export function NearbyStudios({ projectId }: { projectId: string }) {
         ) : (
           <div className="space-y-4">
             <StudioMap studios={studios} />
+            {/* Said here, at the point the tiles load, rather than only in the
+                privacy notice. The map is the one thing on this site that makes
+                the visitor's browser contact anybody else, and it happens
+                because they asked for it - which is what keeps it lawful
+                without a consent banner, and what makes telling them fair. */}
+            <p className="text-xs text-ink-muted">
+              Map tiles are loaded from OpenStreetMap, so your browser contacts
+              their servers to draw this map. The search itself was made by our
+              server, not by you.
+            </p>
             <ul className="space-y-4">
               {studios.map((studio) => (
                 <li
