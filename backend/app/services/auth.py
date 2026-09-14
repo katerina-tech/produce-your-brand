@@ -122,6 +122,13 @@ def read_session(
         return None
 
     settings = settings or get_settings()
+    if not settings.session_secret.get_secret_value():
+        # A deployment with no secret cannot verify anybody, and every visitor
+        # is simply signed out. Raising here instead would turn one missing
+        # environment variable into a 500 on every page a stale cookie touches
+        # - the whole product lost to a feature that is meant to be optional.
+        return None
+
     parts = token.rsplit(".", 2)
     if len(parts) != 3:
         return None
@@ -154,6 +161,18 @@ def read_session(
         return None
 
     return user_id
+
+
+def sign_in_available(settings: Settings | None = None) -> bool:
+    """Whether this deployment can issue sessions at all.
+
+    Sign-in is the one feature that degrades rather than breaks: without a
+    configured secret the product works exactly as it did before accounts
+    existed, and the health endpoint says so instead of failing at the moment
+    somebody tries to register.
+    """
+    settings = settings or get_settings()
+    return bool(settings.session_secret.get_secret_value())
 
 
 def normalise_email(email: str) -> str:

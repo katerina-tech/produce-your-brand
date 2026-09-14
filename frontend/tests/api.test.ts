@@ -159,8 +159,12 @@ describe("design attachment", () => {
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain("/uploads");
     expect(init.body).toBeInstanceOf(FormData);
-    // No Content-Type header: fetch must set the multipart boundary itself.
-    expect(init.headers).toBeUndefined();
+    // No Content-Type header: setting one by hand strips the multipart
+    // boundary fetch would otherwise generate. The session cookie may travel
+    // alongside, so this checks the invariant itself rather than the absence
+    // of headers in general.
+    const headerNames = Object.keys(init.headers ?? {}).map((name) => name.toLowerCase());
+    expect(headerNames).not.toContain("content-type");
   });
 
   it("returns a preview only from generation, never from a plain upload", async () => {

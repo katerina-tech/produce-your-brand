@@ -103,3 +103,6 @@ class ProjectSummary(BaseModel):
     product: str | None
     quantity: int | None
     updated_at: datetime
+    # Whether this row belongs to the person looking at it. Not "has an owner":
+    # a project owned by somebody else is never in a list in the first place.
+    mine: bool = False

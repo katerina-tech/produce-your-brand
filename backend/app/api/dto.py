@@ -49,6 +49,7 @@ class ReadinessChecks(BaseModel):
     knowledge_doc_count: int
     search_index_built: bool
     injection_guard_enabled: bool
+    sign_in_configured: bool = False
 
 
 class HealthResponse(BaseModel):
@@ -134,6 +135,14 @@ class ProjectStateResponse(BaseModel):
     expected_action: str | None = None
     errors: list[str] = []
     is_complete: bool = False
+    mine: bool = Field(
+        default=False,
+        description=(
+            "Whether this project belongs to the caller. False means unowned, "
+            "never somebody else's - a project with a different owner is a 404 "
+            "here, so there is no third case for a client to handle."
+        ),
+    )
 
 
 class ProjectSummaryResponse(BaseModel):
@@ -144,6 +153,7 @@ class ProjectSummaryResponse(BaseModel):
     product: str | None
     quantity: int | None
     updated_at: str
+    mine: bool = False
 
 
 class ProjectListResponse(BaseModel):

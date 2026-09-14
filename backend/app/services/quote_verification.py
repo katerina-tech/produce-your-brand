@@ -39,7 +39,8 @@ from app.services.text_normalise import fold
 # Fields whose value the model may only report if it can point at words. The
 # numeric ones additionally have to survive the value check below; the rest can
 # only be grounded to the extent that a span exists and is genuinely present.
-GROUNDED_FIELDS: tuple[str, ...] = NUMERIC_ANSWER_FIELDS + (
+GROUNDED_FIELDS: tuple[str, ...] = (
+    *NUMERIC_ANSWER_FIELDS,
     "feasible",
     "proposed_method",
     "price_basis",

@@ -5,8 +5,13 @@
  * cross-origin request: reads happen in server components, writes go through
  * server actions. That keeps credentials and the API surface off the client and
  * makes CORS a non-problem rather than a configuration.
+ *
+ * Every request carries the caller's session cookie, which is why ownership
+ * needed no per-call wiring: identity crosses this seam in one place, so an
+ * endpoint added later is authenticated by default rather than by remembering.
  */
 
+import { sessionHeader } from "./auth";
 import type {
   FeedbackRequest,
   GeneratedDesign,
@@ -50,7 +55,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     response = await fetch(`${BASE}${path}`, {
       ...init,
-      headers: { "Content-Type": "application/json", ...init?.headers },
+      headers: {
+        "Content-Type": "application/json",
+        ...(await sessionHeader()),
+        ...init?.headers,
+      },
       cache: "no-store",
     });
   } catch {
@@ -80,7 +89,12 @@ async function postFile<T>(path: string, file: File): Promise<T> {
 
   let response: Response;
   try {
-    response = await fetch(`${BASE}${path}`, { method: "POST", body, cache: "no-store" });
+    response = await fetch(`${BASE}${path}`, {
+      method: "POST",
+      body,
+      headers: await sessionHeader(),
+      cache: "no-store",
+    });
   } catch {
     throw new ApiError(
       "The API is not reachable. Start the backend on port 8000.",
@@ -107,6 +121,11 @@ export async function getHealth(): Promise<Health | null> {
 export async function listProjects(): Promise<ProjectSummary[]> {
   const body = await request<{ projects: ProjectSummary[] }>("/projects");
   return body.projects;
+}
+
+/** Take ownership of a project that has none. */
+export async function claimProject(id: string): Promise<ProjectState> {
+  return request<ProjectState>(`/projects/${id}/claim`, { method: "POST" });
 }
 
 export async function getProject(id: string): Promise<ProjectState> {

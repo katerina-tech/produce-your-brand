@@ -42,7 +42,7 @@ class User(BaseModel):
     created_at: str
 
 
-class EmailAlreadyRegistered(Exception):
+class EmailAlreadyRegisteredError(Exception):
     """That address already has an account."""
 
 
@@ -68,7 +68,7 @@ class UserRepository:
                     (user_id, email, password_hash, created_at),
                 )
         except sqlite3.IntegrityError as clash:
-            raise EmailAlreadyRegistered(email) from clash
+            raise EmailAlreadyRegisteredError(email) from clash
 
         log_event(logger, Event.PROJECT_PERSISTED, "account created", user_id=user_id)
         return User(id=user_id, email=email, created_at=created_at)

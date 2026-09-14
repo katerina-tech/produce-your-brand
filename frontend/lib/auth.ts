@@ -44,10 +44,21 @@ export async function getAccount(): Promise<Account | null> {
   }
 }
 
-/** The cookie header to forward, so the API knows whose projects to return. */
+/**
+ * The cookie header to forward, so the API knows who is asking.
+ *
+ * Every API call goes through this, including the ones made while rendering a
+ * page that nobody is signed in for - so "no session" has to be an ordinary
+ * empty header rather than anything that interrupts a render.
+ */
 export async function sessionHeader(): Promise<Record<string, string>> {
-  const token = (await cookies()).get(SESSION_COOKIE)?.value;
-  return token ? { cookie: `${SESSION_COOKIE}=${token}` } : {};
+  try {
+    const token = (await cookies()).get(SESSION_COOKIE)?.value;
+    return token ? { cookie: `${SESSION_COOKIE}=${token}` } : {};
+  } catch {
+    // Outside a request scope there is no cookie to read and no user to be.
+    return {};
+  }
 }
 
 async function authenticate(

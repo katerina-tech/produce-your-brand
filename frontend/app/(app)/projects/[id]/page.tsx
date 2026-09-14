@@ -9,6 +9,8 @@ import { MatchList } from "@/components/workflow/MatchList";
 import { MethodReview } from "@/components/workflow/MethodReview";
 import { RfqReview } from "@/components/workflow/RfqReview";
 import { ApiError, getProject } from "@/lib/api";
+import { claimProjectAction } from "@/lib/actions";
+import { getAccount } from "@/lib/auth";
 import type { ProjectState } from "@/lib/types";
 import { STAGE_LABELS } from "@/lib/types";
 
@@ -87,6 +89,12 @@ export default async function ProjectPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const account = await getAccount();
+
+  async function keep() {
+    "use server";
+    await claimProjectAction(id);
+  }
 
   let state: ProjectState;
   try {
@@ -128,6 +136,24 @@ export default async function ProjectPage({
           {state.expected_action ? " · awaiting your decision" : ""}
         </p>
       </div>
+
+      {account && !state.mine ? (
+        <Notice tone="warning" title="This project is open to anyone with the link">
+          <p>
+            It was started without an account. Keep it and it moves onto{" "}
+            {account.email} and closes to everybody else — the project itself does
+            not change.
+          </p>
+          <form action={keep} className="mt-3">
+            <button
+              type="submit"
+              className="rounded-lg bg-ink px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-ink/90"
+            >
+              Keep this project
+            </button>
+          </form>
+        </Notice>
+      ) : null}
 
       {state.errors.length > 0 ? (
         <Notice tone="error" title="This project stopped early">

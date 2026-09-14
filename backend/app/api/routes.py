@@ -40,7 +40,7 @@ from app.api.dto import (
 )
 from app.config import Settings, get_settings
 from app.llm.factory import ImageProvider
-from app.repositories.user_repo import EmailAlreadyRegistered, UserRepository
+from app.repositories.user_repo import EmailAlreadyRegisteredError, UserRepository
 from app.security.uploads import UploadRejectedError, store_upload
 from app.services.auth import (
     SESSION_COOKIE,
@@ -49,6 +49,7 @@ from app.services.auth import (
     issue_session,
     normalise_email,
     read_session,
+    sign_in_available,
     validate_credentials,
     verify_password,
 )
@@ -97,6 +98,18 @@ def current_user_id(request: Request) -> str | None:
     return read_session(request.cookies.get(SESSION_COOKIE), settings)
 
 
+def guard_project(service: ProjectService, project_id: str, viewer_id: str | None) -> None:
+    """Refuse a project that belongs to somebody else.
+
+    404 rather than 403, deliberately. 403 would confirm that the id exists,
+    which turns this endpoint into a way of discovering other people's
+    projects one guess at a time; 404 tells an attacker nothing they did not
+    already know and tells a legitimate user exactly as much as they need.
+    """
+    if not service.visible_to(project_id, viewer_id):
+        raise HTTPException(status_code=404, detail="No such project.")
+
+
 def get_app_settings(request: Request) -> Settings:
     """Resolve the settings the app was actually built with.
 
@@ -137,7 +150,7 @@ def get_osm_search_client(request: Request) -> OverpassStudioSearch:
     return client
 
 
-def _to_response(view: ProjectView) -> ProjectStateResponse:
+def _to_response(view: ProjectView, *, mine: bool = False) -> ProjectStateResponse:
     return ProjectStateResponse(
         project_id=view.project_id,
         stage=view.stage,
@@ -147,6 +160,7 @@ def _to_response(view: ProjectView) -> ProjectStateResponse:
         expected_action=view.expected_action,
         errors=view.errors,
         is_complete=view.is_complete,
+        mine=mine,
     )
 
 
@@ -165,6 +179,7 @@ def _readiness(settings: Settings, request: Request) -> ReadinessChecks:
         knowledge_doc_count=len(knowledge_docs),
         search_index_built=(settings.index_dir / "index.faiss").is_file(),
         injection_guard_enabled=settings.injection_classifier_enabled,
+        sign_in_configured=sign_in_available(settings),
     )
 
 
@@ -181,18 +196,30 @@ def health(request: Request, settings: Settings = Depends(get_app_settings)) -> 
 
 @router.post("/projects", response_model=ProjectStateResponse, status_code=201, tags=["projects"])
 def create_project(
-    body: CreateProjectRequest, service: ProjectService = Depends(get_service)
+    body: CreateProjectRequest,
+    service: ProjectService = Depends(get_service),
+    user_id: str | None = Depends(current_user_id),
 ) -> ProjectStateResponse:
-    """Start a project and run to the first human gate."""
+    """Start a project and run to the first human gate.
+
+    Signed in, the project is yours from the moment it exists. Signed out, it
+    belongs to nobody and stays openable by anyone holding the link - which is
+    what the demo link in the application depends on.
+    """
     try:
-        return _to_response(service.create(body.request_text, body.design_upload_id))
+        return _to_response(
+            service.create(body.request_text, body.design_upload_id, owner_id=user_id)
+        )
     except DesignNotFoundError as missing:
         raise HTTPException(status_code=422, detail=str(missing)) from missing
 
 
 @router.get("/projects", response_model=ProjectListResponse, tags=["projects"])
-def list_projects(service: ProjectService = Depends(get_service)) -> ProjectListResponse:
-    """Dashboard rows, newest first."""
+def list_projects(
+    service: ProjectService = Depends(get_service),
+    user_id: str | None = Depends(current_user_id),
+) -> ProjectListResponse:
+    """Dashboard rows, newest first: your own, plus the unowned ones."""
     return ProjectListResponse(
         projects=[
             ProjectSummaryResponse(
@@ -201,28 +228,35 @@ def list_projects(service: ProjectService = Depends(get_service)) -> ProjectList
                 product=summary.product,
                 quantity=summary.quantity,
                 updated_at=summary.updated_at.isoformat(),
+                mine=summary.mine,
             )
-            for summary in service.list_summaries()
+            for summary in service.list_summaries(viewer_id=user_id)
         ]
     )
 
 
 @router.get("/projects/{project_id}", response_model=ProjectStateResponse, tags=["projects"])
 def get_project(
-    project_id: str, service: ProjectService = Depends(get_service)
+    project_id: str,
+    service: ProjectService = Depends(get_service),
+    user_id: str | None = Depends(current_user_id),
 ) -> ProjectStateResponse:
     """Full current state. This is the "leave and come back" endpoint."""
+    guard_project(service, project_id, user_id)
     view = service.get(project_id)
     if view is None:
         raise HTTPException(status_code=404, detail="No such project.")
-    return _to_response(view)
+    return _to_response(view, mine=service.owned_by(project_id, user_id))
 
 
 @router.post(
     "/projects/{project_id}/resume", response_model=ProjectStateResponse, tags=["projects"]
 )
 def resume_project(
-    project_id: str, body: ResumeRequest, service: ProjectService = Depends(get_service)
+    project_id: str,
+    body: ResumeRequest,
+    service: ProjectService = Depends(get_service),
+    user_id: str | None = Depends(current_user_id),
 ) -> ProjectStateResponse:
     """Answer the current gate and run to the next one.
 
@@ -230,6 +264,7 @@ def resume_project(
     expects, so a stale browser tab gets a correctable answer rather than
     silently resuming the wrong branch.
     """
+    guard_project(service, project_id, user_id)
     try:
         return _to_response(service.resume(project_id, body.action, body.payload()))
     except KeyError as missing:
@@ -244,6 +279,31 @@ def resume_project(
         ) from mismatch
 
 
+@router.post("/projects/{project_id}/claim", response_model=ProjectStateResponse, tags=["projects"])
+def claim_project(
+    project_id: str,
+    service: ProjectService = Depends(get_service),
+    user_id: str | None = Depends(current_user_id),
+) -> ProjectStateResponse:
+    """Take ownership of a project that has none.
+
+    This is what makes accounts arrive without stranding anything: work started
+    before signing in, or on another device, can be moved onto the shelf it
+    belongs on. A project that already has an owner answers 404 like any other
+    project you cannot see - including, deliberately, one that is already yours
+    to claim a second time.
+    """
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="Sign in to keep a project.")
+
+    view = service.get(project_id)
+    if view is None:
+        raise HTTPException(status_code=404, detail="No such project.")
+    if not service.claim(project_id, user_id):
+        raise HTTPException(status_code=404, detail="No such project.")
+    return _to_response(view)
+
+
 @router.get(
     "/projects/{project_id}/nearby-studios",
     response_model=NearbyStudiosResponse,
@@ -253,6 +313,7 @@ def nearby_studios(
     project_id: str,
     service: ProjectService = Depends(get_service),
     client: OverpassStudioSearch = Depends(get_osm_search_client),
+    user_id: str | None = Depends(current_user_id),
 ) -> NearbyStudiosResponse:
     """Real, unscored Berlin businesses from OpenStreetMap for this project's
     confirmed method - see app/services/osm_search.py for why these are kept
@@ -261,6 +322,7 @@ def nearby_studios(
     Available once a method is confirmed; before that there is nothing to
     search for, and the response says so rather than guessing a technique.
     """
+    guard_project(service, project_id, user_id)
     project = service.get_record(project_id)
     if project is None:
         raise HTTPException(status_code=404, detail="No such project.")
@@ -363,11 +425,13 @@ def submit_feedback(
     project_id: str,
     body: FeedbackRequest,
     service: ProjectService = Depends(get_service),
+    user_id: str | None = Depends(current_user_id),
 ) -> FeedbackResponse:
     """Record one product-validation response. Not a workflow action - it
     never touches the graph, and it does not require the project to be at
     any particular stage.
     """
+    guard_project(service, project_id, user_id)
     try:
         service.record_feedback(project_id, body.model_dump())
     except KeyError as missing:
@@ -422,7 +486,7 @@ def register(
         user = users.create(email, hash_password(body.password))
     except AuthError as invalid:
         raise HTTPException(status_code=422, detail=str(invalid)) from invalid
-    except EmailAlreadyRegistered as taken:
+    except EmailAlreadyRegisteredError as taken:
         raise HTTPException(
             status_code=409, detail="That address already has an account. Sign in instead."
         ) from taken
@@ -478,10 +542,20 @@ def me(
 
 def _set_session_cookie(response: Response, user_id: str, settings: Settings) -> None:
     """HttpOnly so script cannot read it; Lax so a link from elsewhere still
-    arrives signed in; Secure whenever the deployment is not plain local."""
+    arrives signed in; Secure whenever the deployment is not plain local.
+
+    A deployment with no configured secret answers 503 here rather than 500:
+    the request is fine, the feature is not available, and saying which is the
+    difference between a fixable deployment and a mysterious one.
+    """
+    try:
+        token = issue_session(user_id, settings)
+    except AuthError as unconfigured:
+        raise HTTPException(status_code=503, detail=str(unconfigured)) from unconfigured
+
     response.set_cookie(
         SESSION_COOKIE,
-        issue_session(user_id, settings),
+        token,
         max_age=settings.session_ttl_seconds,
         httponly=True,
         samesite="lax",

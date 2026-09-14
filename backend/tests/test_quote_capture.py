@@ -9,6 +9,7 @@ of them the correspondence must survive and only the convenience may be lost.
 from __future__ import annotations
 
 from datetime import date
+from typing import ClassVar
 
 import pytest
 
@@ -166,7 +167,7 @@ def test_every_question_stays_unanswered_when_nothing_was_read() -> None:
 
 def test_an_unavailable_model_costs_convenience_not_correspondence() -> None:
     class Failing:
-        calls: list[object] = []
+        calls: ClassVar[list[object]] = []
 
         def structured(self, *args: object, **kwargs: object) -> object:
             raise LLMError("provider down")

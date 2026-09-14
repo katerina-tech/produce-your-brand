@@ -137,14 +137,60 @@ class ProjectRepository:
         ).fetchone()
         return self._to_project(row) if row else None
 
-    def list_summaries(self, limit: int = 50) -> list[ProjectSummary]:
-        """Dashboard rows, newest first."""
+    def claim(self, project_id: str, owner_id: str) -> bool:
+        """Give an unowned project to somebody. Returns whether it moved.
+
+        ``owner_id IS NULL`` in the WHERE clause is the whole safety property:
+        claiming is how a project gains an owner, never how it changes one. Two
+        people racing for the same link cannot take it from each other, and a
+        replayed request cannot hand somebody else's work away.
+        """
+        with self._connection:
+            cursor = self._connection.execute(
+                "UPDATE projects SET owner_id = ? WHERE id = ? AND owner_id IS NULL",
+                (owner_id, project_id),
+            )
+        claimed = cursor.rowcount == 1
+        if claimed:
+            log_event(logger, Event.PROJECT_PERSISTED, "project claimed", project_id=project_id)
+        return claimed
+
+    def owner_of(self, project_id: str) -> str | None:
+        """Who owns a project. ``None`` for an unowned one *and* for one that
+        does not exist - the caller establishes existence separately, and
+        collapsing the two here keeps this from becoming an existence oracle."""
+        row = self._connection.execute(
+            "SELECT owner_id FROM projects WHERE id = ?", (project_id,)
+        ).fetchone()
+        return row["owner_id"] if row else None
+
+    def list_summaries(self, limit: int = 50, viewer_id: str | None = None) -> list[ProjectSummary]:
+        """Dashboard rows, newest first.
+
+        Who may see what is decided here rather than in the route, so exactly one
+        place in the codebase knows the rule: an owned project belongs to its
+        owner alone, an unowned one is visible to everybody.
+
+        Signing in therefore adds a private shelf without removing the shared
+        one. That matters for a real reason - every project that existed before
+        accounts did is unowned, and a rule of "signed in means only mine" would
+        have made all of them vanish the first time somebody registered.
+        """
+        # Both branches are literals chosen here, never anything a caller sent;
+        # every value still travels as a bound parameter.
+        where: str
+        params: tuple[str | int, ...]
+        if viewer_id is None:
+            where, params = "WHERE owner_id IS NULL", (limit,)
+        else:
+            where, params = "WHERE owner_id IS NULL OR owner_id = ?", (viewer_id, limit)
+
         rows = self._connection.execute(
-            """
-            SELECT id, stage, requirement_json, updated_at
-            FROM projects ORDER BY updated_at DESC LIMIT ?
+            f"""
+            SELECT id, stage, requirement_json, updated_at, owner_id
+            FROM projects {where} ORDER BY updated_at DESC LIMIT ?
             """,
-            (limit,),
+            params,
         ).fetchall()
 
         summaries: list[ProjectSummary] = []
@@ -158,6 +204,7 @@ class ProjectRepository:
                         "product": requirement.get("product"),
                         "quantity": requirement.get("quantity"),
                         "updated_at": row["updated_at"],
+                        "mine": viewer_id is not None and row["owner_id"] == viewer_id,
                     }
                 )
             )

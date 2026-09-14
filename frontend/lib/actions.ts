@@ -15,6 +15,7 @@ import { redirect } from "next/navigation";
 
 import {
   ApiError,
+  claimProject,
   createProject,
   generateDesign,
   getNearbyStudios,
@@ -135,6 +136,28 @@ export async function submitFeedbackAction(
       error: error instanceof ApiError ? error.message : "Could not record your answer.",
     };
   }
+  return {};
+}
+
+/**
+ * Take ownership of a project that has none.
+ *
+ * The one place an account changes what you can see rather than merely who you
+ * are. A project that already has an owner answers 404 here, same as any other
+ * project you cannot see - so this cannot be used to find out whether one
+ * exists.
+ */
+export async function claimProjectAction(projectId: string): Promise<ActionResult> {
+  try {
+    await claimProject(projectId);
+  } catch (error) {
+    return {
+      error:
+        error instanceof ApiError ? error.message : "Could not keep this project.",
+    };
+  }
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/dashboard");
   return {};
 }
 

@@ -118,7 +118,12 @@ class ProjectService:
 
     # ------------------------------------------------------------- creating
 
-    def create(self, raw_request: str, design_upload_id: str | None = None) -> ProjectView:
+    def create(
+        self,
+        raw_request: str,
+        design_upload_id: str | None = None,
+        owner_id: str | None = None,
+    ) -> ProjectView:
         """Start a project and run to the first human gate.
 
         A supplied ``design_upload_id`` is verified before anything else is
@@ -142,6 +147,10 @@ class ProjectService:
                 updated_at=now,
             )
         )
+        if owner_id is not None:
+            # Before the graph runs, not after. A run that fails half way should
+            # still leave the project belonging to the person who started it.
+            self._projects.claim(project_id, owner_id)
         log_event(
             logger,
             Event.PROJECT_CREATED,
@@ -233,8 +242,29 @@ class ProjectService:
         general-purpose read model."""
         return self._projects.get(project_id)
 
-    def list_summaries(self, limit: int = 50) -> list[ProjectSummary]:
-        return self._projects.list_summaries(limit)
+    def list_summaries(self, limit: int = 50, viewer_id: str | None = None) -> list[ProjectSummary]:
+        return self._projects.list_summaries(limit, viewer_id)
+
+    def visible_to(self, project_id: str, viewer_id: str | None) -> bool:
+        """Whether this viewer may read this project.
+
+        Unowned projects stay public, which is what keeps a shared link working
+        and what keeps every pre-accounts project reachable.
+        """
+        owner = self._projects.owner_of(project_id)
+        return owner is None or owner == viewer_id
+
+    def owned_by(self, project_id: str, viewer_id: str | None) -> bool:
+        """Whether this viewer *owns* the project, as opposed to merely being
+        allowed to see it. The difference is what an unowned project offers:
+        a way to keep it."""
+        if viewer_id is None:
+            return False
+        return self._projects.owner_of(project_id) == viewer_id
+
+    def claim(self, project_id: str, owner_id: str) -> bool:
+        """Take ownership of an unowned project."""
+        return self._projects.claim(project_id, owner_id)
 
     # ------------------------------------------------------- product validation
 

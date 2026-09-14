@@ -195,6 +195,9 @@ export interface ProjectState {
   expected_action: string | null;
   errors: string[];
   is_complete: boolean;
+  /** Whether this project belongs to you. False means unowned, never somebody
+   *  else's - a project with a different owner answers 404. */
+  mine: boolean;
 }
 
 /** Metadata for a stored design file. The body is never returned here. */
@@ -244,10 +247,16 @@ export interface ProjectSummary {
   product: string | null;
   quantity: number | null;
   updated_at: string;
+  /** Yours, as opposed to unowned. A project belonging to somebody else is
+   *  never in this list at all, so there is no third case to render. */
+  mine: boolean;
 }
 
 export interface HealthChecks {
   api_key_configured: boolean;
+  /** Whether this deployment can issue sessions. False means sign-in is off
+   *  and everything else works exactly as it did before accounts existed. */
+  sign_in_configured: boolean;
   suppliers_file_present: boolean;
   supplier_count: number;
   knowledge_dir_present: boolean;
