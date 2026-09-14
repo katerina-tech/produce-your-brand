@@ -26,6 +26,7 @@ from pydantic import BaseModel
 
 from app.config import Settings, get_settings
 from app.logging_config import Event, log_event
+from app.observability import tracing
 
 logger = logging.getLogger(__name__)
 
@@ -124,40 +125,77 @@ class OpenAIProvider:
         purpose: Purpose = "main",
     ) -> SchemaT:
         model = self._model(purpose)
-        try:
-            result = model.with_structured_output(schema).invoke(messages)
-        except Exception as error:  # provider, network, timeout, parse
-            log_event(
-                logger,
-                Event.LLM_ERROR,
-                "structured call failed",
-                level=logging.ERROR,
-                schema=schema.__name__,
-                purpose=purpose,
-                error_type=type(error).__name__,
-                status_code=getattr(error, "status_code", None),
-                body=getattr(getattr(error, "response", None), "text", None) or str(error),
-                request_id=getattr(error, "request_id", None),
-            )
-            raise LLMError(
-                f"{schema.__name__} generation failed",
-                content_filtered=_is_content_filter(error),
-            ) from error
+        settings = self._settings
+        model_name = settings.model_name if purpose == "main" else settings.classifier_model_name
 
-        if not isinstance(result, schema):
-            # Defensive: a gateway that ignores the schema must not slip an
-            # unvalidated dict into business logic.
-            log_event(
-                logger,
-                Event.VALIDATION_ERROR,
-                "model returned an unexpected type",
-                level=logging.ERROR,
-                schema=schema.__name__,
-                got=type(result).__name__,
-            )
-            raise LLMError(f"{schema.__name__} generation returned {type(result).__name__}")
+        # The generation wraps the call rather than following it, so a failure
+        # is recorded as a generation that errored instead of vanishing from
+        # the trace - the failed runs are the ones worth looking at. With no
+        # credentials configured this is a no-op context manager.
+        with tracing.generation(
+            schema.__name__,
+            model=model_name,
+            metadata={"purpose": purpose, "schema": schema.__name__},
+        ) as observation:
+            try:
+                result = model.with_structured_output(schema).invoke(messages)
+            except Exception as error:  # provider, network, timeout, parse
+                log_event(
+                    logger,
+                    Event.LLM_ERROR,
+                    "structured call failed",
+                    level=logging.ERROR,
+                    schema=schema.__name__,
+                    purpose=purpose,
+                    error_type=type(error).__name__,
+                    status_code=getattr(error, "status_code", None),
+                    body=getattr(getattr(error, "response", None), "text", None) or str(error),
+                    request_id=getattr(error, "request_id", None),
+                )
+                raise LLMError(
+                    f"{schema.__name__} generation failed",
+                    content_filtered=_is_content_filter(error),
+                ) from error
 
-        return result
+            if not isinstance(result, schema):
+                # Defensive: a gateway that ignores the schema must not slip an
+                # unvalidated dict into business logic.
+                log_event(
+                    logger,
+                    Event.VALIDATION_ERROR,
+                    "model returned an unexpected type",
+                    level=logging.ERROR,
+                    schema=schema.__name__,
+                    got=type(result).__name__,
+                )
+                raise LLMError(f"{schema.__name__} generation returned {type(result).__name__}")
+
+            if observation is not None:
+                _record_usage(observation, result)
+
+            return result
+
+
+def _record_usage(observation: Any, result: object) -> None:
+    """Attach token usage to a generation when the provider reported it.
+
+    Best effort by design: usage metadata is not part of the structured-output
+    contract, and a provider that omits it must cost a figure on a dashboard,
+    never the response itself.
+    """
+    from contextlib import suppress
+
+    with suppress(Exception):
+        usage = getattr(result, "usage_metadata", None) or {}
+        if not isinstance(usage, dict):
+            return
+        details = {
+            key: int(usage[key])
+            for key in ("input_tokens", "output_tokens", "total_tokens")
+            if isinstance(usage.get(key), int)
+        }
+        if details:
+            observation.update(usage_details=details)
 
 
 def get_provider(settings: Settings | None = None) -> LLMProvider:

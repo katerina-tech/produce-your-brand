@@ -26,6 +26,7 @@ from app.config import Settings, get_settings
 from app.graph.workflow import checkpointer_for, compile_workflow, production_deps
 from app.llm.factory import get_image_provider
 from app.logging_config import Event, configure_logging, log_event
+from app.observability import flush_traces
 from app.repositories import db
 from app.repositories.project_repo import ProjectRepository
 from app.repositories.supplier_repo import SupplierRepository
@@ -85,6 +86,11 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     try:
         yield
     finally:
+        # Send anything still buffered before the process goes away. Ordered
+        # before the connection close because a flush failure is swallowed by
+        # the helper, whereas leaving the checkpoint connection open is not
+        # something to risk on a best-effort call.
+        flush_traces()
         connection.close()
 
 

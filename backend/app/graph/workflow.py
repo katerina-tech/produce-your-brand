@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 import sqlite3
 from collections.abc import Callable
+from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import date
 from functools import partial
@@ -32,6 +33,7 @@ from app.domain.enums import Stage
 from app.graph import nodes
 from app.graph.state import CHECKPOINTED_TYPES, ProductionState
 from app.llm.factory import LLMProvider, get_embedding_provider, get_provider
+from app.observability import tracing
 from app.rag.retriever import KnowledgeRetriever
 from app.rag.store import KnowledgeStore
 from app.repositories.offer_repo import OfferRepository
@@ -157,7 +159,30 @@ def build_graph(deps: GraphDeps) -> StateGraph[ProductionState, None, Any, Any]:
     graph: StateGraph[ProductionState, None, Any, Any] = StateGraph(ProductionState)
 
     def bind(fn: Callable[..., dict[str, Any]]) -> BoundNode:
-        bound: BoundNode = partial(fn, deps=deps)
+        """Bind dependencies and open a trace span, in that order.
+
+        This is the only place every node passes through, so it is the only
+        place instrumentation belongs. The node functions stay free of any
+        knowledge that they are observed, which keeps them readable and keeps
+        the tracing dependency out of the graph's logic.
+
+        With tracing unconfigured the span helper is a no-op context manager,
+        so this costs one function call and nothing else.
+        """
+        node_name = fn.__name__
+
+        def traced(state: ProductionState, **kwargs: Any) -> dict[str, Any]:
+            with tracing.span(node_name) as observation:
+                result = fn(state, deps=deps, **kwargs)
+                if observation is not None:
+                    # Record which keys the node wrote, not their values: the
+                    # shape of the update is what makes a trace readable, and
+                    # the values may carry customer text.
+                    with suppress(Exception):
+                        observation.update(output={"updated": sorted(result)})
+                return result
+
+        bound: BoundNode = traced
         return bound
 
     graph.add_node("extract_requirement", bind(nodes.extract_requirement))

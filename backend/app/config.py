@@ -66,6 +66,17 @@ class Settings(BaseSettings):
     # Reasoning and extraction stay hosted on purpose. Structured-output
     # reliability is the core value path, and small local models are not
     # dependable at strict JSON schemas.
+    # Tracing. Entirely optional: without a key pair the app behaves exactly as
+    # it does today, which is why these default to empty rather than raising.
+    # The secret is a SecretStr for the same reason the model key is - an
+    # accidental repr of settings must not leak it.
+    langfuse_public_key: str = ""
+    langfuse_secret_key: SecretStr | None = None
+    # EU region by default: traces from a Berlin product describing Berlin
+    # businesses should not leave the EU without a deliberate decision.
+    langfuse_host: str = "https://cloud.langfuse.com"
+    langfuse_environment: str = "development"
+
     embedding_backend: Literal["openai", "local"] = "openai"
     local_embedding_model: str = "BAAI/bge-small-en-v1.5"
 
@@ -159,6 +170,18 @@ class Settings(BaseSettings):
         """
         key = self.openai_api_key.get_secret_value().strip()
         return bool(key) and key not in _PLACEHOLDER_KEYS and not key.endswith("...")
+
+    @property
+    def tracing_configured(self) -> bool:
+        """Both halves of the key pair present. Anything less means tracing off.
+
+        Checked rather than assumed because a half-configured deployment - one
+        variable set, the other forgotten - is the likeliest misconfiguration,
+        and it should degrade silently rather than error on every request.
+        """
+        return bool(self.langfuse_public_key) and bool(
+            self.langfuse_secret_key and self.langfuse_secret_key.get_secret_value()
+        )
 
     @property
     def active_embedding_model(self) -> str:
