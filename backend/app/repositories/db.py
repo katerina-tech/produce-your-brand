@@ -52,7 +52,15 @@ CREATE TABLE IF NOT EXISTS project_events (
     created_at   TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS project_quotes (
+    id         TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    quote_json TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_events_project ON project_events(project_id);
+CREATE INDEX IF NOT EXISTS idx_quotes_project ON project_quotes(project_id);
 CREATE INDEX IF NOT EXISTS idx_projects_updated ON projects(updated_at DESC);
 """
 

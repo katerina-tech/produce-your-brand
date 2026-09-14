@@ -11,7 +11,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.domain.enums import Stage
+from app.domain.enums import PriceBasis, ProductionMethod, Stage
 
 
 class ErrorDetail(BaseModel):
@@ -286,6 +286,117 @@ class OutreachResponse(BaseModel):
         "cannot receive mail. The client must say so rather than let somebody "
         "believe they have written to a real company.",
     )
+
+
+class CaptureQuoteRequest(BaseModel):
+    """A supplier's reply, pasted by the buyer who received it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    reply_text: str = Field(
+        min_length=1,
+        max_length=20_000,
+        description="The reply as received. Screened before anything reads it.",
+    )
+
+
+class ConfirmQuoteRequest(BaseModel):
+    """Corrections a human typed at the confirm gate.
+
+    Only the fields a person can reasonably re-read off the letter. Identity,
+    provenance and ``confirmed_by_human`` are deliberately absent: a request
+    that could set them could claim a figure was human-checked when it was not.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    unit_price_eur: float | None = Field(default=None, ge=0)
+    total_price_eur: float | None = Field(default=None, ge=0)
+    setup_cost_eur: float | None = Field(default=None, ge=0)
+    quoted_quantity: int | None = Field(default=None, ge=0)
+    lead_time_days: int | None = Field(default=None, ge=0)
+    price_basis: PriceBasis | None = None
+    currency: str | None = Field(default=None, min_length=3, max_length=3)
+    feasible: bool | None = None
+
+
+class FieldEvidenceResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    field: str
+    quote: str
+
+
+class QuoteResponse(BaseModel):
+    """One captured reply, with the words each figure was read from."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    supplier_name: str
+    feasible: bool | None
+    proposed_method: ProductionMethod | None
+    unit_price_eur: float | None
+    total_price_eur: float | None
+    setup_cost_eur: float | None
+    quoted_quantity: int | None
+    price_basis: PriceBasis
+    price_is_estimate: bool | None
+    currency: str | None
+    lead_time_days: int | None
+    sample_available: bool | None
+    accepts_customer_owned_goods: bool | None
+    open_questions: list[str] = []
+    evidence: list[FieldEvidenceResponse] = []
+    unverified_fields: list[str] = Field(
+        default=[],
+        description="Figures the verifier deleted because their span was not in the text.",
+    )
+    corrected_fields: list[str] = []
+    source_text: str
+    received_on: str
+    confirmed_by_human: bool
+    needs_manual_entry: bool = Field(
+        default=False,
+        description="Nothing could be read, so the buyer has to type the figures.",
+    )
+
+
+class ComparisonRowResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    quote_id: str
+    supplier_name: str
+    comparable_total_eur: float | None
+    total_basis: PriceBasis
+    lead_time_days: int | None
+    answered_count: int
+    unanswered: list[str] = []
+    blockers: list[str] = []
+
+
+class FollowUpResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    supplier_name: str
+    subject: str
+    questions: list[str] = []
+    asks: list[str] = []
+
+
+class QuoteDeskResponse(BaseModel):
+    """Everything the quote screen renders, in one read."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    quotes: list[QuoteResponse] = []
+    rows: list[ComparisonRowResponse] = []
+    requested_quantity: int | None = None
+    cheapest_quote_id: str | None = None
+    fastest_quote_id: str | None = None
+    unanswered_by_everyone: list[str] = []
+    note: str = ""
+    followups: list[FollowUpResponse] = []
 
 
 class FeedbackResponse(BaseModel):

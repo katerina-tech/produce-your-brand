@@ -15,8 +15,11 @@ import { redirect } from "next/navigation";
 
 import {
   ApiError,
+  captureQuote,
   claimProject,
+  confirmQuote,
   createProject,
+  deleteQuote,
   generateDesign,
   getNearbyStudios,
   resumeProject,
@@ -27,6 +30,7 @@ import type {
   FeedbackRequest,
   GeneratedDesign,
   NearbyStudio,
+  QuoteDesk,
   ResumeAction,
   UploadResponse,
 } from "./types";
@@ -159,6 +163,58 @@ export async function claimProjectAction(projectId: string): Promise<ActionResul
   revalidatePath(`/projects/${projectId}`);
   revalidatePath("/dashboard");
   return {};
+}
+
+export interface QuoteDeskResult {
+  desk?: QuoteDesk;
+  error?: string;
+}
+
+/**
+ * Read one pasted supplier reply.
+ *
+ * Returns the whole desk rather than the one quote: capturing a reply changes
+ * the comparison and the follow-ups too, and re-deriving those in the browser
+ * would be a second implementation of rules that live on the server.
+ */
+export async function captureQuoteAction(
+  projectId: string,
+  replyText: string,
+): Promise<QuoteDeskResult> {
+  try {
+    return { desk: await captureQuote(projectId, replyText) };
+  } catch (error) {
+    return {
+      error: error instanceof ApiError ? error.message : "Could not read that reply.",
+    };
+  }
+}
+
+export async function confirmQuoteAction(
+  projectId: string,
+  quoteId: string,
+  corrections: Record<string, unknown>,
+): Promise<QuoteDeskResult> {
+  try {
+    return { desk: await confirmQuote(projectId, quoteId, corrections) };
+  } catch (error) {
+    return {
+      error: error instanceof ApiError ? error.message : "Could not save your correction.",
+    };
+  }
+}
+
+export async function deleteQuoteAction(
+  projectId: string,
+  quoteId: string,
+): Promise<QuoteDeskResult> {
+  try {
+    return { desk: await deleteQuote(projectId, quoteId) };
+  } catch (error) {
+    return {
+      error: error instanceof ApiError ? error.message : "Could not remove that reply.",
+    };
+  }
 }
 
 async function advance(

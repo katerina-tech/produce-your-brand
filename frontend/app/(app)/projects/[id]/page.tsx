@@ -7,13 +7,14 @@ import { ClarifyPrompt } from "@/components/workflow/ClarifyPrompt";
 import { ContactPartner } from "@/components/workflow/ContactPartner";
 import { FeedbackSurvey } from "@/components/workflow/FeedbackSurvey";
 import { NearbyStudios } from "@/components/workflow/NearbyStudios";
+import { QuoteDeskPanel } from "@/components/workflow/QuoteDesk";
 import { MatchList } from "@/components/workflow/MatchList";
 import { MethodReview } from "@/components/workflow/MethodReview";
 import { RfqReview } from "@/components/workflow/RfqReview";
-import { ApiError, getOutreach, getProject } from "@/lib/api";
+import { ApiError, getOutreach, getProject, getQuoteDesk } from "@/lib/api";
 import { claimProjectAction } from "@/lib/actions";
 import { getAccount } from "@/lib/auth";
-import type { Outreach, ProjectState } from "@/lib/types";
+import type { Outreach, ProjectState, QuoteDesk } from "@/lib/types";
 import { STAGE_LABELS } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +28,15 @@ export const dynamic = "force-dynamic";
  * renders the stage it is told and posts back the action the server said it
  * expects. That is what makes it replaceable without touching the agent.
  */
-function StageView({ state, outreach }: { state: ProjectState; outreach: Outreach | null }) {
+function StageView({
+  state,
+  outreach,
+  desk,
+}: {
+  state: ProjectState;
+  outreach: Outreach | null;
+  desk: QuoteDesk | null;
+}) {
   const { stage, payload, project_id: projectId, design_upload_id: designUploadId } = state;
 
   if (!payload) {
@@ -47,6 +56,10 @@ function StageView({ state, outreach }: { state: ProjectState; outreach: Outreac
             </div>
           </Card>
           {outreach ? <ContactPartner outreach={outreach} /> : null}
+          {/* What happens after the request goes out - replies arrive days
+              later, on the supplier's timetable, which is why this is a panel
+              here rather than another step in the workflow. */}
+          {desk ? <QuoteDeskPanel projectId={projectId} initial={desk} /> : null}
           {/* Real Berlin businesses, live from OpenStreetMap, shown here and
               not only at partner selection: this is the screen where somebody
               needs an address, and the matched partner is sample data whose
@@ -124,8 +137,10 @@ export default async function ProjectPage({
   // Only a completed project has an approved request to send, and asking for
   // one earlier would be a round trip to be told 409. A failure here costs the
   // contact card, never the page: the project is still readable without it.
-  const outreach =
-    state.stage === "completed" ? await getOutreach(id).catch(() => null) : null;
+  const [outreach, desk] =
+    state.stage === "completed"
+      ? await Promise.all([getOutreach(id).catch(() => null), getQuoteDesk(id)])
+      : [null, null];
 
   // The API carries the product at every stage; the payload only sometimes
   // does, which is why this does not read from the payload first.
@@ -194,7 +209,7 @@ export default async function ProjectPage({
         </Notice>
       ) : null}
 
-      <StageView state={state} outreach={outreach} />
+      <StageView state={state} outreach={outreach} desk={desk} />
     </div>
   );
 }

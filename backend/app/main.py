@@ -24,15 +24,18 @@ from app.api.dto import ErrorDetail, ErrorResponse
 from app.api.routes import router
 from app.config import Settings, get_settings
 from app.graph.workflow import checkpointer_for, compile_workflow, production_deps
-from app.llm.factory import get_image_provider
+from app.llm.factory import get_image_provider, get_provider
 from app.logging_config import Event, configure_logging, log_event
 from app.observability import flush_traces
 from app.repositories import db
 from app.repositories.project_repo import ProjectRepository
+from app.repositories.quote_repo import QuoteRepository
 from app.repositories.supplier_repo import SupplierRepository
 from app.repositories.user_repo import UserRepository
+from app.security.guard import build_guard
 from app.services.osm_search import get_osm_search
 from app.services.project_service import ProjectService
+from app.services.quote_desk import QuoteDesk
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +66,16 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     app.state.project_service = ProjectService(workflow, ProjectRepository(connection))
     app.state.user_repository = UserRepository(connection)
+    # Off the graph on purpose: replies arrive on the supplier's timetable,
+    # days later and sometimes never, so they are not a workflow step.
+    # One provider, used for both the guard's classifier and the extraction, so
+    # a deployment without a key degrades in one place rather than two.
+    quote_provider = get_provider(settings) if settings.has_api_key else None
+    app.state.quote_desk = QuoteDesk(
+        QuoteRepository(connection),
+        build_guard(quote_provider, settings),
+        quote_provider,
+    )
     app.state.image_provider = get_image_provider(settings)
     app.state.osm_search = get_osm_search(settings)
 

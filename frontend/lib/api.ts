@@ -19,6 +19,7 @@ import type {
   NearbyStudiosResponse,
   Outreach,
   ProjectState,
+  QuoteDesk,
   ProjectSummary,
   ResumeAction,
   UploadResponse,
@@ -186,6 +187,39 @@ export async function getOutreach(id: string): Promise<Outreach | null> {
     if (error instanceof ApiError && error.status === 409) return null;
     throw error;
   }
+}
+
+/** Everything the quote screen renders, in one read. */
+export async function getQuoteDesk(id: string): Promise<QuoteDesk | null> {
+  try {
+    return await request<QuoteDesk>(`/projects/${id}/quotes`);
+  } catch {
+    // The desk is an extra on a finished project, so a failure here costs the
+    // panel and never the page.
+    return null;
+  }
+}
+
+export async function captureQuote(id: string, replyText: string): Promise<QuoteDesk> {
+  return request<QuoteDesk>(`/projects/${id}/quotes`, {
+    method: "POST",
+    body: JSON.stringify({ reply_text: replyText }),
+  });
+}
+
+export async function confirmQuote(
+  id: string,
+  quoteId: string,
+  corrections: Record<string, unknown>,
+): Promise<QuoteDesk> {
+  return request<QuoteDesk>(`/projects/${id}/quotes/${quoteId}/confirm`, {
+    method: "POST",
+    body: JSON.stringify(corrections),
+  });
+}
+
+export async function deleteQuote(id: string, quoteId: string): Promise<QuoteDesk> {
+  return request<QuoteDesk>(`/projects/${id}/quotes/${quoteId}`, { method: "DELETE" });
 }
 
 export async function getNearbyStudios(id: string): Promise<NearbyStudiosResponse> {

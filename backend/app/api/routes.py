@@ -17,15 +17,21 @@ import base64
 import logging
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
+from pydantic import ValidationError
 
 from app.api.dto import (
     AccountResponse,
+    CaptureQuoteRequest,
+    ComparisonRowResponse,
+    ConfirmQuoteRequest,
     CreateProjectRequest,
     CredentialsRequest,
     FeedbackEntryResponse,
     FeedbackListResponse,
     FeedbackRequest,
     FeedbackResponse,
+    FieldEvidenceResponse,
+    FollowUpResponse,
     GeneratedDesignResponse,
     GenerateDesignRequest,
     HealthResponse,
@@ -35,12 +41,16 @@ from app.api.dto import (
     ProjectListResponse,
     ProjectStateResponse,
     ProjectSummaryResponse,
+    QuoteDeskResponse,
+    QuoteResponse,
     ReadinessChecks,
     ResumeRequest,
     UploadResponse,
 )
 from app.config import Settings, get_settings
 from app.domain.outreach import SAMPLE_ADDRESS_SUFFIX
+from app.domain.project import Project
+from app.domain.quote import SupplierQuote
 from app.llm.factory import ImageProvider
 from app.repositories.supplier_repo import SupplierRepository
 from app.repositories.user_repo import EmailAlreadyRegisteredError, UserRepository
@@ -65,6 +75,7 @@ from app.services.project_service import (
     ProjectView,
     StageMismatchError,
 )
+from app.services.quote_desk import NoRequestToAnswerError, QuoteDesk
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +131,86 @@ def get_suppliers(request: Request) -> SupplierRepository | None:
     experience and not a broken one."""
     repository: SupplierRepository | None = getattr(request.app.state, "supplier_repository", None)
     return repository
+
+
+def get_quote_desk(request: Request) -> QuoteDesk:
+    """The Quote Desk built at startup."""
+    desk: QuoteDesk | None = getattr(request.app.state, "quote_desk", None)
+    if desk is None:
+        raise HTTPException(status_code=503, detail="The service is not ready.")
+    return desk
+
+
+def _visible_project(service: ProjectService, project_id: str, user_id: str | None) -> Project:
+    """The project, or the 404 that a project you cannot see always gets."""
+    guard_project(service, project_id, user_id)
+    project = service.get_record(project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="No such project.")
+    return project
+
+
+def _quote_response(quote: SupplierQuote) -> QuoteResponse:
+    return QuoteResponse(
+        id=quote.id,
+        supplier_name=quote.supplier_name,
+        feasible=quote.feasible,
+        proposed_method=quote.proposed_method,
+        unit_price_eur=quote.unit_price_eur,
+        total_price_eur=quote.total_price_eur,
+        setup_cost_eur=quote.setup_cost_eur,
+        quoted_quantity=quote.quoted_quantity,
+        price_basis=quote.price_basis,
+        price_is_estimate=quote.price_is_estimate,
+        currency=quote.currency,
+        lead_time_days=quote.lead_time_days,
+        sample_available=quote.sample_available,
+        accepts_customer_owned_goods=quote.accepts_customer_owned_goods,
+        open_questions=list(quote.open_questions),
+        evidence=[
+            FieldEvidenceResponse(field=item.field, quote=item.quote) for item in quote.evidence
+        ],
+        unverified_fields=list(quote.unverified_fields),
+        corrected_fields=list(quote.corrected_fields),
+        source_text=quote.source_text,
+        received_on=quote.received_on.isoformat(),
+        confirmed_by_human=quote.confirmed_by_human,
+        needs_manual_entry=quote.nothing_was_read,
+    )
+
+
+def _desk_response(desk: QuoteDesk, project: Project) -> QuoteDeskResponse:
+    comparison = desk.comparison(project)
+    return QuoteDeskResponse(
+        quotes=[_quote_response(quote) for quote in desk.quotes_for(project)],
+        rows=[
+            ComparisonRowResponse(
+                quote_id=row.quote_id,
+                supplier_name=row.supplier_name,
+                comparable_total_eur=row.comparable_total_eur,
+                total_basis=row.total_basis,
+                lead_time_days=row.lead_time_days,
+                answered_count=row.answered_count,
+                unanswered=list(row.unanswered),
+                blockers=list(row.blockers),
+            )
+            for row in comparison.rows
+        ],
+        requested_quantity=comparison.requested_quantity,
+        cheapest_quote_id=comparison.cheapest_quote_id,
+        fastest_quote_id=comparison.fastest_quote_id,
+        unanswered_by_everyone=list(comparison.unanswered_by_everyone),
+        note=comparison.note,
+        followups=[
+            FollowUpResponse(
+                supplier_name=draft.supplier_name,
+                subject=draft.subject,
+                questions=list(draft.questions),
+                asks=list(draft.asks),
+            )
+            for draft in desk.followups(project)
+        ],
+    )
 
 
 def get_app_settings(request: Request) -> Settings:
@@ -467,6 +558,102 @@ def project_outreach(
         fits_in_a_url=email.fits_in_a_url,
         address_is_sample=email.to.endswith(SAMPLE_ADDRESS_SUFFIX),
     )
+
+
+@router.get("/projects/{project_id}/quotes", response_model=QuoteDeskResponse, tags=["quotes"])
+def list_quotes(
+    project_id: str,
+    service: ProjectService = Depends(get_service),
+    desk: QuoteDesk = Depends(get_quote_desk),
+    user_id: str | None = Depends(current_user_id),
+) -> QuoteDeskResponse:
+    """Everything the quote screen renders, in one read."""
+    project = _visible_project(service, project_id, user_id)
+    return _desk_response(desk, project)
+
+
+@router.post(
+    "/projects/{project_id}/quotes",
+    response_model=QuoteDeskResponse,
+    status_code=201,
+    tags=["quotes"],
+)
+def capture_reply(
+    project_id: str,
+    body: CaptureQuoteRequest,
+    service: ProjectService = Depends(get_service),
+    desk: QuoteDesk = Depends(get_quote_desk),
+    user_id: str | None = Depends(current_user_id),
+) -> QuoteDeskResponse:
+    """Read one pasted supplier reply into a stored quote.
+
+    201 even when nothing could be read. A blocked or unreadable reply is still
+    captured, with every figure absent and the text kept, because the buyer
+    needs to see that it arrived and type the numbers themselves - losing it
+    would be the worse answer.
+    """
+    project = _visible_project(service, project_id, user_id)
+    try:
+        desk.capture(project, body.reply_text)
+    except NoRequestToAnswerError as missing:
+        raise HTTPException(
+            status_code=409,
+            detail="Approve a quotation request before capturing a reply to it.",
+        ) from missing
+    return _desk_response(desk, project)
+
+
+@router.post(
+    "/projects/{project_id}/quotes/{quote_id}/confirm",
+    response_model=QuoteDeskResponse,
+    tags=["quotes"],
+)
+def confirm_quote(
+    project_id: str,
+    quote_id: str,
+    body: ConfirmQuoteRequest,
+    service: ProjectService = Depends(get_service),
+    desk: QuoteDesk = Depends(get_quote_desk),
+    user_id: str | None = Depends(current_user_id),
+) -> QuoteDeskResponse:
+    """Apply a human's corrections and mark the reply checked.
+
+    ``confirmed_by_human`` is set server-side and is not a field of the request:
+    a client that could set it could claim a figure was checked when nobody
+    looked at it.
+    """
+    project = _visible_project(service, project_id, user_id)
+    corrections = body.model_dump(exclude_none=True)
+    try:
+        updated = desk.confirm(quote_id, corrections)
+    except ValidationError as invalid:
+        # A correction can contradict a rule - a sample cost with no sample.
+        raise HTTPException(status_code=422, detail=str(invalid.errors()[0]["msg"])) from invalid
+    if updated is None or updated.project_id != project.id:
+        raise HTTPException(status_code=404, detail="No such quote.")
+    return _desk_response(desk, project)
+
+
+@router.delete(
+    "/projects/{project_id}/quotes/{quote_id}",
+    response_model=QuoteDeskResponse,
+    tags=["quotes"],
+)
+def delete_quote(
+    project_id: str,
+    quote_id: str,
+    service: ProjectService = Depends(get_service),
+    desk: QuoteDesk = Depends(get_quote_desk),
+    user_id: str | None = Depends(current_user_id),
+) -> QuoteDeskResponse:
+    """Remove a captured reply - pasted into the wrong project, most likely,
+    and then it is somebody else's correspondence sitting where it should not."""
+    project = _visible_project(service, project_id, user_id)
+    existing = desk.quotes_for(project)
+    if not any(quote.id == quote_id for quote in existing):
+        raise HTTPException(status_code=404, detail="No such quote.")
+    desk.remove(quote_id)
+    return _desk_response(desk, project)
 
 
 @router.post(

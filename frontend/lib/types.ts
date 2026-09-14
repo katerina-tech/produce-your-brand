@@ -243,6 +243,67 @@ export interface NearbyStudiosResponse {
   note: string;
 }
 
+export interface FieldEvidenceItem {
+  field: string;
+  quote: string;
+}
+
+export interface Quote {
+  id: string;
+  supplier_name: string;
+  feasible: boolean | null;
+  proposed_method: string | null;
+  unit_price_eur: number | null;
+  total_price_eur: number | null;
+  setup_cost_eur: number | null;
+  quoted_quantity: number | null;
+  price_basis: "net" | "gross" | "unstated";
+  price_is_estimate: boolean | null;
+  currency: string | null;
+  lead_time_days: number | null;
+  sample_available: boolean | null;
+  accepts_customer_owned_goods: boolean | null;
+  open_questions: string[];
+  evidence: FieldEvidenceItem[];
+  /** Figures the verifier deleted because their words were not in the reply. */
+  unverified_fields: string[];
+  corrected_fields: string[];
+  source_text: string;
+  received_on: string;
+  confirmed_by_human: boolean;
+  needs_manual_entry: boolean;
+}
+
+export interface ComparisonRow {
+  quote_id: string;
+  supplier_name: string;
+  comparable_total_eur: number | null;
+  total_basis: "net" | "gross" | "unstated";
+  lead_time_days: number | null;
+  answered_count: number;
+  unanswered: string[];
+  /** Why this row carries no total. Never empty when the total is null. */
+  blockers: string[];
+}
+
+export interface QuoteFollowUp {
+  supplier_name: string;
+  subject: string;
+  questions: string[];
+  asks: string[];
+}
+
+export interface QuoteDesk {
+  quotes: Quote[];
+  rows: ComparisonRow[];
+  requested_quantity: number | null;
+  cheapest_quote_id: string | null;
+  fastest_quote_id: string | null;
+  unanswered_by_everyone: string[];
+  note: string;
+  followups: QuoteFollowUp[];
+}
+
 export interface Outreach {
   supplier_name: string;
   /** Always empty: the backend stores no supplier addresses. */

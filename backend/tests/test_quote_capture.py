@@ -87,7 +87,11 @@ def test_identity_and_provenance_come_from_code_not_the_model() -> None:
     assert outcome.quote.project_id == "p1"
     assert outcome.quote.supplier_id == "syn-001"
     assert outcome.quote.received_on == date(2026, 9, 13)
-    assert outcome.quote.is_demo is True
+    # Not demo data: a person pasted this out of their own inbox, and the flag
+    # means "seeded sample". Defaulting a captured letter to True mislabelled
+    # every real reply as a sample - and made confirming one impossible, since
+    # the model forbids a demo record from also being human-confirmed.
+    assert outcome.quote.is_demo is False
     assert outcome.quote.confirmed_by_human is False
 
 

@@ -171,6 +171,30 @@ class SupplierQuote(BaseModel):
 
     # ------------------------------------------------------------- validators
 
+    @property
+    def nothing_was_read(self) -> bool:
+        """True when this record carries no reading at all.
+
+        Derived rather than stored, so it cannot drift from the record and so
+        it survives a page reload - the capture outcome knows the model failed,
+        but a quote fetched back an hour later would not, and the interface
+        would then show an empty card indistinguishable from a reply that
+        genuinely said nothing.
+        """
+        if self.evidence or self.corrected_fields:
+            return False
+        answers = (
+            self.feasible,
+            self.proposed_method,
+            self.unit_price_eur,
+            self.total_price_eur,
+            self.quoted_quantity,
+            self.lead_time_days,
+            self.sample_available,
+            self.accepts_customer_owned_goods,
+        )
+        return all(answer is None for answer in answers)
+
     @model_validator(mode="after")
     def _a_total_price_must_say_what_quantity_it_is_for(self) -> SupplierQuote:
         """A total with no quantity cannot be compared with anything.

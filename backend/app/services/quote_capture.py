@@ -116,6 +116,11 @@ def capture_quote(
         "supplier_name": supplier_name,
         "source_text": screening.text,
         "received_on": received_on,
+        # A person pasted this out of their inbox, so it is a real reply by
+        # definition - the flag means "seeded sample", and defaulting a
+        # captured letter to True would mislabel every real one. Seeding
+        # scripts set it themselves.
+        "is_demo": False,
     }
 
     if screening.blocked:
