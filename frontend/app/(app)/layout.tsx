@@ -56,6 +56,17 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           The agent recommends; you decide. Nothing is ordered and no partner is
           contacted by this system. Partner data in this build is synthetic.
         </p>
+        {/* Reachable in one click from every page of the working app too - the
+            law asks for permanently available, not available on the homepage. */}
+        <p className="mt-3 text-xs text-ink-muted">
+          <Link href="/privacy" className="hover:text-ink">
+            Privacy
+          </Link>
+          {" · "}
+          <Link href="/impressum" className="hover:text-ink">
+            Impressum
+          </Link>
+        </p>
       </footer>
     </>
   );

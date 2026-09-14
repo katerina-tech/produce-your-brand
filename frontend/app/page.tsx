@@ -387,23 +387,17 @@ export default function MarketingPage() {
                 Account
               </Link>
             </div>
-            <div className="space-y-2.5">
-              <p className="eyebrow">Company</p>
-              <a href="#" className="block text-sm text-ink-soft hover:text-ink">
-                About
-              </a>
-              <a href="#" className="block text-sm text-ink-soft hover:text-ink">
-                Contact
-              </a>
-            </div>
+            {/* "About" and "Contact" are gone rather than pointing nowhere: a
+                link that does not go anywhere is a small lie, and the Impressum
+                is the page that actually answers "who is behind this". */}
             <div className="space-y-2.5">
               <p className="eyebrow">Legal</p>
-              <a href="#" className="block text-sm text-ink-soft hover:text-ink">
+              <Link href="/privacy" className="block text-sm text-ink-soft hover:text-ink">
                 Privacy
-              </a>
-              <a href="#" className="block text-sm text-ink-soft hover:text-ink">
-                Imprint
-              </a>
+              </Link>
+              <Link href="/impressum" className="block text-sm text-ink-soft hover:text-ink">
+                Impressum
+              </Link>
             </div>
           </div>
         </div>

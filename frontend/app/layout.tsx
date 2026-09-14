@@ -1,7 +1,21 @@
 import type { Metadata } from "next";
+import { Space_Grotesk } from "next/font/google";
 import type { ReactNode } from "react";
 
 import "./globals.css";
+
+/**
+ * Downloaded at build time and served from this origin - no request reaches
+ * Google when somebody opens the page. That is a legal requirement here, not
+ * a performance preference: a remote webfont hands the visitor's IP address to
+ * a third country before they have consented to anything.
+ */
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-space-grotesk",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Produce Your Brand",
@@ -18,7 +32,7 @@ export const metadata: Metadata = {
  */
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={spaceGrotesk.variable}>
       <body className="min-h-screen">{children}</body>
     </html>
   );

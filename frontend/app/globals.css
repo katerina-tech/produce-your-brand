@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 /*
@@ -36,7 +35,13 @@
   --color-mismatch: #c94a3b;
   --color-mismatch-bg: #fbedeb;
 
-  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, -apple-system,
+  /* Fed by next/font in app/layout.tsx, which downloads the files at build
+     time and serves them from this origin. Loading them from Google's CDN
+     instead sends every visitor's IP address to Google before they have
+     agreed to anything - which a German court (LG Muenchen I, 3 O 17493/20)
+     found to be a GDPR violation, and which is the sort of thing that arrives
+     as an Abmahnung rather than as a bug report. */
+  --font-sans: var(--font-space-grotesk), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas,
     monospace;

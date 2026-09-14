@@ -72,6 +72,18 @@ from your machine.
 3. **Variables**:
    - `API_BASE_URL` = `https://<the backend domain from step 3.5>/api`
      (include the `/api` suffix, and `https://`, not `http://`).
+   - `LEGAL_OPERATOR_NAME`, `LEGAL_OPERATOR_ADDRESS`, `LEGAL_OPERATOR_EMAIL` —
+     who is responsible for the site. German law (§ 5 DDG) requires a public
+     site to name its operator with a postal address and a way to reach them,
+     and `/impressum` prints exactly these.
+
+     Separate the address lines with `|`, for example
+     `Musterstrasse 1|10999 Berlin|Germany`. Optional alongside them:
+     `LEGAL_OPERATOR_PHONE`, `LEGAL_OPERATOR_REGISTER`, `LEGAL_OPERATOR_VAT_ID`.
+
+     Leave them unset and `/impressum` says the deployment has no operator
+     details rather than printing a placeholder - which is the honest state for
+     a prototype, and not a state a publicly advertised site should be in.
 4. **Settings → Networking → Generate Domain.** This is the URL you'll
    actually give people.
 5. Deploy.
