@@ -88,7 +88,7 @@ automatically on every build. Same input, same answer, every time. That is not a
 purity: a supplier will only pay for leads from a system that cannot misrepresent
 what they can do."* Then the hackathon plan, which is the strongest thing we say in a
 round about execution: *"We are not bringing an idea. The hard part is built,
-deployed, and covered by 311 tests. In 48 hours we close the loop: real Berlin
+deployed, and covered by 322 tests. In 48 hours we close the loop: real Berlin
 Sebastian gets real Berlin suppliers in, I get requests for quotation going out and
 the replies parsed back into one comparison. Right now we give you an answer. After
 Berlin we give you a quote."* Then the final line, and then stop:
