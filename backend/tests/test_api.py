@@ -99,6 +99,7 @@ def test_openapi_exposes_exactly_the_intended_surface(api: TestClient) -> None:
         "/api/projects/{project_id}",
         "/api/projects/{project_id}/resume",
         "/api/projects/{project_id}/claim",
+        "/api/projects/{project_id}/outreach",
         "/api/projects/{project_id}/nearby-studios",
         "/api/projects/{project_id}/feedback",
         "/api/analytics/feedback",

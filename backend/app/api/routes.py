@@ -31,6 +31,7 @@ from app.api.dto import (
     HealthResponse,
     NearbyStudioResponse,
     NearbyStudiosResponse,
+    OutreachResponse,
     ProjectListResponse,
     ProjectStateResponse,
     ProjectSummaryResponse,
@@ -55,6 +56,7 @@ from app.services.auth import (
 )
 from app.services.design_service import DesignGenerationError, generate_design
 from app.services.osm_search import OSMSearchError, OverpassStudioSearch
+from app.services.outreach import RFQNotApprovedError, render_email
 from app.services.project_service import (
     DesignNotFoundError,
     ProjectService,
@@ -412,6 +414,45 @@ def generate_design_route(
         mime_type=record.mime_type,
         size_bytes=record.size_bytes,
         preview_data_url=preview,
+    )
+
+
+@router.get("/projects/{project_id}/outreach", response_model=OutreachResponse, tags=["projects"])
+def project_outreach(
+    project_id: str,
+    service: ProjectService = Depends(get_service),
+    user_id: str | None = Depends(current_user_id),
+) -> OutreachResponse:
+    """The approved quotation request, ready to open in a mail client.
+
+    A GET, because it creates nothing and sends nothing: it renders text the
+    user already approved. 409 rather than 404 when the RFQ is not approved
+    yet - the project exists and the answer is "not at that step", which is
+    something the caller can act on.
+    """
+    guard_project(service, project_id, user_id)
+    project = service.get_record(project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="No such project.")
+    if project.rfq is None:
+        raise HTTPException(status_code=409, detail="This project has no quotation request yet.")
+
+    try:
+        email = render_email(project.rfq)
+    except RFQNotApprovedError as unapproved:
+        raise HTTPException(
+            status_code=409,
+            detail="Approve the quotation request before contacting the partner.",
+        ) from unapproved
+
+    return OutreachResponse(
+        supplier_name=project.rfq.supplier_name,
+        to=email.to,
+        subject=email.subject,
+        body=email.body,
+        gmail_url=email.gmail_url,
+        mailto_url=email.mailto_url,
+        fits_in_a_url=email.fits_in_a_url,
     )
 
 

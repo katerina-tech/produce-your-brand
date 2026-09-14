@@ -255,6 +255,29 @@ class FeedbackRequest(BaseModel):
     missing: str | None = Field(default=None, max_length=1000)
 
 
+class OutreachResponse(BaseModel):
+    """The approved quotation request, as an email the user can open and send.
+
+    Carries links rather than a send button, because this system does not send.
+    The buyer remains the sender - which is what keeps supplier contact data out
+    of this product entirely and keeps a platform from being the one making
+    unsolicited contact.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    supplier_name: str
+    to: str = Field(default="", description="Empty: no supplier addresses are stored.")
+    subject: str
+    body: str
+    gmail_url: str = Field(description="Opens a pre-filled Gmail compose window.")
+    mailto_url: str = Field(description="The same message in the local mail client.")
+    fits_in_a_url: bool = Field(
+        description="False when the body is too long for a link to carry intact; "
+        "the client should offer copying instead of a truncated draft."
+    )
+
+
 class FeedbackResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

@@ -337,3 +337,28 @@ def test_without_a_secret_registering_says_so(unconfigured: TestClient) -> None:
 
 def test_with_a_secret_health_says_so(api: TestClient) -> None:
     assert api.get("/api/health").json()["checks"]["sign_in_configured"] is True
+
+
+# ------------------------------------------------------ contacting a partner
+
+
+def test_the_outreach_endpoint_is_private_like_every_other(api: TestClient) -> None:
+    """It renders the text of somebody's business enquiry, including their
+    deadline and quantity. It belongs behind the same wall as the project."""
+    anna = _register(api, "anna@example.de")
+    bruno = _register(api, "bruno@example.de")
+    project_id = _create(api, anna)
+
+    assert api.get(f"/api/projects/{project_id}/outreach", headers=_as(bruno)).status_code == 404
+    assert api.get(f"/api/projects/{project_id}/outreach").status_code == 404
+
+
+def test_outreach_refuses_before_there_is_an_approved_request(api: TestClient) -> None:
+    """409, not 404: the project is real and the answer is "not at that step",
+    which is something the caller can do something about."""
+    project_id = _create(api)
+
+    response = api.get(f"/api/projects/{project_id}/outreach")
+
+    assert response.status_code == 409
+    assert "quotation request" in response.text

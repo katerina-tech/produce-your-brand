@@ -241,6 +241,17 @@ export interface NearbyStudiosResponse {
   note: string;
 }
 
+export interface Outreach {
+  supplier_name: string;
+  /** Always empty: the backend stores no supplier addresses. */
+  to: string;
+  subject: string;
+  body: string;
+  gmail_url: string;
+  mailto_url: string;
+  fits_in_a_url: boolean;
+}
+
 export interface ProjectSummary {
   id: string;
   stage: Stage;

@@ -4,14 +4,15 @@ import { notFound } from "next/navigation";
 import { BackLink, Card, CardHeader, Notice, StageStepper } from "@/components/ui";
 import { BriefReview } from "@/components/workflow/BriefReview";
 import { ClarifyPrompt } from "@/components/workflow/ClarifyPrompt";
+import { ContactPartner } from "@/components/workflow/ContactPartner";
 import { FeedbackSurvey } from "@/components/workflow/FeedbackSurvey";
 import { MatchList } from "@/components/workflow/MatchList";
 import { MethodReview } from "@/components/workflow/MethodReview";
 import { RfqReview } from "@/components/workflow/RfqReview";
-import { ApiError, getProject } from "@/lib/api";
+import { ApiError, getOutreach, getProject } from "@/lib/api";
 import { claimProjectAction } from "@/lib/actions";
 import { getAccount } from "@/lib/auth";
-import type { ProjectState } from "@/lib/types";
+import type { Outreach, ProjectState } from "@/lib/types";
 import { STAGE_LABELS } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +26,7 @@ export const dynamic = "force-dynamic";
  * renders the stage it is told and posts back the action the server said it
  * expects. That is what makes it replaceable without touching the agent.
  */
-function StageView({ state }: { state: ProjectState }) {
+function StageView({ state, outreach }: { state: ProjectState; outreach: Outreach | null }) {
   const { stage, payload, project_id: projectId, design_upload_id: designUploadId } = state;
 
   if (!payload) {
@@ -44,6 +45,7 @@ function StageView({ state }: { state: ProjectState }) {
               </p>
             </div>
           </Card>
+          {outreach ? <ContactPartner outreach={outreach} /> : null}
           <FeedbackSurvey projectId={projectId} />
         </div>
       );
@@ -113,6 +115,12 @@ export default async function ProjectPage({
     );
   }
 
+  // Only a completed project has an approved request to send, and asking for
+  // one earlier would be a round trip to be told 409. A failure here costs the
+  // contact card, never the page: the project is still readable without it.
+  const outreach =
+    state.stage === "completed" ? await getOutreach(id).catch(() => null) : null;
+
   // The API carries the product at every stage; the payload only sometimes
   // does, which is why this does not read from the payload first.
   const product =
@@ -180,7 +188,7 @@ export default async function ProjectPage({
         </Notice>
       ) : null}
 
-      <StageView state={state} />
+      <StageView state={state} outreach={outreach} />
     </div>
   );
 }

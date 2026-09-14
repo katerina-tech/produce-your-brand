@@ -17,6 +17,7 @@ import type {
   GeneratedDesign,
   Health,
   NearbyStudiosResponse,
+  Outreach,
   ProjectState,
   ProjectSummary,
   ResumeAction,
@@ -170,6 +171,21 @@ export async function submitFeedback(id: string, feedback: FeedbackRequest): Pro
     method: "POST",
     body: JSON.stringify(feedback),
   });
+}
+
+/**
+ * The approved quotation request, rendered as an email.
+ *
+ * Returns null when there is nothing to send yet - a project mid-workflow
+ * answers 409, which is an ordinary state here and not worth an error screen.
+ */
+export async function getOutreach(id: string): Promise<Outreach | null> {
+  try {
+    return await request<Outreach>(`/projects/${id}/outreach`);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 409) return null;
+    throw error;
+  }
 }
 
 export async function getNearbyStudios(id: string): Promise<NearbyStudiosResponse> {
