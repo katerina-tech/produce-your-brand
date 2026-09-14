@@ -231,6 +231,8 @@ export interface NearbyStudio {
   address: string | null;
   website: string | null;
   phone: string | null;
+  /** Published by the business to OpenStreetMap, where it published one. */
+  email: string | null;
   lat: number;
   lon: number;
 }
@@ -250,6 +252,8 @@ export interface Outreach {
   gmail_url: string;
   mailto_url: string;
   fits_in_a_url: boolean;
+  /** The address belongs to a sample partner and cannot receive mail. */
+  address_is_sample: boolean;
 }
 
 export interface ProjectSummary {

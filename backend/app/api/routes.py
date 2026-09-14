@@ -40,7 +40,9 @@ from app.api.dto import (
     UploadResponse,
 )
 from app.config import Settings, get_settings
+from app.domain.outreach import SAMPLE_ADDRESS_SUFFIX
 from app.llm.factory import ImageProvider
+from app.repositories.supplier_repo import SupplierRepository
 from app.repositories.user_repo import EmailAlreadyRegisteredError, UserRepository
 from app.security.uploads import UploadRejectedError, store_upload
 from app.services.auth import (
@@ -110,6 +112,14 @@ def guard_project(service: ProjectService, project_id: str, viewer_id: str | Non
     """
     if not service.visible_to(project_id, viewer_id):
         raise HTTPException(status_code=404, detail="No such project.")
+
+
+def get_suppliers(request: Request) -> SupplierRepository | None:
+    """The partner dataset, if it loaded. ``None`` rather than 503: everything
+    that needs it here degrades to an empty address box, which is a worse
+    experience and not a broken one."""
+    repository: SupplierRepository | None = getattr(request.app.state, "supplier_repository", None)
+    return repository
 
 
 def get_app_settings(request: Request) -> Settings:
@@ -421,6 +431,7 @@ def generate_design_route(
 def project_outreach(
     project_id: str,
     service: ProjectService = Depends(get_service),
+    suppliers: SupplierRepository | None = Depends(get_suppliers),
     user_id: str | None = Depends(current_user_id),
 ) -> OutreachResponse:
     """The approved quotation request, ready to open in a mail client.
@@ -437,8 +448,9 @@ def project_outreach(
     if project.rfq is None:
         raise HTTPException(status_code=409, detail="This project has no quotation request yet.")
 
+    partner = suppliers.get(project.rfq.supplier_id) if suppliers else None
     try:
-        email = render_email(project.rfq)
+        email = render_email(project.rfq, to=partner.contact_email or "" if partner else "")
     except RFQNotApprovedError as unapproved:
         raise HTTPException(
             status_code=409,
@@ -453,6 +465,7 @@ def project_outreach(
         gmail_url=email.gmail_url,
         mailto_url=email.mailto_url,
         fits_in_a_url=email.fits_in_a_url,
+        address_is_sample=email.to.endswith(SAMPLE_ADDRESS_SUFFIX),
     )
 
 

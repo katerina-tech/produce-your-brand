@@ -22,7 +22,10 @@ import type { Outreach } from "@/lib/types";
  * word, and it is one click away.
  */
 export function ContactPartner({ outreach }: { outreach: Outreach }) {
-  const [to, setTo] = useState("");
+  // Seeded from the partner record, then the sender's to change. Prefilling
+  // is the point of the feature; locking it would be an opinion about an
+  // address we are less sure of than they are.
+  const [to, setTo] = useState(outreach.to);
   const [copied, setCopied] = useState(false);
 
   const draft = { to: to.trim(), subject: outreach.subject, body: outreach.body };
@@ -61,11 +64,18 @@ export function ContactPartner({ outreach }: { outreach: Outreach }) {
             placeholder="info@example.de"
             className="w-full rounded-lg border border-line bg-surface px-3.5 py-2.5 text-[15px] outline-none transition-colors focus:border-accent sm:max-w-md"
           />
-          <p className="mt-1.5 text-xs text-ink-muted">
-            This system stores no supplier addresses, so this one is yours to
-            supply. You can also leave it blank and fill it in once the message
-            opens.
-          </p>
+          {outreach.address_is_sample && to === outreach.to ? (
+            <p className="mt-1.5 text-xs text-ink-muted">
+              This partner is sample data, and the address ends in{" "}
+              <code className="font-mono">.example</code> — a domain reserved so
+              it can never deliver. Replace it with a real one to send for real.
+            </p>
+          ) : (
+            <p className="mt-1.5 text-xs text-ink-muted">
+              You can also leave this blank and fill it in once the message
+              opens.
+            </p>
+          )}
           {addressLooksWrong ? (
             <p className="mt-1.5 text-xs text-blocked">
               That does not look like an email address yet.

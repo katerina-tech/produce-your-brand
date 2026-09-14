@@ -36,6 +36,15 @@ class Supplier(BaseModel):
     name: str
     location: Location
     website: str | None = None
+    contact_email: str | None = Field(
+        default=None,
+        description=(
+            "Where a quotation request would be sent. Every address in the "
+            "shipped dataset ends in .example, which RFC 2606 reserves so that "
+            "it can never resolve - a sample partner cannot be emailed by "
+            "accident, however far a demo is clicked."
+        ),
+    )
     supported_methods: tuple[ProductionMethod, ...]
     supported_materials: tuple[str, ...] | None = None
     product_categories: tuple[ProductCategory, ...]

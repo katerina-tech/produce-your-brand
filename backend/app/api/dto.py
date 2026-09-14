@@ -215,6 +215,10 @@ class NearbyStudioResponse(BaseModel):
     address: str | None
     website: str | None
     phone: str | None
+    # Volunteered by the business to OpenStreetMap, alongside the phone number
+    # already here. Passed through at the moment of the query and stored no
+    # more than the phone number is.
+    email: str | None
     lat: float
     lon: float
 
@@ -275,6 +279,12 @@ class OutreachResponse(BaseModel):
     fits_in_a_url: bool = Field(
         description="False when the body is too long for a link to carry intact; "
         "the client should offer copying instead of a truncated draft."
+    )
+    address_is_sample: bool = Field(
+        default=False,
+        description="True when the address belongs to a sample partner and "
+        "cannot receive mail. The client must say so rather than let somebody "
+        "believe they have written to a real company.",
     )
 
 

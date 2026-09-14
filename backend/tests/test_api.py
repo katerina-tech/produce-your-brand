@@ -489,6 +489,7 @@ def test_nearby_studios_returns_results_once_a_method_is_confirmed(api: TestClie
             "address": "Skalitzer Str. 1 10999 Berlin",
             "website": "https://example.invalid",
             "phone": None,
+            "email": None,
             "lat": 52.5,
             "lon": 13.4,
         }

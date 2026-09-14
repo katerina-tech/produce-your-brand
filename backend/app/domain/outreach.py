@@ -24,6 +24,11 @@ from pydantic import BaseModel, ConfigDict, Field
 
 GMAIL_COMPOSE = "https://mail.google.com/mail/"
 
+# RFC 2606 reserves .example so that it can never resolve. Every address in
+# the shipped partner dataset ends in it, which is what makes a sample
+# partner impossible to email by accident however far a demo is clicked.
+SAMPLE_ADDRESS_SUFFIX = ".example"
+
 # Browsers and Gmail both stop honouring very long URLs, and the failure is
 # silent truncation - a half-written email in the compose window. Past this the
 # interface offers copying instead, which has no limit.

@@ -18,6 +18,7 @@ from app.services.osm_search import (
     METHOD_TAGS,
     OSMSearchError,
     OverpassStudioSearch,
+    _parse_element,
     build_query,
 )
 
@@ -182,3 +183,40 @@ def test_search_sends_the_query_as_form_data() -> None:
     body = captured["request"].read().decode()
     assert body.startswith("data=")
     assert "craft" in body and "embroiderer" in body
+
+
+def test_an_email_the_business_published_is_carried_through() -> None:
+    """OpenStreetMap already ships this tag in the response this query makes;
+    it was simply being dropped. Read at the moment somebody asks and kept
+    nowhere, exactly like the phone number beside it."""
+    element = {
+        "type": "node",
+        "id": 7,
+        "lat": 52.5,
+        "lon": 13.4,
+        "tags": {
+            "name": "Prenzlberg Siebdruck",
+            "craft": "printer",
+            "contact:email": "kontakt@prenzlberg-siebdruck.de",
+        },
+    }
+
+    studio = _parse_element(element, (("craft", "printer"),))
+
+    assert studio is not None
+    assert studio.email == "kontakt@prenzlberg-siebdruck.de"
+
+
+def test_a_business_that_published_no_email_simply_has_none() -> None:
+    element = {
+        "type": "node",
+        "id": 8,
+        "lat": 52.5,
+        "lon": 13.4,
+        "tags": {"name": "Quiet Studio", "craft": "printer"},
+    }
+
+    studio = _parse_element(element, (("craft", "printer"),))
+
+    assert studio is not None
+    assert studio.email is None

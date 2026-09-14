@@ -70,6 +70,7 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     # a malformed file should fail loudly here, not surface later as an
     # inexplicably empty match list.
     suppliers = SupplierRepository(settings.suppliers_file)
+    app.state.supplier_repository = suppliers
     try:
         app.state.supplier_count = suppliers.count()
     except (OSError, ValueError):

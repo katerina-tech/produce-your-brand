@@ -23,6 +23,7 @@ class NearbyStudio(BaseModel):
     osm_category: str = Field(description="The OSM tag that matched, e.g. 'craft=embroiderer'.")
     address: str | None = Field(default=None, description="Assembled from addr:* tags, if present.")
     website: str | None = None
+    email: str | None = None
     phone: str | None = None
     lat: float
     lon: float

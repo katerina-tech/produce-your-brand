@@ -119,6 +119,11 @@ def _parse_element(
         osm_category=_matched_category(tags, candidates),
         address=_address_from_tags(tags),
         website=tags.get("website") or tags.get("contact:website"),
+        # Real, volunteered contact data that this query already downloads and
+        # was throwing away. Shown like the phone number beside it and stored
+        # no more than that one is: it is read at the moment somebody asks and
+        # kept nowhere, which is why no new processing ground arises for it.
+        email=tags.get("email") or tags.get("contact:email"),
         phone=tags.get("phone") or tags.get("contact:phone"),
         lat=float(lat),
         lon=float(lon),

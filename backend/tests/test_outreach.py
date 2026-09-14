@@ -157,3 +157,31 @@ def test_a_message_too_long_for_a_url_says_so_instead_of_being_cut() -> None:
 
     assert short.fits_in_a_url is True
     assert long.fits_in_a_url is False
+
+
+# ------------------------------------------------ where the address comes from
+
+
+def test_a_sample_partner_address_can_never_reach_anybody() -> None:
+    """Every address in the shipped dataset ends in .example, which RFC 2606
+    reserves so that it cannot resolve. A demo clicked all the way through
+    therefore cannot land in a real company's inbox - which is the difference
+    between sample data and fabricated data."""
+    from pathlib import Path
+
+    from app.domain.outreach import SAMPLE_ADDRESS_SUFFIX
+    from app.repositories.supplier_repo import SupplierRepository
+
+    suppliers = SupplierRepository(Path(__file__).resolve().parent.parent / "data/suppliers.json")
+    addresses = [supplier.contact_email for supplier in suppliers.all()]
+
+    assert all(addresses), "every partner needs one, or the demo stops halfway"
+    assert all(address.endswith(SAMPLE_ADDRESS_SUFFIX) for address in addresses if address)
+    assert len(set(addresses)) == len(addresses), "and they are not all the same one"
+
+
+def test_an_address_supplied_by_the_caller_reaches_the_links() -> None:
+    email = render_email(_rfq(), to="kontakt@spree-textildruck-werk.example")
+
+    assert email.to == "kontakt@spree-textildruck-werk.example"
+    assert "kontakt%40spree-textildruck-werk.example" in email.gmail_url

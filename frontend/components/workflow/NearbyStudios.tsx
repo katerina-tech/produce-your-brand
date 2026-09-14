@@ -102,6 +102,14 @@ export function NearbyStudios({ projectId }: { projectId: string }) {
                       </a>
                     ) : null}
                     {studio.phone ? <span className="text-ink-soft">{studio.phone}</span> : null}
+                    {studio.email ? (
+                      <a
+                        href={`mailto:${studio.email}`}
+                        className="text-accent underline underline-offset-4"
+                      >
+                        {studio.email}
+                      </a>
+                    ) : null}
                   </p>
                 </li>
               ))}
