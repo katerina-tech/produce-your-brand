@@ -1,0 +1,90 @@
+# The build the README and the presentation refer to.
+#
+# Both documents state that a check fails the build if anyone lets the
+# deterministic scorer import the AI layer. That was true of the audit script
+# and false of the project: nothing ran it. This workflow is the missing half.
+#
+# No job here needs a model API key. The suite is built so that not one of its
+# tests calls a live provider, which is why CI can run on every push for free
+# and why a red build always means a real defect rather than an outage.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend — lint, types, tests, architecture, evaluation
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync --group dev
+
+      - name: Lint
+        run: uv run python -m ruff check app tests scripts
+
+      - name: Format check
+        run: uv run python -m ruff format --check app tests scripts
+
+      - name: Type check
+        run: uv run python -m mypy app
+
+      # The architecture audit runs inside this suite (tests/test_architecture_audit.py),
+      # so a violated invariant fails here rather than waiting for someone to
+      # remember the script.
+      - name: Tests
+        run: uv run python -m pytest -q
+
+      # Run explicitly as well: the script prints a readable diagnosis of which
+      # rule broke, which a pytest assertion alone does not surface as clearly.
+      - name: Architecture audit
+        run: uv run python scripts/audit_architecture.py
+
+      # The behavioural evaluation is deterministic and model-free, so it
+      # belongs on every build rather than in a manual ritual.
+      - name: Behavioural evaluation
+        run: uv run python scripts/run_eval.py
+
+  frontend:
+    name: Frontend — types and production build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
