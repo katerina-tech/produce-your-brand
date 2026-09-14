@@ -33,7 +33,6 @@ import base64
 import binascii
 import logging
 import re
-import unicodedata
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -43,46 +42,17 @@ from app.config import Settings, get_settings
 from app.llm import prompts
 from app.llm.factory import LLMError, LLMProvider
 from app.logging_config import Event, log_event
+from app.services.text_normalise import CONFUSABLES, INVISIBLE, fold
 
 logger = logging.getLogger(__name__)
 
 MAX_SCREEN_LENGTH = 20_000
 
-# Homoglyphs that survive NFKC. Cyrillic and Greek lookalikes are the cheap way
-# to write "ignore" so that a Latin pattern list never sees it.
-_CONFUSABLES = str.maketrans(
-    {
-        "а": "a",
-        "е": "e",
-        "о": "o",
-        "р": "p",
-        "с": "c",
-        "у": "y",
-        "х": "x",
-        "і": "i",
-        "ѕ": "s",
-        "ԁ": "d",
-        "ո": "n",
-        "ⅼ": "l",
-        "А": "A",
-        "Е": "E",
-        "О": "O",
-        "Р": "P",
-        "С": "C",
-        "Т": "T",
-        "У": "Y",
-        "Х": "X",
-        "ο": "o",
-        "ν": "v",
-        "α": "a",
-        "ι": "i",
-        "ρ": "p",
-        "τ": "t",
-    }
-)
-
-# Characters with no visible width that can hide inside a word.
-_INVISIBLE = re.compile(r"[​-‏‪-‮⁠-⁤﻿­]")
+# Folding lives in app.services.text_normalise so the quote verifier can use
+# exactly these rules without importing this module, which reaches app.llm and
+# must stay out of code that decides whether a number may exist.
+_CONFUSABLES = CONFUSABLES
+_INVISIBLE = INVISIBLE
 
 _BASE64_BLOCK = re.compile(r"[A-Za-z0-9+/]{24,}={0,2}")
 
@@ -190,17 +160,12 @@ class ScreeningResult:
 def normalise(text: str) -> str:
     """Strip obfuscation. Runs before any inspection and before any prompt use.
 
-    Order matters: compatibility-fold first so full-width and styled characters
-    become plain, then remove invisibles, then fold homoglyphs.
+    Folding is shared with app.services.text_normalise so the quote verifier
+    compares spans against exactly the text the model was shown. Truncation
+    stays here: how much to inspect is a screening policy, while folding is
+    about what characters mean.
     """
-    folded = unicodedata.normalize("NFKC", text)
-    folded = _INVISIBLE.sub("", folded)
-    folded = folded.translate(_CONFUSABLES)
-    # Collapse runs of whitespace but keep line structure, since prompts and
-    # documents rely on paragraphs.
-    folded = re.sub(r"[ \t]+", " ", folded)
-    folded = re.sub(r"\n{3,}", "\n\n", folded)
-    return folded.strip()[:MAX_SCREEN_LENGTH]
+    return fold(text)[:MAX_SCREEN_LENGTH]
 
 
 def neutralise_fences(text: str) -> str:

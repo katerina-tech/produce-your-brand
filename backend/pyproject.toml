@@ -64,6 +64,9 @@ ignore = ["B008"]  # FastAPI Depends() in defaults is idiomatic
 # folds them and the tests attack with them. Flagging them as "ambiguous" is
 # exactly backwards.
 "app/security/guard.py" = ["RUF001", "RUF002", "RUF003"]
+# The homoglyph table is a list of deliberately ambiguous characters - that is
+# the point of it - so the rule that flags them has nothing useful to say here.
+"app/services/text_normalise.py" = ["RUF001", "RUF002", "RUF003"]
 "tests/test_security.py" = ["RUF001", "RUF002", "RUF003"]
 "scripts/*" = ["T201"]  # scripts may print
 
