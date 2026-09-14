@@ -272,6 +272,26 @@ def _serializer() -> JsonPlusSerializer:
     return JsonPlusSerializer(allowed_msgpack_modules=CHECKPOINTED_TYPES)
 
 
+# A probe that touches every column langgraph reads back. It is a read, so it
+# is safe to run against a store that turns out to be fine.
+_PROBE_THREAD = "checkpointer-readability-probe"
+
+
+def _is_readable(saver: SqliteSaver) -> bool:
+    """Whether this store can actually be read by the langgraph in this image.
+
+    ``SqliteSaver.setup()`` creates its tables with ``IF NOT EXISTS``, so a
+    ``checkpoints`` table written by an older version is never migrated and
+    never replaced - it is simply kept, and every read against it fails on a
+    column that no longer exists.
+    """
+    try:
+        saver.get_tuple({"configurable": {"thread_id": _PROBE_THREAD, "checkpoint_ns": ""}})
+    except sqlite3.DatabaseError:
+        return False
+    return True
+
+
 def checkpointer_for(path: Path | str) -> BaseCheckpointSaver[str]:
     """Build a SQLite checkpointer for a long-lived process.
 
@@ -279,9 +299,39 @@ def checkpointer_for(path: Path | str) -> BaseCheckpointSaver[str]:
     connection on exit, which is wrong for a server that must keep it open, so we
     construct the connection ourselves. ``check_same_thread=False`` because
     FastAPI serves requests on a thread pool.
+
+    A store this version cannot read is rebuilt rather than kept. That trade is
+    only sound because of what a checkpoint is: resumable position inside a
+    workflow, never the record of what happened - that lives in ``app.db`` and
+    is untouched here. An unreadable store has already lost the position, so
+    keeping the file costs every future run and saves nothing. The alternative
+    is what this was found as: a deployment answering 500 to every project,
+    permanently, because a file on a persistent volume outlived the library
+    that wrote it.
+
+    The old file is renamed rather than deleted, so a wrong guess about which
+    is which stays recoverable.
     """
     if isinstance(path, Path):
         path.parent.mkdir(parents=True, exist_ok=True)
+
+    connection = sqlite3.connect(str(path), check_same_thread=False)
+    saver = SqliteSaver(connection, serde=_serializer())
+    if _is_readable(saver):
+        return saver
+
+    connection.close()
+    unreadable = Path(str(path) + ".unreadable")
+    logger.warning(
+        "checkpoint store at %s could not be read by this version of langgraph; "
+        "renaming it to %s and starting a new one. Durable project records are "
+        "in app.db and are unaffected.",
+        path,
+        unreadable.name,
+    )
+    unreadable.unlink(missing_ok=True)
+    Path(str(path)).replace(unreadable)
+
     connection = sqlite3.connect(str(path), check_same_thread=False)
     return SqliteSaver(connection, serde=_serializer())
 

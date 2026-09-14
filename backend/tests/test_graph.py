@@ -8,6 +8,7 @@ flow rather than a model's mood.
 
 from __future__ import annotations
 
+import sqlite3
 from collections.abc import Iterator
 from datetime import date
 from pathlib import Path
@@ -15,6 +16,7 @@ from typing import Any
 
 import pytest
 from langchain_core.runnables import RunnableConfig
+from langgraph.checkpoint.base import empty_checkpoint
 from langgraph.types import Command
 
 from app.domain.enums import Confidence, ProductCategory, ProductionMethod, Stage
@@ -717,3 +719,71 @@ def test_supplier_funnel_reaches_the_user(tools: ProductionTools, workflow_facto
     assert paused["candidate_count"] > 0
     assert paused["candidate_count"] >= len(paused["matches"])
     assert app.get_state(config).values["supplier_candidates"]
+
+
+# ------------------------------------------ a checkpoint store from another life
+
+
+def _stale_checkpoint_store(path: Path) -> None:
+    """A ``checkpoints`` table shaped the way an older langgraph wrote it.
+
+    This is not hypothetical: a persistent volume outlived the library that
+    wrote the file on it, and because ``SqliteSaver.setup()`` creates its
+    tables with ``IF NOT EXISTS``, the old table was neither migrated nor
+    replaced. Every read failed on a column that no longer exists, so the
+    deployment answered 500 to every project, permanently.
+    """
+    connection = sqlite3.connect(path)
+    connection.execute("CREATE TABLE checkpoints (thread_id TEXT, checkpoint BLOB)")
+    connection.commit()
+    connection.close()
+
+
+def test_an_unreadable_checkpoint_store_is_rebuilt(tmp_path: Path) -> None:
+    path = tmp_path / "checkpoints.db"
+    _stale_checkpoint_store(path)
+
+    saver = checkpointer_for(path)
+
+    # Readable now, where a moment ago the same call raised OperationalError.
+    assert saver.get_tuple({"configurable": {"thread_id": "anything", "checkpoint_ns": ""}}) is None
+
+
+def test_the_unreadable_store_is_kept_rather_than_deleted(tmp_path: Path) -> None:
+    """A wrong guess about which file was which must stay recoverable."""
+    path = tmp_path / "checkpoints.db"
+    _stale_checkpoint_store(path)
+
+    checkpointer_for(path)
+
+    kept = tmp_path / "checkpoints.db.unreadable"
+    assert kept.is_file()
+    with sqlite3.connect(kept) as old:
+        columns = {row[1] for row in old.execute("PRAGMA table_info(checkpoints)")}
+    assert columns == {"thread_id", "checkpoint"}, "the original file, untouched"
+
+
+def test_a_healthy_store_is_left_exactly_alone(tmp_path: Path) -> None:
+    """The probe is a read. A store that works must not be disturbed by it -
+    including across a restart, which is the whole point of checkpointing."""
+    path = tmp_path / "checkpoints.db"
+    first = checkpointer_for(path)
+    config = {"configurable": {"thread_id": "t-1", "checkpoint_ns": ""}}
+    first.put(config, empty_checkpoint(), {}, {})
+
+    second = checkpointer_for(path)
+
+    assert second.get_tuple(config) is not None, "the checkpoint survived the probe"
+    assert not (tmp_path / "checkpoints.db.unreadable").exists()
+
+
+def test_a_file_that_is_not_a_database_is_rebuilt_too(tmp_path: Path) -> None:
+    """Corruption and a stale schema are the same problem to a caller: the
+    store cannot be read, so it cannot be kept."""
+    path = tmp_path / "checkpoints.db"
+    path.write_bytes(b"this is not a SQLite file at all")
+
+    saver = checkpointer_for(path)
+
+    assert saver.get_tuple({"configurable": {"thread_id": "x", "checkpoint_ns": ""}}) is None
+    assert (tmp_path / "checkpoints.db.unreadable").is_file()
