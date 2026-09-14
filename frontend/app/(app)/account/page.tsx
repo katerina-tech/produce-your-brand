@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { Card } from "@/components/ui";
+import { Card, Notice } from "@/components/ui";
 import { getAccount, signIn, signOut, signUp } from "@/lib/auth";
-import { ApiError } from "@/lib/api";
+import { ApiError, getHealth } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +19,17 @@ export default async function AccountPage({
 }: {
   searchParams: Promise<{ error?: string; mode?: string }>;
 }) {
-  const account = await getAccount();
+  const [account, health] = await Promise.all([getAccount(), getHealth()]);
   const params = await searchParams;
   const registering = params.mode === "register";
+
+  // A deployment with no session secret cannot issue sessions. Everything else
+  // works, so the honest move is to say so here rather than to offer a form
+  // that can only fail - and to say it in terms of the thing to fix.
+  // Strictly `=== false`, not falsy: a backend deployed before this field
+  // existed reports nothing, and reading that absence as "switched off"
+  // would announce a broken feature that works fine.
+  const signInUnavailable = health?.checks.sign_in_configured === false;
 
   async function authenticate(formData: FormData) {
     "use server";
@@ -79,6 +87,32 @@ export default async function AccountPage({
             </form>
           </div>
         </Card>
+      </div>
+    );
+  }
+
+  if (signInUnavailable) {
+    return (
+      <div className="mx-auto max-w-lg">
+        <p className="eyebrow mb-2">Account</p>
+        <h1 className="mb-6 text-2xl font-bold tracking-tight">Sign-in is switched off here</h1>
+        <Notice tone="warning" title="This deployment has no session secret">
+          <p>
+            Accounts need <code className="font-mono text-xs">PYS_SESSION_SECRET</code>{" "}
+            set on the backend service. Without it nothing can be signed, so
+            nobody can sign in.
+          </p>
+          <p className="mt-3">
+            Everything else works exactly as it does with accounts switched on:
+            projects, the workflow and every link keep working, and a project
+            simply belongs to nobody.
+          </p>
+        </Notice>
+        <p className="mt-4">
+          <Link href="/dashboard" className="text-accent underline underline-offset-4">
+            Back to projects
+          </Link>
+        </p>
       </div>
     );
   }

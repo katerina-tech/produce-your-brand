@@ -85,6 +85,17 @@ export default function MarketingPage() {
             >
               My projects
             </Link>
+            {/* Labelled "Account" rather than "Sign in" so it reads correctly
+                either way: this page is statically prerendered and therefore
+                cannot know who is looking at it, and making it dynamic would
+                cost every visitor a server round trip to greet the few who
+                are signed in. */}
+            <Link
+              href="/account"
+              className="hidden text-sm font-medium text-ink-soft transition-colors hover:text-ink sm:inline"
+            >
+              Account
+            </Link>
             <Link
               href="/new"
               className="rounded-lg bg-ink px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-ink/90"
@@ -371,6 +382,9 @@ export default function MarketingPage() {
               </a>
               <Link href="/dashboard" className="block text-sm text-ink-soft hover:text-ink">
                 My projects
+              </Link>
+              <Link href="/account" className="block text-sm text-ink-soft hover:text-ink">
+                Account
               </Link>
             </div>
             <div className="space-y-2.5">
