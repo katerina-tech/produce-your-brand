@@ -69,6 +69,25 @@ def _is_content_filter(error: BaseException) -> bool:
     return any(marker in lowered for marker in _CONTENT_FILTER_MARKERS)
 
 
+def _provider_status(error: BaseException) -> int | None:
+    """The HTTP status a provider exception carries, if it carries one.
+
+    Read defensively rather than by isinstance: this must not import the
+    provider SDK's exception classes, and a provider that changes its
+    exception hierarchy should cost a generic message, not a crash inside
+    error handling.
+    """
+    status = getattr(error, "status_code", None)
+    return status if isinstance(status, int) else None
+
+
+# Two upstream failures mean something a person can act on, and everything
+# else means "it did not work". Keeping the list this short is deliberate:
+# an error message that guesses is worse than one that admits ignorance.
+_OUT_OF_CREDIT = 402
+_RATE_LIMITED = 429
+
+
 class LLMProvider(Protocol):
     """What the graph needs from a model. Deliberately one method."""
 
@@ -453,6 +472,7 @@ class OpenRouterImageProvider:
         except LLMError:
             raise
         except Exception as error:
+            status = _provider_status(error)
             log_event(
                 logger,
                 Event.LLM_ERROR,
@@ -460,8 +480,27 @@ class OpenRouterImageProvider:
                 level=logging.ERROR,
                 model=settings.image_model,
                 error_type=type(error).__name__,
+                provider_status=status,
                 content_filtered=_is_content_filter(error),
             )
+
+            # The reason reaches the user, so it has to be worth reading. A
+            # generation that failed because the model account is out of
+            # credit is fixable by exactly one person, and telling them
+            # "Image generation failed" sends them to look at the code
+            # instead. Uploading a file costs nothing and still works, which
+            # is what the message should send them to.
+            if status == _OUT_OF_CREDIT:
+                raise LLMError(
+                    "Design generation is out of image budget on this deployment. "
+                    "Uploading your own design file still works and costs nothing."
+                ) from error
+            if status == _RATE_LIMITED:
+                raise LLMError(
+                    "The image provider is busy right now. Try again in a minute, "
+                    "or upload your own design file instead."
+                ) from error
+
             raise LLMError(
                 "Image generation failed", content_filtered=_is_content_filter(error)
             ) from error
