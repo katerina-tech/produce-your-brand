@@ -76,3 +76,18 @@ class Confidence(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
+
+
+class PriceBasis(StrEnum):
+    """Whether a quoted price includes VAT - and the honest third answer.
+
+    Three members rather than a bool for the same reason ``Verdict`` has an
+    UNKNOWN: a German reply says "netto", says "brutto", or says nothing at all,
+    and the distance between the last two is 19% VAT. Defaulting an unstated
+    basis to either one would invent the most expensive kind of number in this
+    whole system - one a buyer might act on.
+    """
+
+    NET = "net"
+    GROSS = "gross"
+    UNSTATED = "unstated"
