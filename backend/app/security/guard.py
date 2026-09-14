@@ -67,6 +67,11 @@ class Provenance(StrEnum):
     CUSTOMER_TEXT = "customer_text"
     KNOWLEDGE_BASE = "knowledge_base"
     UPLOADED_FILE = "uploaded_file"
+    # A supplier's reply is authored outside this system, like an upload, and
+    # unlike a customer's own brief. It fails closed for the same reason: a
+    # false positive costs one manual entry, while a missed injection reaches a
+    # model that is about to produce figures somebody will spend money on.
+    SUPPLIER_REPLY = "supplier_reply"
 
 
 # Weighted signals. Individually weak, collectively meaningful - which is the
@@ -349,12 +354,13 @@ class InjectionGuard:
     ) -> bool:
         """Blocking policy, by provenance.
 
-        Uploads fail closed: an externally-authored file that looks like an attack
-        has no legitimate reason to proceed. Customer text and our own curated
-        knowledge fail open with a log, because a false positive there breaks a
-        real user's project or the product's own reference material.
+        Externally-authored content fails closed: an upload or a supplier's reply
+        that looks like an attack has no legitimate reason to proceed. Customer
+        text and our own curated knowledge fail open with a log, because a false
+        positive there breaks a real user's project or the product's own
+        reference material.
         """
-        if provenance is Provenance.UPLOADED_FILE:
+        if provenance in (Provenance.UPLOADED_FILE, Provenance.SUPPLIER_REPLY):
             if verdict is not None and verdict.is_injection and verdict.confidence >= 0.6:
                 return True
             return score >= 0.6

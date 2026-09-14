@@ -49,6 +49,7 @@ class Event(StrEnum):
     SUPPLIER_MATCHING_COMPLETED = "supplier_matching_completed"
     SUPPLIER_SELECTED = "supplier_selected"
     RFQ_GENERATED = "rfq_generated"
+    SUPPLIER_QUOTE_CAPTURED = "supplier_quote_captured"
     RFQ_APPROVED = "rfq_approved"
     INJECTION_SUSPECTED = "injection_suspected"
     UPLOAD_REJECTED = "upload_rejected"
@@ -129,18 +130,28 @@ def log_event(
     logger.log(level, message or event.value, extra={"event": event.value, **fields})
 
 
-def redact_text(text: str | None) -> dict[str, Any]:
-    """Summarise user-supplied text for logs: length, hash, short preview.
+def redact_text(text: str | None, *, preview: bool = True) -> dict[str, Any]:
+    """Summarise user-supplied text for logs: length, hash, and maybe a preview.
 
     The full text is deliberately never returned, so request bodies and document
     contents cannot end up in log storage.
+
+    ``preview=False`` drops even the opening characters, and exists for third
+    party correspondence. A supplier's reply is usually shorter than the preview
+    limit, so a "truncated" preview of one is in practice the whole letter -
+    written by somebody who never chose to use this product, and copied into
+    logs that outlive the project. Length and hash still identify the record
+    and still prove it was not altered.
     """
     if not text:
         return {"text_len": 0, "text_sha256": None, "text_preview": None}
     encoded = text.encode("utf-8", errors="replace")
-    preview = text[:_TRUNCATE_AT].replace("\n", " ")
+    digest = hashlib.sha256(encoded).hexdigest()[:16]
+    if not preview:
+        return {"text_len": len(text), "text_sha256": digest, "text_preview": None}
+    shortened = text[:_TRUNCATE_AT].replace(chr(10), " ")
     return {
         "text_len": len(text),
-        "text_sha256": hashlib.sha256(encoded).hexdigest()[:16],
-        "text_preview": preview + ("..." if len(text) > _TRUNCATE_AT else ""),
+        "text_sha256": digest,
+        "text_preview": shortened + ("..." if len(text) > _TRUNCATE_AT else ""),
     }
