@@ -6,6 +6,7 @@ import { BriefReview } from "@/components/workflow/BriefReview";
 import { ClarifyPrompt } from "@/components/workflow/ClarifyPrompt";
 import { ContactPartner } from "@/components/workflow/ContactPartner";
 import { FeedbackSurvey } from "@/components/workflow/FeedbackSurvey";
+import { NearbyStudios } from "@/components/workflow/NearbyStudios";
 import { MatchList } from "@/components/workflow/MatchList";
 import { MethodReview } from "@/components/workflow/MethodReview";
 import { RfqReview } from "@/components/workflow/RfqReview";
@@ -46,6 +47,11 @@ function StageView({ state, outreach }: { state: ProjectState; outreach: Outreac
             </div>
           </Card>
           {outreach ? <ContactPartner outreach={outreach} /> : null}
+          {/* Real Berlin businesses, live from OpenStreetMap, shown here and
+              not only at partner selection: this is the screen where somebody
+              needs an address, and the matched partner is sample data whose
+              address cannot receive mail. These are the ones that can. */}
+          <NearbyStudios projectId={projectId} />
           <FeedbackSurvey projectId={projectId} />
         </div>
       );
