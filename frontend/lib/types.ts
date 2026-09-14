@@ -39,6 +39,7 @@ export interface Requirement {
   design_available: boolean | null;
   preferred_finish: string | null;
   deadline: string | null;
+  budget_eur: number | null;
   location: string | null;
   priority: string | null;
   additional_constraints: string[];

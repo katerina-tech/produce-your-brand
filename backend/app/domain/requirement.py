@@ -49,6 +49,14 @@ class ProductionRequirement(BaseModel):
         default=None, description="Requested finish, e.g. 'gold', 'matte', 'debossed'."
     )
     deadline: date | None = Field(default=None, description="Required delivery date.")
+    budget_eur: float | None = Field(
+        default=None,
+        gt=0,
+        description=(
+            "Total budget in EUR, only if the customer states one. Never inferred from "
+            "the product or the quantity - an unstated budget is null, not zero."
+        ),
+    )
     location: str | None = Field(default=None, description="Delivery location as stated.")
     priority: Priority | None = Field(default=None, description="Only if explicitly stated.")
     additional_constraints: list[str] = Field(

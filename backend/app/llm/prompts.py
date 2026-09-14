@@ -87,6 +87,9 @@ will supply them; false only if they ask the partner to source them. Otherwise n
 given. A month/day with no year (e.g. "by September 15") always means the next \
 occurrence of that date on or after the reference date - never a date that has \
 already passed, even if omitting the year would put it in the current year.
+- budget_eur: a total budget in euros, only if stated as a budget or a \
+price ceiling ("up to 10,000 EUR"). A per-unit price is not a total \
+budget - leave null rather than multiplying. Never infer a budget.
 - location: the delivery location as stated.
 - priority: only if they explicitly prioritise cost, speed or quality.
 - additional_constraints: other stated constraints; empty list if none.

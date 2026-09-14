@@ -38,6 +38,7 @@ const EDITABLE: {
   { key: "preferred_finish", type: "text" },
   { key: "deadline", type: "date" },
   { key: "location", type: "text" },
+  { key: "budget_eur", type: "number" },
 ];
 
 /** Shown as placeholder text (or, for deadline, a caption below the field) -
@@ -49,6 +50,8 @@ const FIELD_HINTS: Partial<Record<keyof Requirement, string>> = {
   preferred_finish: "e.g. gold, matte, embossed - leave blank if it doesn't matter",
   deadline: "When the finished goods need to be delivered, not when production starts.",
   location: "e.g. Berlin - where the finished goods should be delivered",
+  budget_eur:
+    "Total budget in EUR, if you have one. It is passed to the partner in the request - it never changes who is recommended.",
 };
 
 const FALLBACK_LABELS: Record<string, string> = {
@@ -63,6 +66,7 @@ const FALLBACK_LABELS: Record<string, string> = {
   deadline: "Deadline",
   location: "Delivery location",
   priority: "Priority",
+  budget_eur: "Budget",
   additional_constraints: "Additional constraints",
 };
 
@@ -219,6 +223,14 @@ export function BriefReview({
             <Field label={label("preferred_finish")} value={requirement.preferred_finish} />
             <Field label={label("deadline")} value={requirement.deadline} />
             <Field label={label("location")} value={requirement.location} />
+            <Field
+              label={label("budget_eur")}
+              value={
+                requirement.budget_eur === null
+                  ? null
+                  : `EUR ${requirement.budget_eur.toLocaleString("en-GB")}`
+              }
+            />
             <Field
               label={label("design_available")}
               value={

@@ -54,6 +54,11 @@ def _additional_notes(requirement: ProductionRequirement) -> list[str]:
         notes.append(f"Preferred finish: {requirement.preferred_finish}")
     if requirement.priority:
         notes.append(f"Customer priority: {requirement.priority.value}")
+    if requirement.budget_eur is not None:
+        # Stated to the supplier rather than used to filter: we hold no reliable
+        # price data, so the only honest thing to do with a budget is pass it on
+        # and let the people who know their costs answer against it.
+        notes.append(f"Customer budget: up to EUR {requirement.budget_eur:,.0f} in total")
     if requirement.material is None:
         notes.append("Material has not been confirmed by the customer.")
     return notes

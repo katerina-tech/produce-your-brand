@@ -35,6 +35,7 @@ NON_BLOCKING_FIELDS: tuple[str, ...] = (
     "deadline",
     "location",
     "priority",
+    "budget_eur",
 )
 
 # Backend owns the labels so the UI and the clarification flow cannot drift.
@@ -50,6 +51,7 @@ FIELD_LABELS: dict[str, str] = {
     "deadline": "Deadline",
     "location": "Delivery location",
     "priority": "Priority",
+    "budget_eur": "Budget",
     "additional_constraints": "Additional constraints",
 }
 
