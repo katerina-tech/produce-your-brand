@@ -13,6 +13,9 @@ export const dynamic = "force-dynamic";
  * slash in it — "node/6532305050". Encoding the slash would make the URL
  * unshareable in practice: proxies normalise %2F back, and some refuse it.
  *
+ * Public, like the rest of the directory: no sign-in, no project, nothing here
+ * belongs to an account.
+ *
  * The page is built around the quotes rather than the claims. A claim on its
  * own is this product's summary of a named business; the quote is the business
  * speaking. Anybody being asked to confirm a reading needs the second to judge
@@ -34,7 +37,7 @@ export default async function PartnerPage({
 
   return (
     <div className="space-y-6">
-      <BackLink href="/partners">← Berlin directory</BackLink>
+      <BackLink href="/directory">← All companies</BackLink>
 
       <div>
         <div className="flex flex-wrap items-start justify-between gap-3">

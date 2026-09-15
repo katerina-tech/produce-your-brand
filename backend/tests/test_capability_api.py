@@ -1,6 +1,6 @@
-"""The HTTP surface the confirmation screen depends on.
+"""The directory's HTTP surface.
 
-Three endpoints, and each exists because something upstream of it is not
+Four endpoints, and each of the last three exists because something upstream of it is not
 trustworthy on its own. The detail view exists so a person can read a company's
 own words before vouching for them. The verification endpoint exists because no
 amount of scraping produces somebody's judgement. The match endpoint exists
@@ -298,3 +298,46 @@ def test_a_requirement_too_short_to_search_is_refused(client: TestClient) -> Non
     """422 rather than an empty result: two characters is a slip, and answering
     it with "nobody can do this" would be worse than saying so."""
     assert client.post("/api/partners/match", json={"requirement": "a"}).status_code == 422
+
+
+# -------------------------------------------------------------- the listing
+
+
+def test_the_listing_carries_where_each_company_is(client: TestClient) -> None:
+    """The district is what a person recognises - "a printer in Wedding" - and
+    it is derived from coordinates, so every company has one."""
+    body = client.get("/api/partners?limit=5").json()
+
+    assert body["partners"]
+    assert all(partner["district"] for partner in body["partners"])
+
+
+def test_the_boroughs_come_back_with_their_counts(client: TestClient) -> None:
+    """So a filter can be drawn from the data rather than from a constant that
+    can drift out of step with it."""
+    body = client.get("/api/partners?limit=1").json()
+
+    assert body["boroughs"]
+    assert all(item["count"] > 0 for item in body["boroughs"])
+    assert sum(item["count"] for item in body["boroughs"]) <= body["total"]
+
+
+def test_filtering_to_one_borough(client: TestClient) -> None:
+    body = client.get("/api/partners?limit=1").json()
+    name = body["boroughs"][0]["name"]
+
+    filtered = client.get(f"/api/partners?borough={name}").json()
+
+    assert filtered["shown"] == body["boroughs"][0]["count"]
+    assert all(partner["borough"] == name for partner in filtered["partners"])
+
+
+def test_the_borough_list_does_not_shrink_as_you_filter(client: TestClient) -> None:
+    """A filter that removes its own options is one you cannot get back out of
+    without knowing to clear it by hand."""
+    unfiltered = client.get("/api/partners?limit=1").json()["boroughs"]
+    name = unfiltered[0]["name"]
+
+    filtered = client.get(f"/api/partners?borough={name}&limit=1").json()["boroughs"]
+
+    assert filtered == unfiltered

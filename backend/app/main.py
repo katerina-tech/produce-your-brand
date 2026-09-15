@@ -90,6 +90,11 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     # the rows, so a restart cannot overwrite a capability somebody confirmed.
     partners = PartnerRepository(connection, settings.partners_file)
     partners.seed_if_empty()
+    # Where each business sits was added to the survey after the table existed,
+    # so a deployment seeded before then is brought up to date rather than
+    # re-seeded - which would be the one operation that could undo a
+    # confirmation somebody made by hand.
+    partners.fill_in_districts()
     app.state.partner_repository = partners
     # What was read from those companies' own websites. The search index over
     # it is built on first use rather than here: embedding every company on

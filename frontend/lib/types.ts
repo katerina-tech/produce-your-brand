@@ -248,6 +248,10 @@ export interface Partner {
   name: string;
   address: string | null;
   city: string;
+  /** The Ortsteil - Kreuzberg, Wedding. What a person says when they mean "near me". */
+  district: string | null;
+  /** One of Berlin's twelve Bezirke, or null just outside the city. The filter reads this. */
+  borough: string | null;
   website: string | null;
   email: string | null;
   phone: string | null;
@@ -258,8 +262,15 @@ export interface Partner {
   verified: boolean;
 }
 
+export interface BoroughCount {
+  name: string;
+  count: number;
+}
+
 export interface PartnerDirectory {
   partners: Partner[];
+  /** Every Bezirk with businesses, most first. Counted, never a constant list. */
+  boroughs: BoroughCount[];
   total: number;
   contactable: number;
   shown: number;

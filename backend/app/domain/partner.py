@@ -41,6 +41,24 @@ class Partner(BaseModel):
 
     address: str | None = None
     city: str = "Berlin"
+    district: str | None = Field(
+        default=None,
+        description=(
+            "The Ortsteil - Kreuzberg, Wedding, Prenzlauer Berg. What a person says "
+            "out loud when they mean 'near me', and what half these addresses do not "
+            "contain, which is why it is derived from the coordinates rather than "
+            "parsed out of the street line."
+        ),
+    )
+    borough: str | None = Field(
+        default=None,
+        description=(
+            "The Bezirk - one of Berlin's twelve. The one of the two that makes a "
+            "usable filter, because fifty Ortsteile in a dropdown is a list nobody "
+            "reads. None for the handful of businesses just outside the city, which "
+            "is the honest answer rather than the nearest Berlin name."
+        ),
+    )
     lat: float | None = None
     lon: float | None = None
 

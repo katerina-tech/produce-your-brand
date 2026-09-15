@@ -423,6 +423,17 @@ class PartnerResponse(BaseModel):
     name: str
     address: str | None
     city: str
+    district: str | None = Field(
+        default=None,
+        description="The Ortsteil - what a person says when they mean 'near me'.",
+    )
+    borough: str | None = Field(
+        default=None,
+        description=(
+            "One of Berlin's twelve Bezirke, or null for the few businesses just "
+            "outside the city. The filter reads this; the screen shows the district."
+        ),
+    )
     website: str | None
     email: str | None
     phone: str | None
@@ -435,10 +446,27 @@ class PartnerResponse(BaseModel):
     verified: bool = False
 
 
+class BoroughCount(BaseModel):
+    """One Bezirk and how many businesses are in it.
+
+    Counted from the data rather than listed from a constant: offering a filter
+    for a borough with nothing behind it answers "nothing here" to a question
+    the directory never had.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    count: int
+
+
 class PartnerDirectoryResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     partners: list[PartnerResponse] = []
+    boroughs: list[BoroughCount] = Field(
+        default=[], description="Every Bezirk with businesses, most first."
+    )
     total: int = Field(description="Businesses in the whole directory, before filtering.")
     contactable: int = Field(description="How many of the total publish an email address.")
     shown: int = Field(description="How many matched the current filters.")

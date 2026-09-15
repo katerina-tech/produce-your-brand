@@ -337,7 +337,7 @@ rather than something that appeared.
 | `DELETE` | `/api/projects/{id}/quotes/{quote_id}` | remove one |
 | `POST` | `/api/uploads` | validated design file, metadata only |
 | `POST` | `/api/designs/generate` | generate a design from a text prompt (real per-image cost) |
-| `GET` | `/api/partners` | the Berlin directory, filtered server-side |
+| `GET` | `/api/partners` | the Berlin directory, filtered server-side by name, borough and contactability |
 | `GET` | `/api/partners/detail/{id}` | one company and what its own site says it does |
 | `POST` | `/api/partners/verification/{id}` | record that a person confirmed that reading |
 | `POST` | `/api/partners/match` | retrieval + verification over the companies' own words |
@@ -450,13 +450,46 @@ Tiles come from `tile.openstreetmap.org` with the attribution their usage policy
 
 ---
 
-## The Berlin directory, and the database under it
+## The Berlin directory — its own front door
 
-`/partners` is 135 real Berlin production businesses with the contact details
-they published themselves — 41 of them an email address. Searchable by name or
-address, filterable to the ones you can write to today. Built by
-`scripts/build_berlin_partners.py` from OpenStreetMap, under the ODbL, with the
-attribution travelling in the data rather than remembered by a reader.
+**`/directory`** is 135 real Berlin production businesses with the contact
+details they published themselves — 41 of them an email address. Searchable by
+name or address, filterable by borough and to the ones you can write to today,
+and shown on a map. Built by `scripts/build_berlin_partners.py` from
+OpenStreetMap, under the ODbL, with the attribution travelling in the data
+rather than remembered by a reader.
+
+**It has its own chrome, and that is the whole of the separation.** Three
+layouts now serve three audiences: `/` sells the product, `(app)` is the
+working tool behind an optional sign-in, and `(directory)` is a public
+reference anybody can read without an account and without a project — somebody
+looking for a print shop in Kreuzberg should not be met with "My projects" and
+"New project". A separate *deployment* was considered and rejected: it would
+have bought a second domain at the price of a second design system, a second
+API client and a second Impressum (§ 5 DDG applies per site), while the
+directory's whole point is that confirmed companies feed the matcher next door.
+The old `/partners` URLs redirect permanently, so nothing already linked
+breaks.
+
+### Where each company is
+
+Derived from its coordinates, never parsed out of the street line. All 135
+records have a position; only 82 have an address containing a postcode, so
+parsing would have answered for three companies in five and left a filter
+looking complete while hiding a third of the directory.
+`scripts/enrich_districts.py` reverse-geocodes each one through Nominatim — one
+request a second and an identifying User-Agent, as their usage policy asks —
+and stores two names, because they answer different questions. The **Ortsteil**
+(Wedding, Prenzlauer Berg) is what a person says out loud and is what the list
+shows. The **Bezirk** is one of Berlin's twelve and is the only one of the two
+that makes a filter somebody will read.
+
+**The twelve are written out in the script rather than trusted from the
+response.** A geocoder answers a *nearby* administrative name for an address
+outside the city, and the first run put Stahnsdorf — a Brandenburg town — in
+the borough filter beside Pankow and Mitte. Eleven businesses sit outside
+Berlin's boroughs; they keep their own town name and get no Bezirk, which is
+the honest answer rather than the nearest Berlin label. A test pins it.
 
 **A `Partner` is not a `Supplier`, and a test forbids them sharing a field.** A
 Supplier is a company somebody established facts about — materials, minimum
@@ -536,7 +569,7 @@ are the list worth a phone call.
 
 ### The step that is not automatable
 
-`/partners/<id>` shows what was read from one company beside the sentences it
+`/directory/<id>` shows what was read from one company beside the sentences it
 was read from, and one button: **confirm this reading is right**. That is the
 only fact in the directory no amount of scraping produces. A model read the page
 and a verifier checked its quotes; neither of those is a person saying "yes,
@@ -692,6 +725,8 @@ backend/
     fetch_company_pages.py    # stores their page text for capability reading
     extract_capabilities.py   # reads that text into verified claims; resumable,
                               #   because each company costs a model call
+    enrich_districts.py       # places each company in its Ortsteil and Bezirk
+                              #   from its coordinates, politely
     demo_run.py          # the only code that calls a real model
   tests/
   Dockerfile, docker-entrypoint.sh, railway.json   # the deployed backend
@@ -699,10 +734,13 @@ frontend/
   app/
     page.tsx             # marketing homepage - full-bleed, its own chrome
     impressum/, privacy/ # § 5 DDG and Art. 13 GDPR, linked from every page
-    (app)/                # dashboard, new project, partners, account, workflow
+    (app)/                # dashboard, new project, account, workflow
+    (directory)/          # the public company directory - its own chrome,
+                          #   no sign-in, nothing tied to an account
   components/
     partners/            # CapabilitySearch.tsx (ask by job, not by name),
-                         #   ConfirmReading.tsx (the one un-automatable step)
+                         #   ConfirmReading.tsx (the one un-automatable step),
+                         #   PartnerMap.tsx (Leaflet; follows the filter)
     ui.tsx               # presentation primitives
     Logo.tsx             # the one place the brand mark is drawn
     workflow/            # one component per gate, plus NearbyStudios.tsx,
@@ -917,7 +955,7 @@ take on trust.
 | Human-in-the-loop | four gates, enforced by `interrupt()` | `test_workflow_stops_at_all_four_approval_gates` |
 | Structured logging | one config, closed event enum | `test_log_events_are_a_closed_set` |
 
-**600 backend tests, 28 frontend tests.** No test calls a live model, and none
+**612 backend tests, 28 frontend tests.** No test calls a live model, and none
 calls the real Overpass API either - `test_osm_search.py` swaps in
 `httpx.MockTransport`. The graph runs on a scripted provider and retrieval on a
 hashing embedder whose similarity is real term overlap, so the suite is free,

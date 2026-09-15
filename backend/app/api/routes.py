@@ -21,6 +21,7 @@ from pydantic import ValidationError
 
 from app.api.dto import (
     AccountResponse,
+    BoroughCount,
     CapabilityClaimResponse,
     CapabilityMatchesResponse,
     CapabilityMatchRequest,
@@ -618,6 +619,8 @@ def _partner_response(partner: Partner) -> PartnerResponse:
         name=partner.name,
         address=partner.address,
         city=partner.city,
+        district=partner.district,
+        borough=partner.borough,
         website=partner.website,
         email=partner.email,
         phone=partner.phone,
@@ -632,6 +635,7 @@ def _partner_response(partner: Partner) -> PartnerResponse:
 def list_partners(
     q: str | None = None,
     method: ProductionMethod | None = None,
+    borough: str | None = None,
     with_email: bool = False,
     limit: int = 200,
     partners: PartnerRepository = Depends(get_partners),
@@ -643,10 +647,16 @@ def list_partners(
     the source does not know those and this product does not invent them.
     """
     directory = partners.directory()
-    found = partners.search(query=q, method=method, with_email=with_email, limit=limit)
+    found = partners.search(
+        query=q, method=method, borough=borough, with_email=with_email, limit=limit
+    )
 
     return PartnerDirectoryResponse(
         partners=[_partner_response(partner) for partner in found],
+        # The whole list every time, not only the boroughs surviving the current
+        # filter: a filter that removes its own options is one you cannot get
+        # back out of without knowing to clear it.
+        boroughs=[BoroughCount(name=name, count=count) for name, count in partners.boroughs()],
         total=partners.count(),
         contactable=partners.contactable_count(),
         shown=len(found),

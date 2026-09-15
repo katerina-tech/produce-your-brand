@@ -72,6 +72,8 @@ CREATE TABLE IF NOT EXISTS partners (
     verified       INTEGER NOT NULL DEFAULT 0,
     address        TEXT,
     city           TEXT NOT NULL,
+    district       TEXT,
+    borough        TEXT,
     lat            REAL,
     lon            REAL,
     website        TEXT,
@@ -153,6 +155,21 @@ _MIGRATIONS: tuple[tuple[str, str, str], ...] = (
         "owner_id",
         "ALTER TABLE projects ADD COLUMN owner_id TEXT",
     ),
+    # Where in Berlin, for a table seeded before anybody asked. Two columns
+    # rather than one because they answer different questions: the Ortsteil is
+    # what a person says out loud - "a printer in Kreuzberg" - and the Bezirk is
+    # the dozen official divisions, which is the only one of the two that makes
+    # a usable filter.
+    (
+        "partners",
+        "district",
+        "ALTER TABLE partners ADD COLUMN district TEXT",
+    ),
+    (
+        "partners",
+        "borough",
+        "ALTER TABLE partners ADD COLUMN borough TEXT",
+    ),
 )
 
 
@@ -176,4 +193,5 @@ def initialize_schema(connection: Database) -> None:
     # column existed, the column is only there once migrations have run.
     with connection:
         connection.execute("CREATE INDEX IF NOT EXISTS idx_projects_owner ON projects(owner_id)")
+        connection.execute("CREATE INDEX IF NOT EXISTS idx_partners_borough ON partners(borough)")
     logger.debug("schema ready", extra={"event": "schema_initialised"})

@@ -13,6 +13,16 @@ const nextConfig: NextConfig = {
   // node_modules) so the deploy image doesn't need the full node_modules
   // tree copied in. Only affects `next build` output, not `next dev`.
   output: "standalone",
+
+  // The directory used to live at /partners, inside the working app. It is its
+  // own thing now - its own front door, its own chrome, no sign-in - so it has
+  // its own address. Anything already linked or bookmarked still arrives.
+  async redirects() {
+    return [
+      { source: "/partners", destination: "/directory", permanent: true },
+      { source: "/partners/:path*", destination: "/directory/:path*", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

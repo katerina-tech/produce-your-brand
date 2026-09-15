@@ -15,7 +15,9 @@
       "email": null,
       "phone": "+49 30 4515813",
       "lat": 52.5515565,
-      "lon": 13.3486931
+      "lon": 13.3486931,
+      "district": "Wedding",
+      "borough": "Mitte"
     },
     {
       "osm_id": "node/10883113063",
@@ -27,7 +29,9 @@
       "email": null,
       "phone": "+49 30 45804121",
       "lat": 52.5125483,
-      "lon": 13.3172411
+      "lon": 13.3172411,
+      "district": "Charlottenburg",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/3615221020",
@@ -39,7 +43,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5187321,
-      "lon": 13.4300941
+      "lon": 13.4300941,
+      "district": "Friedrichshain",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "way/553786971",
@@ -51,7 +57,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4616214,
-      "lon": 13.582913
+      "lon": 13.582913,
+      "district": "Köpenick",
+      "borough": "Treptow-Köpenick"
     },
     {
       "osm_id": "node/2824286805",
@@ -63,7 +71,9 @@
       "email": null,
       "phone": null,
       "lat": 52.383122,
-      "lon": 13.2396183
+      "lon": 13.2396183,
+      "district": "Stahnsdorf",
+      "borough": null
     },
     {
       "osm_id": "node/6403071244",
@@ -75,7 +85,9 @@
       "email": "bigcopy@bigcopy.de",
       "phone": "+49 30 3150968 0",
       "lat": 52.5129617,
-      "lon": 13.3146589
+      "lon": 13.3146589,
+      "district": "Charlottenburg",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "way/147842139",
@@ -87,7 +99,9 @@
       "email": "info@bundesdruckerei.de",
       "phone": "+49 30 2598-0",
       "lat": 52.5079721,
-      "lon": 13.4016861
+      "lon": 13.4016861,
+      "district": "Kreuzberg",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/13730592140",
@@ -99,7 +113,9 @@
       "email": "hrehak@buerodienste-in-pankow.de",
       "phone": "+49 30 85622124",
       "lat": 52.5868158,
-      "lon": 13.3552536
+      "lon": 13.3552536,
+      "district": "Wilhelmsruh",
+      "borough": "Pankow"
     },
     {
       "osm_id": "node/13874146751",
@@ -111,7 +127,9 @@
       "email": null,
       "phone": "+49 30 68965559; +49 176 21105086",
       "lat": 52.5143234,
-      "lon": 13.4935654
+      "lon": 13.4935654,
+      "district": "Lichtenberg",
+      "borough": "Lichtenberg"
     },
     {
       "osm_id": "node/4152700902",
@@ -123,7 +141,9 @@
       "email": "info@centralstation-berlin.de",
       "phone": "+49 30 42026130",
       "lat": 52.5328045,
-      "lon": 13.4409787
+      "lon": 13.4409787,
+      "district": "Prenzlauer Berg",
+      "borough": "Pankow"
     },
     {
       "osm_id": "node/5596243762",
@@ -135,7 +155,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5123319,
-      "lon": 13.3242832
+      "lon": 13.3242832,
+      "district": "Charlottenburg",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/2306709204",
@@ -147,7 +169,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5034369,
-      "lon": 13.3052554
+      "lon": 13.3052554,
+      "district": "Charlottenburg",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/2442886651",
@@ -159,7 +183,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4878259,
-      "lon": 13.322194
+      "lon": 13.322194,
+      "district": "Wilmersdorf",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/3235730006",
@@ -171,7 +197,9 @@
       "email": "info@copyalarm.de",
       "phone": "+493056734400",
       "lat": 52.4811633,
-      "lon": 13.4407263
+      "lon": 13.4407263,
+      "district": "Neukölln",
+      "borough": "Neukölln"
     },
     {
       "osm_id": "node/6419661885",
@@ -183,7 +211,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5050738,
-      "lon": 13.3004416
+      "lon": 13.3004416,
+      "district": "Charlottenburg",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/1447901168",
@@ -195,7 +225,9 @@
       "email": "info@allesclara.de",
       "phone": "+49 30 2828557",
       "lat": 52.5241953,
-      "lon": 13.3922764
+      "lon": 13.3922764,
+      "district": "Mitte",
+      "borough": "Mitte"
     },
     {
       "osm_id": "node/8811638326",
@@ -207,7 +239,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4788816,
-      "lon": 13.4278599
+      "lon": 13.4278599,
+      "district": "Neukölln",
+      "borough": "Neukölln"
     },
     {
       "osm_id": "node/10126373078",
@@ -219,7 +253,9 @@
       "email": null,
       "phone": "+4930 88 49 04 64",
       "lat": 52.4559605,
-      "lon": 13.379064
+      "lon": 13.379064,
+      "district": "Tempelhof",
+      "borough": "Tempelhof-Schöneberg"
     },
     {
       "osm_id": "node/3471425375",
@@ -231,7 +267,9 @@
       "email": null,
       "phone": "+49 30 4944691",
       "lat": 52.5559832,
-      "lon": 13.3775603
+      "lon": 13.3775603,
+      "district": "Gesundbrunnen",
+      "borough": "Mitte"
     },
     {
       "osm_id": "node/375759137",
@@ -243,7 +281,9 @@
       "email": "daten@copyprint.de",
       "phone": "+49 30 3180590 0",
       "lat": 52.511867,
-      "lon": 13.3207629
+      "lon": 13.3207629,
+      "district": "Charlottenburg",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/13606186048",
@@ -255,7 +295,9 @@
       "email": null,
       "phone": null,
       "lat": 52.51698,
-      "lon": 13.3003335
+      "lon": 13.3003335,
+      "district": "Charlottenburg",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/12424954404",
@@ -267,7 +309,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5531368,
-      "lon": 13.414775
+      "lon": 13.414775,
+      "district": "Prenzlauer Berg",
+      "borough": "Pankow"
     },
     {
       "osm_id": "node/2301998296",
@@ -279,7 +323,9 @@
       "email": "info@copyshop-glienicke.de",
       "phone": null,
       "lat": 52.6324975,
-      "lon": 13.3101385
+      "lon": 13.3101385,
+      "district": "Glienicke/Nordbahn",
+      "borough": null
     },
     {
       "osm_id": "node/6499431431",
@@ -291,7 +337,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5178945,
-      "lon": 13.3061085
+      "lon": 13.3061085,
+      "district": "Charlottenburg",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/3269332801",
@@ -303,7 +351,9 @@
       "email": "info@copytake16.de",
       "phone": "+49303138565",
       "lat": 52.5081964,
-      "lon": 13.3224855
+      "lon": 13.3224855,
+      "district": "Charlottenburg",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/2476268057",
@@ -315,7 +365,9 @@
       "email": "post@copy-terra.de",
       "phone": "+49 30 8535554",
       "lat": 52.4785175,
-      "lon": 13.3292625
+      "lon": 13.3292625,
+      "district": "Wilmersdorf",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/871633762",
@@ -327,7 +379,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5027902,
-      "lon": 13.4142218
+      "lon": 13.4142218,
+      "district": "Kreuzberg",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/678901079",
@@ -339,7 +393,9 @@
       "email": "ladenbergstr@copy-center.de",
       "phone": "+49 30 83009310",
       "lat": 52.4461565,
-      "lon": 13.2926378
+      "lon": 13.2926378,
+      "district": "Dahlem",
+      "borough": "Steglitz-Zehlendorf"
     },
     {
       "osm_id": "node/3508893325",
@@ -351,7 +407,9 @@
       "email": "info@copy-day.de",
       "phone": "+49303955441",
       "lat": 52.5303561,
-      "lon": 13.345931
+      "lon": 13.345931,
+      "district": "Moabit",
+      "borough": "Mitte"
     },
     {
       "osm_id": "node/1247771753",
@@ -363,7 +421,9 @@
       "email": "info@e-printshop.de",
       "phone": "+49 30 631 66 59",
       "lat": 52.4576106,
-      "lon": 13.5108963
+      "lon": 13.5108963,
+      "district": "Niederschöneweide",
+      "borough": "Treptow-Köpenick"
     },
     {
       "osm_id": "node/9271884434",
@@ -375,7 +435,9 @@
       "email": "habelschwerdterallee@copy-center.de",
       "phone": "+49 30 841742-10",
       "lat": 52.4501045,
-      "lon": 13.2891971
+      "lon": 13.2891971,
+      "district": "Dahlem",
+      "borough": "Steglitz-Zehlendorf"
     },
     {
       "osm_id": "node/1389048017",
@@ -387,7 +449,9 @@
       "email": "copytime@copy-time.de",
       "phone": "+49 30 6112299",
       "lat": 52.499843,
-      "lon": 13.4386194
+      "lon": 13.4386194,
+      "district": "Kreuzberg",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/4714693669",
@@ -399,7 +463,9 @@
       "email": null,
       "phone": "+49 30 74309847",
       "lat": 52.4449773,
-      "lon": 13.3861273
+      "lon": 13.3861273,
+      "district": "Mariendorf",
+      "borough": "Tempelhof-Schöneberg"
     },
     {
       "osm_id": "node/4456611891",
@@ -411,7 +477,9 @@
       "email": "post@copyking.de",
       "phone": "+49 30 8312482",
       "lat": 52.446599,
-      "lon": 13.2951922
+      "lon": 13.2951922,
+      "district": "Lichterfelde",
+      "borough": "Steglitz-Zehlendorf"
     },
     {
       "osm_id": "node/7606373195",
@@ -423,7 +491,9 @@
       "email": "copyplanet@outlook.de",
       "phone": "+49 30 4484133",
       "lat": 52.5365364,
-      "lon": 13.39704
+      "lon": 13.39704,
+      "district": "Mitte",
+      "borough": "Mitte"
     },
     {
       "osm_id": "node/4116076648",
@@ -435,7 +505,9 @@
       "email": null,
       "phone": "+49 30 50382889",
       "lat": 52.490915,
-      "lon": 13.5250958
+      "lon": 13.5250958,
+      "district": "Karlshorst",
+      "borough": "Lichtenberg"
     },
     {
       "osm_id": "node/3597870584",
@@ -447,7 +519,9 @@
       "email": "info@hascomedia.de",
       "phone": "+49 30 65762555",
       "lat": 52.4712562,
-      "lon": 13.5638927
+      "lon": 13.5638927,
+      "district": "Köpenick",
+      "borough": "Treptow-Köpenick"
     },
     {
       "osm_id": "node/11253590526",
@@ -459,7 +533,9 @@
       "email": null,
       "phone": "+49 30 3326616",
       "lat": 52.5317336,
-      "lon": 13.1978915
+      "lon": 13.1978915,
+      "district": "Spandau",
+      "borough": "Spandau"
     },
     {
       "osm_id": "node/4757441921",
@@ -471,7 +547,9 @@
       "email": null,
       "phone": "+49 30 54598820",
       "lat": 52.5047346,
-      "lon": 13.4480537
+      "lon": 13.4480537,
+      "district": "Friedrichshain",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/4624301392",
@@ -483,7 +561,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4923407,
-      "lon": 13.4181476
+      "lon": 13.4181476,
+      "district": "Kreuzberg",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/259203949",
@@ -495,7 +575,9 @@
       "email": null,
       "phone": "+49 30 291 39 85",
       "lat": 52.5119821,
-      "lon": 13.4527691
+      "lon": 13.4527691,
+      "district": "Friedrichshain",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/4832749380",
@@ -507,7 +589,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5693419,
-      "lon": 13.4048928
+      "lon": 13.4048928,
+      "district": "Pankow",
+      "borough": "Pankow"
     },
     {
       "osm_id": "node/3561809557",
@@ -519,7 +603,9 @@
       "email": "Pappel@CSVcopy.de",
       "phone": "+49 30 44650314",
       "lat": 52.5440242,
-      "lon": 13.4159072
+      "lon": 13.4159072,
+      "district": "Prenzlauer Berg",
+      "borough": "Pankow"
     },
     {
       "osm_id": "node/846185116",
@@ -531,7 +617,9 @@
       "email": "uni@csvcopy.de",
       "phone": "+493067804581",
       "lat": 52.4297258,
-      "lon": 13.5308336
+      "lon": 13.5308336,
+      "district": "Adlershof",
+      "borough": "Treptow-Köpenick"
     },
     {
       "osm_id": "node/12529267892",
@@ -543,7 +631,9 @@
       "email": null,
       "phone": "+49 30 4211995",
       "lat": 52.5431287,
-      "lon": 13.522568
+      "lon": 13.522568,
+      "district": "Alt-Hohenschönhausen",
+      "borough": "Lichtenberg"
     },
     {
       "osm_id": "node/8423150288",
@@ -555,7 +645,9 @@
       "email": null,
       "phone": "+49 30 55078057",
       "lat": 52.5263729,
-      "lon": 13.3301349
+      "lon": 13.3301349,
+      "district": "Moabit",
+      "borough": "Mitte"
     },
     {
       "osm_id": "node/8223127052",
@@ -567,7 +659,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4815942,
-      "lon": 13.346139
+      "lon": 13.346139,
+      "district": "Schöneberg",
+      "borough": "Tempelhof-Schöneberg"
     },
     {
       "osm_id": "node/12398216328",
@@ -579,7 +673,9 @@
       "email": null,
       "phone": "+49 30 413 60 53",
       "lat": 52.5697066,
-      "lon": 13.3127834
+      "lon": 13.3127834,
+      "district": "Reinickendorf",
+      "borough": "Reinickendorf"
     },
     {
       "osm_id": "node/1314614825",
@@ -591,7 +687,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4907738,
-      "lon": 13.3863643
+      "lon": 13.3863643,
+      "district": "Kreuzberg",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/5578988347",
@@ -603,7 +701,9 @@
       "email": "ansbacherstr@copy-center.de",
       "phone": "+49 30 84181114",
       "lat": 52.5036281,
-      "lon": 13.3424952
+      "lon": 13.3424952,
+      "district": "Schöneberg",
+      "borough": "Tempelhof-Schöneberg"
     },
     {
       "osm_id": "node/6838590541",
@@ -615,7 +715,9 @@
       "email": "markgrafenstr@copy-center.de",
       "phone": "+49 30 22658010",
       "lat": 52.5072974,
-      "lon": 13.3940855
+      "lon": 13.3940855,
+      "district": "Kreuzberg",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/2262772641",
@@ -627,7 +729,9 @@
       "email": null,
       "phone": "+49 30 4538463",
       "lat": 52.5430232,
-      "lon": 13.3560478
+      "lon": 13.3560478,
+      "district": "Wedding",
+      "borough": "Mitte"
     },
     {
       "osm_id": "node/5913456222",
@@ -639,7 +743,9 @@
       "email": null,
       "phone": null,
       "lat": 52.535563,
-      "lon": 13.4540695
+      "lon": 13.4540695,
+      "district": "Prenzlauer Berg",
+      "borough": "Pankow"
     },
     {
       "osm_id": "node/4574014595",
@@ -651,7 +757,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5095878,
-      "lon": 13.2793848
+      "lon": 13.2793848,
+      "district": "Westend",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/12483866779",
@@ -663,7 +771,9 @@
       "email": null,
       "phone": null,
       "lat": 52.516152,
-      "lon": 13.4478209
+      "lon": 13.4478209,
+      "district": "Friedrichshain",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/1774557611",
@@ -675,7 +785,9 @@
       "email": null,
       "phone": "+49 175 2038780",
       "lat": 52.4687724,
-      "lon": 13.3417956
+      "lon": 13.3417956,
+      "district": "Schöneberg",
+      "borough": "Tempelhof-Schöneberg"
     },
     {
       "osm_id": "node/12883446136",
@@ -687,7 +799,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5284569,
-      "lon": 13.3334886
+      "lon": 13.3334886,
+      "district": "Moabit",
+      "borough": "Mitte"
     },
     {
       "osm_id": "node/1588251877",
@@ -699,7 +813,9 @@
       "email": null,
       "phone": null,
       "lat": 52.331882,
-      "lon": 13.602748
+      "lon": 13.602748,
+      "district": "Zeuthen",
+      "borough": null
     },
     {
       "osm_id": "node/13005340201",
@@ -711,7 +827,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5317364,
-      "lon": 13.3965237
+      "lon": 13.3965237,
+      "district": "Mitte",
+      "borough": "Mitte"
     },
     {
       "osm_id": "node/9957304160",
@@ -723,7 +841,9 @@
       "email": null,
       "phone": "+49 3328 312 40 40",
       "lat": 52.3938166,
-      "lon": 13.2435483
+      "lon": 13.2435483,
+      "district": "Ruhlsdorf",
+      "borough": null
     },
     {
       "osm_id": "node/1086590593",
@@ -735,7 +855,9 @@
       "email": null,
       "phone": "+4933283366050",
       "lat": 52.3993664,
-      "lon": 13.2465466
+      "lon": 13.2465466,
+      "district": "Ruhlsdorf",
+      "borough": null
     },
     {
       "osm_id": "node/12768039986",
@@ -747,7 +869,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5525775,
-      "lon": 13.4506616
+      "lon": 13.4506616,
+      "district": "Weißensee",
+      "borough": "Pankow"
     },
     {
       "osm_id": "node/1930491522",
@@ -759,7 +883,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4351082,
-      "lon": 13.5527756
+      "lon": 13.5527756,
+      "district": "Adlershof",
+      "borough": "Treptow-Köpenick"
     },
     {
       "osm_id": "node/1113373278",
@@ -771,7 +897,9 @@
       "email": null,
       "phone": null,
       "lat": 52.3303466,
-      "lon": 13.1147312
+      "lon": 13.1147312,
+      "district": "Saarmund",
+      "borough": null
     },
     {
       "osm_id": "way/255967086",
@@ -783,7 +911,9 @@
       "email": "info@druckereijurisch.de",
       "phone": "+49 30 5350165",
       "lat": 52.4893235,
-      "lon": 13.6039
+      "lon": 13.6039,
+      "district": "Mahlsdorf",
+      "borough": "Marzahn-Hellersdorf"
     },
     {
       "osm_id": "node/9737037062",
@@ -795,7 +925,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5105485,
-      "lon": 13.2867155
+      "lon": 13.2867155,
+      "district": "Charlottenburg",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/3078149661",
@@ -807,7 +939,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5475327,
-      "lon": 13.4576612
+      "lon": 13.4576612,
+      "district": "Weißensee",
+      "borough": "Pankow"
     },
     {
       "osm_id": "node/11553506856",
@@ -819,7 +953,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5564763,
-      "lon": 13.3857684
+      "lon": 13.3857684,
+      "district": "Gesundbrunnen",
+      "borough": "Mitte"
     },
     {
       "osm_id": "node/3219825977",
@@ -831,7 +967,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4686861,
-      "lon": 13.4316036
+      "lon": 13.4316036,
+      "district": "Neukölln",
+      "borough": "Neukölln"
     },
     {
       "osm_id": "node/10290515369",
@@ -843,7 +981,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4808295,
-      "lon": 13.4339179
+      "lon": 13.4339179,
+      "district": "Neukölln",
+      "borough": "Neukölln"
     },
     {
       "osm_id": "node/268595932",
@@ -855,7 +995,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4535937,
-      "lon": 13.3166745
+      "lon": 13.3166745,
+      "district": "Steglitz",
+      "borough": "Steglitz-Zehlendorf"
     },
     {
       "osm_id": "node/12082885211",
@@ -867,7 +1009,9 @@
       "email": null,
       "phone": "+49 30 28040977",
       "lat": 52.5370944,
-      "lon": 13.3732021
+      "lon": 13.3732021,
+      "district": "Mitte",
+      "borough": "Mitte"
     },
     {
       "osm_id": "node/6239510065",
@@ -879,7 +1023,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4948145,
-      "lon": 13.4189027
+      "lon": 13.4189027,
+      "district": "Kreuzberg",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/6691404843",
@@ -891,7 +1037,9 @@
       "email": null,
       "phone": null,
       "lat": 52.502493,
-      "lon": 13.3095056
+      "lon": 13.3095056,
+      "district": "Charlottenburg",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/3039142175",
@@ -903,7 +1051,9 @@
       "email": "copydeluxe@grossformat-berlin.de",
       "phone": "+49 30 55953420",
       "lat": 52.4902078,
-      "lon": 13.449236
+      "lon": 13.449236,
+      "district": "Alt-Treptow",
+      "borough": "Treptow-Köpenick"
     },
     {
       "osm_id": "node/7590570274",
@@ -915,7 +1065,9 @@
       "email": null,
       "phone": "+49 30 61 28 15 06",
       "lat": 52.4921568,
-      "lon": 13.4177549
+      "lon": 13.4177549,
+      "district": "Kreuzberg",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/1901746292",
@@ -927,7 +1079,9 @@
       "email": "ch@hoppe-repro.de",
       "phone": "+49 30 284 96 70",
       "lat": 52.5526922,
-      "lon": 13.3616293
+      "lon": 13.3616293,
+      "district": "Wedding",
+      "borough": "Mitte"
     },
     {
       "osm_id": "node/11494497097",
@@ -939,7 +1093,9 @@
       "email": "kopiefrosch66@gmail.com",
       "phone": "+49 30 695 80 535",
       "lat": 52.4765215,
-      "lon": 13.4398753
+      "lon": 13.4398753,
+      "district": "Neukölln",
+      "borough": "Neukölln"
     },
     {
       "osm_id": "node/12208922706",
@@ -951,7 +1107,9 @@
       "email": "post@kopier24.de",
       "phone": "+49 30 5149310",
       "lat": 52.4459547,
-      "lon": 13.6202117
+      "lon": 13.6202117,
+      "district": "Friedrichshagen",
+      "borough": "Treptow-Köpenick"
     },
     {
       "osm_id": "node/5167689746",
@@ -963,7 +1121,9 @@
       "email": null,
       "phone": null,
       "lat": 52.489013,
-      "lon": 13.3536326
+      "lon": 13.3536326,
+      "district": "Schöneberg",
+      "borough": "Tempelhof-Schöneberg"
     },
     {
       "osm_id": "node/7705210639",
@@ -975,7 +1135,9 @@
       "email": null,
       "phone": null,
       "lat": 52.467353,
-      "lon": 13.3305664
+      "lon": 13.3305664,
+      "district": "Friedenau",
+      "borough": "Tempelhof-Schöneberg"
     },
     {
       "osm_id": "node/2796281067",
@@ -987,7 +1149,9 @@
       "email": null,
       "phone": "+491752059424",
       "lat": 52.4974662,
-      "lon": 13.4466469
+      "lon": 13.4466469,
+      "district": "Kreuzberg",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/1078763443",
@@ -999,7 +1163,9 @@
       "email": null,
       "phone": "+49 30 3914458",
       "lat": 52.523456,
-      "lon": 13.3493572
+      "lon": 13.3493572,
+      "district": "Moabit",
+      "borough": "Mitte"
     },
     {
       "osm_id": "node/7692314757",
@@ -1011,7 +1177,9 @@
       "email": "goethekopie@gmail.com",
       "phone": "+491748515005",
       "lat": 52.5087494,
-      "lon": 13.3090611
+      "lon": 13.3090611,
+      "district": "Charlottenburg",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/282760029",
@@ -1023,7 +1191,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5142011,
-      "lon": 13.4676029
+      "lon": 13.4676029,
+      "district": "Friedrichshain",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/3385314482",
@@ -1035,7 +1205,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5475265,
-      "lon": 13.449729
+      "lon": 13.449729,
+      "district": "Weißensee",
+      "borough": "Pankow"
     },
     {
       "osm_id": "node/3446697421",
@@ -1047,7 +1219,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5591838,
-      "lon": 13.4121923
+      "lon": 13.4121923,
+      "district": "Pankow",
+      "borough": "Pankow"
     },
     {
       "osm_id": "node/3842680252",
@@ -1059,7 +1233,9 @@
       "email": "info@kopierladen-marzahn.de",
       "phone": "+49 30 9357629",
       "lat": 52.5427267,
-      "lon": 13.5461605
+      "lon": 13.5461605,
+      "district": "Marzahn",
+      "borough": "Marzahn-Hellersdorf"
     },
     {
       "osm_id": "node/759592761",
@@ -1071,7 +1247,9 @@
       "email": "d96@kopierladen-berlin.de",
       "phone": "+49 30 80908687",
       "lat": 52.5374527,
-      "lon": 13.4283891
+      "lon": 13.4283891,
+      "district": "Prenzlauer Berg",
+      "borough": "Pankow"
     },
     {
       "osm_id": "node/1575536718",
@@ -1083,7 +1261,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4900925,
-      "lon": 13.4247198
+      "lon": 13.4247198,
+      "district": "Neukölln",
+      "borough": "Neukölln"
     },
     {
       "osm_id": "node/9815480825",
@@ -1095,7 +1275,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4582273,
-      "lon": 13.2919294
+      "lon": 13.2919294,
+      "district": "Dahlem",
+      "borough": "Steglitz-Zehlendorf"
     },
     {
       "osm_id": "node/10089750884",
@@ -1107,7 +1289,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5151462,
-      "lon": 13.4624371
+      "lon": 13.4624371,
+      "district": "Friedrichshain",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/9379251319",
@@ -1119,7 +1303,9 @@
       "email": "info@copyshop-köpenick.de",
       "phone": "+49 30 27976244",
       "lat": 52.4616438,
-      "lon": 13.5827165
+      "lon": 13.5827165,
+      "district": "Köpenick",
+      "borough": "Treptow-Köpenick"
     },
     {
       "osm_id": "node/7417852791",
@@ -1131,7 +1317,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4546303,
-      "lon": 13.3591781
+      "lon": 13.3591781,
+      "district": "Tempelhof",
+      "borough": "Tempelhof-Schöneberg"
     },
     {
       "osm_id": "node/3767037835",
@@ -1143,7 +1331,9 @@
       "email": "mbe0212@mbe.de",
       "phone": "+49 331 74007770",
       "lat": 52.3839411,
-      "lon": 13.1124944
+      "lon": 13.1124944,
+      "district": "Babelsberg Süd",
+      "borough": null
     },
     {
       "osm_id": "node/12420722659",
@@ -1155,7 +1345,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5001027,
-      "lon": 13.3305519
+      "lon": 13.3305519,
+      "district": "Wilmersdorf",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/3572143825",
@@ -1167,7 +1359,9 @@
       "email": "info@mbe-steglitz.de",
       "phone": "+49 30 98351531",
       "lat": 52.4679892,
-      "lon": 13.3285957
+      "lon": 13.3285957,
+      "district": "Friedenau",
+      "borough": "Tempelhof-Schöneberg"
     },
     {
       "osm_id": "node/12363208403",
@@ -1179,7 +1373,9 @@
       "email": null,
       "phone": "+49 30 2839 1683",
       "lat": 52.5424724,
-      "lon": 13.4389105
+      "lon": 13.4389105,
+      "district": "Prenzlauer Berg",
+      "borough": "Pankow"
     },
     {
       "osm_id": "node/9578003307",
@@ -1191,7 +1387,9 @@
       "email": null,
       "phone": "+49 30 419090",
       "lat": 52.5957709,
-      "lon": 13.5958594
+      "lon": 13.5958594,
+      "district": "Ahrensfelde",
+      "borough": null
     },
     {
       "osm_id": "node/8077217617",
@@ -1203,7 +1401,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4875008,
-      "lon": 13.3304558
+      "lon": 13.3304558,
+      "district": "Wilmersdorf",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/4384775429",
@@ -1215,7 +1415,9 @@
       "email": "buerotechnik@nuescher.de",
       "phone": "+49 30 6066545",
       "lat": 52.4540633,
-      "lon": 13.4383269
+      "lon": 13.4383269,
+      "district": "Britz",
+      "borough": "Neukölln"
     },
     {
       "osm_id": "node/2132999672",
@@ -1227,7 +1429,9 @@
       "email": null,
       "phone": null,
       "lat": 52.488342,
-      "lon": 13.423329
+      "lon": 13.423329,
+      "district": "Kreuzberg",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/1333812251",
@@ -1239,7 +1443,9 @@
       "email": "info@printseven.de",
       "phone": "+49 30 79702242",
       "lat": 52.4644085,
-      "lon": 13.3302071
+      "lon": 13.3302071,
+      "district": "Steglitz",
+      "borough": "Steglitz-Zehlendorf"
     },
     {
       "osm_id": "node/3611058071",
@@ -1251,7 +1457,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4968655,
-      "lon": 13.4313173
+      "lon": 13.4313173,
+      "district": "Kreuzberg",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/7871627252",
@@ -1263,7 +1471,9 @@
       "email": null,
       "phone": "+49 30 61081620",
       "lat": 52.5349729,
-      "lon": 13.4265443
+      "lon": 13.4265443,
+      "district": "Prenzlauer Berg",
+      "borough": "Pankow"
     },
     {
       "osm_id": "node/863962695",
@@ -1275,7 +1485,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5073949,
-      "lon": 13.4671854
+      "lon": 13.4671854,
+      "district": "Friedrichshain",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/1106444578",
@@ -1287,7 +1499,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5042988,
-      "lon": 13.4946375
+      "lon": 13.4946375,
+      "district": "Rummelsburg",
+      "borough": "Lichtenberg"
     },
     {
       "osm_id": "node/1825676997",
@@ -1299,7 +1513,9 @@
       "email": "info@reproberlin.de",
       "phone": "+49 30 3152821",
       "lat": 52.5102425,
-      "lon": 13.3238276
+      "lon": 13.3238276,
+      "district": "Charlottenburg",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/1528318281",
@@ -1311,7 +1527,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5122971,
-      "lon": 13.2932306
+      "lon": 13.2932306,
+      "district": "Charlottenburg",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/3859408852",
@@ -1323,7 +1541,9 @@
       "email": null,
       "phone": "+49 351 87760-50",
       "lat": 52.5459477,
-      "lon": 13.5127653
+      "lon": 13.5127653,
+      "district": "Alt-Hohenschönhausen",
+      "borough": "Lichtenberg"
     },
     {
       "osm_id": "node/1098863811",
@@ -1335,7 +1555,9 @@
       "email": null,
       "phone": "+49 30 622 03 152",
       "lat": 52.5141602,
-      "lon": 13.6113721
+      "lon": 13.6113721,
+      "district": "Mahlsdorf",
+      "borough": "Marzahn-Hellersdorf"
     },
     {
       "osm_id": "node/3439925210",
@@ -1347,7 +1569,9 @@
       "email": "cadberlin@reprotechnik.de",
       "phone": "+49 30 254940",
       "lat": 52.5012848,
-      "lon": 13.3760701
+      "lon": 13.3760701,
+      "district": "Kreuzberg",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/7700452320",
@@ -1359,7 +1583,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4844384,
-      "lon": 13.3199375
+      "lon": 13.3199375,
+      "district": "Wilmersdorf",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/8039040526",
@@ -1371,7 +1597,9 @@
       "email": "info@sdl-druck.de",
       "phone": "+49 3342 20 76 06",
       "lat": 52.511166,
-      "lon": 13.663144
+      "lon": 13.663144,
+      "district": "Dahlwitz-Hoppegarten",
+      "borough": null
     },
     {
       "osm_id": "node/250068256",
@@ -1383,7 +1611,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5362925,
-      "lon": 13.4200962
+      "lon": 13.4200962,
+      "district": "Prenzlauer Berg",
+      "borough": "Pankow"
     },
     {
       "osm_id": "node/487563969",
@@ -1395,7 +1625,9 @@
       "email": null,
       "phone": "+49 30 44024402",
       "lat": 52.5383455,
-      "lon": 13.4097375
+      "lon": 13.4097375,
+      "district": "Prenzlauer Berg",
+      "borough": "Pankow"
     },
     {
       "osm_id": "node/2442886685",
@@ -1407,7 +1639,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4877766,
-      "lon": 13.3228839
+      "lon": 13.3228839,
+      "district": "Wilmersdorf",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/4561716529",
@@ -1419,7 +1653,9 @@
       "email": null,
       "phone": "+49 30 235538850",
       "lat": 52.5201375,
-      "lon": 13.3917351
+      "lon": 13.3917351,
+      "district": "Mitte",
+      "borough": "Mitte"
     },
     {
       "osm_id": "node/4741520226",
@@ -1431,7 +1667,9 @@
       "email": null,
       "phone": "+49 30 2355380",
       "lat": 52.4898987,
-      "lon": 13.3522681
+      "lon": 13.3522681,
+      "district": "Schöneberg",
+      "borough": "Tempelhof-Schöneberg"
     },
     {
       "osm_id": "node/4200076989",
@@ -1443,7 +1681,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4750125,
-      "lon": 13.4275592
+      "lon": 13.4275592,
+      "district": "Neukölln",
+      "borough": "Neukölln"
     },
     {
       "osm_id": "node/7590570275",
@@ -1455,7 +1695,9 @@
       "email": null,
       "phone": "+49 30 28 50 87 40",
       "lat": 52.492101,
-      "lon": 13.4179698
+      "lon": 13.4179698,
+      "district": "Kreuzberg",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/739939498",
@@ -1467,7 +1709,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4348805,
-      "lon": 13.349147
+      "lon": 13.349147,
+      "district": "Lankwitz",
+      "borough": "Steglitz-Zehlendorf"
     },
     {
       "osm_id": "node/5162963055",
@@ -1479,7 +1723,9 @@
       "email": null,
       "phone": null,
       "lat": 52.6561479,
-      "lon": 13.5427541
+      "lon": 13.5427541,
+      "district": "Zepernick",
+      "borough": null
     },
     {
       "osm_id": "node/7598895282",
@@ -1491,7 +1737,9 @@
       "email": null,
       "phone": null,
       "lat": 52.469154,
-      "lon": 13.331844
+      "lon": 13.331844,
+      "district": "Friedenau",
+      "borough": "Tempelhof-Schöneberg"
     },
     {
       "osm_id": "node/6362589262",
@@ -1503,7 +1751,9 @@
       "email": "info@tinte-und-tonerbar.de",
       "phone": "+49 30 96590124",
       "lat": 52.5170672,
-      "lon": 13.3046982
+      "lon": 13.3046982,
+      "district": "Charlottenburg",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/871561400",
@@ -1515,7 +1765,9 @@
       "email": "copy@trigger.de",
       "phone": "+49 30 63499499",
       "lat": 52.5006879,
-      "lon": 13.4177661
+      "lon": 13.4177661,
+      "district": "Kreuzberg",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/9737174242",
@@ -1527,7 +1779,9 @@
       "email": null,
       "phone": null,
       "lat": 52.4543806,
-      "lon": 13.39281
+      "lon": 13.39281,
+      "district": "Tempelhof",
+      "borough": "Tempelhof-Schöneberg"
     },
     {
       "osm_id": "node/11035678005",
@@ -1539,7 +1793,9 @@
       "email": null,
       "phone": "+49 3302 802742",
       "lat": 52.6469884,
-      "lon": 13.2056433
+      "lon": 13.2056433,
+      "district": "Hennigsdorf",
+      "borough": null
     },
     {
       "osm_id": "node/8629566354",
@@ -1551,7 +1807,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5110619,
-      "lon": 13.3184659
+      "lon": 13.3184659,
+      "district": "Charlottenburg",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/6031975287",
@@ -1563,7 +1821,9 @@
       "email": "post@udb.de",
       "phone": "+49 30 4284620",
       "lat": 52.5344727,
-      "lon": 13.4532998
+      "lon": 13.4532998,
+      "district": "Prenzlauer Berg",
+      "borough": "Pankow"
     },
     {
       "osm_id": "node/4948602727",
@@ -1575,7 +1835,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5861027,
-      "lon": 13.4181542
+      "lon": 13.4181542,
+      "district": "Niederschönhausen",
+      "borough": "Pankow"
     },
     {
       "osm_id": "node/12480737334",
@@ -1587,7 +1849,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5328467,
-      "lon": 13.4266686
+      "lon": 13.4266686,
+      "district": "Prenzlauer Berg",
+      "borough": "Pankow"
     },
     {
       "osm_id": "node/6457078636",
@@ -1599,7 +1863,9 @@
       "email": null,
       "phone": "+49 30 3138938",
       "lat": 52.507215,
-      "lon": 13.3137484
+      "lon": 13.3137484,
+      "district": "Charlottenburg",
+      "borough": "Charlottenburg-Wilmersdorf"
     },
     {
       "osm_id": "node/863962890",
@@ -1611,7 +1877,9 @@
       "email": null,
       "phone": "+493028044727",
       "lat": 52.5067637,
-      "lon": 13.4685867
+      "lon": 13.4685867,
+      "district": "Friedrichshain",
+      "borough": "Friedrichshain-Kreuzberg"
     },
     {
       "osm_id": "node/9546982572",
@@ -1623,7 +1891,9 @@
       "email": null,
       "phone": null,
       "lat": 52.5120495,
-      "lon": 13.2685699
+      "lon": 13.2685699,
+      "district": "Westend",
+      "borough": "Charlottenburg-Wilmersdorf"
     }
   ],
   "incomplete_categories": [

@@ -209,3 +209,99 @@ def test_the_list_reads_the_way_a_person_scans_it(partners: PartnerRepository) -
     names = [partner.name for partner in partners.all()]
 
     assert names == sorted(names, key=str.casefold)
+
+
+# ------------------------------------------------------------------ where
+
+
+def test_every_company_is_placed_somewhere(partners: PartnerRepository) -> None:
+    """Derived from coordinates rather than parsed from the street line, which
+    is why this can be all of them: every record has a position, and only 82 of
+    135 have an address with a postcode in it."""
+    placed = [partner for partner in partners.all() if partner.district]
+
+    assert len(placed) == partners.count()
+
+
+def test_only_real_berlin_boroughs_reach_the_filter(partners: PartnerRepository) -> None:
+    """The bug the first run produced: a geocoder answers a *nearby*
+    administrative name for an address outside the city, and Stahnsdorf - a
+    Brandenburg town - appeared in the borough filter beside Pankow and Mitte.
+
+    Berlin has had exactly these twelve since 2001. Anything else is a company
+    outside the city, which is a fact about that company rather than a
+    thirteenth borough.
+    """
+    twelve = {
+        "Mitte",
+        "Friedrichshain-Kreuzberg",
+        "Pankow",
+        "Charlottenburg-Wilmersdorf",
+        "Spandau",
+        "Steglitz-Zehlendorf",
+        "Tempelhof-Schöneberg",
+        "Neukölln",
+        "Treptow-Köpenick",
+        "Marzahn-Hellersdorf",
+        "Lichtenberg",
+        "Reinickendorf",
+    }
+
+    assert {name for name, _ in partners.boroughs()} <= twelve
+
+
+def test_a_company_outside_berlin_keeps_its_town_and_gains_no_borough(
+    partners: PartnerRepository,
+) -> None:
+    """None, not the nearest Berlin name. A buyer filtering to Pankow must not
+    be shown a business in Brandenburg because it was closest to Pankow."""
+    outside = [p for p in partners.all() if p.district and not p.borough]
+
+    assert outside, "the survey did reach a few businesses just outside the city"
+    assert all(partner.district for partner in outside), "they keep their own town name"
+
+
+def test_the_boroughs_are_counted_rather_than_listed(partners: PartnerRepository) -> None:
+    """A filter offering a borough with nothing behind it answers "nothing
+    here" to a question the directory never had."""
+    counts = partners.boroughs()
+
+    assert counts
+    assert all(count > 0 for _, count in counts)
+    assert [count for _, count in counts] == sorted((count for _, count in counts), reverse=True), (
+        "most first, so the biggest is the easiest to reach"
+    )
+
+
+def test_filtering_by_borough(partners: PartnerRepository) -> None:
+    name = partners.boroughs()[0][0]
+
+    found = partners.search(borough=name)
+
+    assert found
+    assert all(partner.borough == name for partner in found)
+    assert len(found) == partners.boroughs()[0][1]
+
+
+def test_filling_in_districts_never_touches_a_confirmation(
+    partners: PartnerRepository,
+) -> None:
+    """The rule the seeding already sets, extended: facts the survey gathered
+    flow from the file into the database, facts a person established live only
+    in the database. This statement cannot reach ``verified``."""
+    confirmed = partners.all()[0]
+    partners.mark_verified(confirmed.id)
+
+    partners.fill_in_districts()
+
+    reloaded = partners.get(confirmed.id)
+    assert reloaded is not None
+    assert reloaded.verified is True
+
+
+def test_filling_in_districts_is_safe_to_run_on_every_boot(
+    partners: PartnerRepository,
+) -> None:
+    """It runs at startup, so running it twice has to be free - and it must not
+    overwrite a district somebody corrected by hand."""
+    assert partners.fill_in_districts() == 0, "already filled by the fixture's seeding"

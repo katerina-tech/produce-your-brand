@@ -32,7 +32,8 @@ from app.repositories.database import Database
 logger = logging.getLogger(__name__)
 
 _COLUMNS = (
-    "id, name, source, verified, address, city, lat, lon, website, email, implied_method, phone"
+    "id, name, source, verified, address, city, district, borough, "
+    "lat, lon, website, email, implied_method, phone"
 )
 
 
@@ -47,6 +48,8 @@ def _to_partner(row: Any) -> Partner:
         verified=bool(record["verified"]),
         address=(record["address"] and str(record["address"])) or None,
         city=str(record["city"]),
+        district=(record["district"] and str(record["district"])) or None,
+        borough=(record["borough"] and str(record["borough"])) or None,
         lat=float(record["lat"]) if record["lat"] is not None else None,
         lon=float(record["lon"]) if record["lon"] is not None else None,
         website=(record["website"] and str(record["website"])) or None,
@@ -88,7 +91,7 @@ class PartnerRepository:
             for item in raw.get("partners", []):
                 self._connection.execute(
                     f"INSERT INTO partners ({_COLUMNS}, created_at) "
-                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) "
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
                     "ON CONFLICT(id) DO NOTHING",
                     (
                         item["osm_id"],
@@ -97,6 +100,8 @@ class PartnerRepository:
                         0,
                         item.get("address"),
                         item.get("city") or "Berlin",
+                        item.get("district"),
+                        item.get("borough"),
                         item.get("lat"),
                         item.get("lon"),
                         item.get("website"),
@@ -150,6 +155,7 @@ class PartnerRepository:
         *,
         query: str | None = None,
         method: ProductionMethod | None = None,
+        borough: str | None = None,
         with_email: bool = False,
         limit: int = 200,
     ) -> tuple[Partner, ...]:
@@ -170,6 +176,9 @@ class PartnerRepository:
         if method is not None:
             clauses.append("implied_method = ?")
             params.append(method.value)
+        if borough and borough.strip():
+            clauses.append("borough = ?")
+            params.append(borough.strip())
         if with_email:
             clauses.append("email IS NOT NULL AND email <> ''")
 
@@ -189,6 +198,58 @@ class PartnerRepository:
             "SELECT COUNT(*) AS n FROM partners WHERE email IS NOT NULL AND email <> ''"
         ).fetchone()
         return int(dict(row)["n"])
+
+    # ------------------------------------------------------- survey backfill
+
+    def fill_in_districts(self) -> int:
+        """Copy districts from the survey file onto rows that have none.
+
+        The rule this follows is the one the seeding already sets: **facts the
+        survey gathered flow from the file into the database; facts a person
+        established live only in the database.** Where a business sits is the
+        first kind, so a table seeded before the enrichment existed can be
+        brought up to date without a re-seed - and without touching anybody's
+        confirmation, which this statement cannot reach.
+        """
+        if self._seed_file is None or not self._seed_file.is_file():
+            return 0
+
+        raw = json.loads(self._seed_file.read_text(encoding="utf-8"))
+        filled = 0
+        with self._connection:
+            for item in raw.get("partners", []):
+                if not item.get("district") and not item.get("borough"):
+                    continue
+                cursor = self._connection.execute(
+                    "UPDATE partners SET district = ?, borough = ? "
+                    "WHERE id = ? AND district IS NULL",
+                    (item.get("district"), item.get("borough"), item["osm_id"]),
+                )
+                filled += cursor.rowcount or 0
+
+        if filled:
+            log_event(
+                logger,
+                Event.SUPPLIER_CANDIDATES_FOUND,
+                "districts filled in from the survey",
+                partner_count=filled,
+                source=str(self._seed_file.name),
+            )
+        return filled
+
+    def boroughs(self) -> tuple[tuple[str, int], ...]:
+        """Each Bezirk that has businesses, with how many, most first.
+
+        Counted rather than listed from a constant: a filter offering a borough
+        with nothing behind it is a filter that answers "nothing here" to a
+        question the data never had.
+        """
+        rows = self._connection.execute(
+            "SELECT borough, COUNT(*) AS n FROM partners "
+            "WHERE borough IS NOT NULL AND borough <> '' "
+            "GROUP BY borough ORDER BY n DESC, borough"
+        ).fetchall()
+        return tuple((str(dict(row)["borough"]), int(dict(row)["n"])) for row in rows)
 
     # ------------------------------------------------------------- writing
 
