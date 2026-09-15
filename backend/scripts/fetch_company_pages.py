@@ -28,6 +28,8 @@ import httpx
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BACKEND_ROOT))
 
+from app.config import get_settings  # noqa: E402
+from app.repositories import db  # noqa: E402
 from app.repositories.partner_repo import PartnerRepository  # noqa: E402
 from app.services.site_fetch import (  # noqa: E402
     USER_AGENT,
@@ -38,7 +40,6 @@ from app.services.site_fetch import (  # noqa: E402
 )
 
 OUTPUT = BACKEND_ROOT / "data" / "company_pages.json"
-DIRECTORY = BACKEND_ROOT / "data" / "berlin_partners.json"
 
 # Seconds between companies. Slow on purpose: this is a one-off survey against
 # other people's servers, and nothing here is in a hurry.
@@ -69,7 +70,14 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=0, help="stop after N companies")
     args = parser.parse_args()
 
-    partners = PartnerRepository(DIRECTORY)
+    # The companies live in the database now, not in the file. This script was
+    # written before that move and kept constructing the repository from a path,
+    # which stopped working silently until somebody ran it.
+    settings = get_settings()
+    connection = db.connect(settings.app_db_path, url=settings.database_url or None)
+    db.initialize_schema(connection)
+    partners = PartnerRepository(connection, settings.partners_file)
+    partners.seed_missing()
     with_site = [partner for partner in partners.all() if partner.website]
     if args.limit:
         with_site = with_site[: args.limit]
@@ -104,10 +112,45 @@ def main() -> int:
                     # empty are different facts, and a later run should know
                     # which it is looking at.
                     "skipped_reason": None if substantial else (refusal or "nothing substantial"),
-                    "pages": [{"url": page.url, "text": page.text} for page in substantial],
+                    "pages": [
+                        {
+                            "url": page.url,
+                            "text": page.text,
+                            # The company's own one-line summary of itself.
+                            "description": page.description,
+                            # Only the mailto links. Keeping every href would
+                            # triple this file to store navigation nobody will
+                            # read; these are the ones that carry a fact the
+                            # page text can only spell out obfuscated.
+                            "mailto": sorted(
+                                {
+                                    href.split("?", 1)[0][7:].strip()
+                                    for href, _ in page.links
+                                    if href.lower().startswith("mailto:") and len(href) > 7
+                                }
+                            ),
+                        }
+                        for page in substantial
+                    ],
                 }
             )
             time.sleep(PAUSE_SECONDS)
+
+    # Merge rather than replace. A run with --limit is how you try a change on
+    # two companies, and having that quietly delete the other eighty-seven's
+    # page text - a fetch this product is not entitled to repeat casually,
+    # against eighty-seven small businesses' servers - is not a trade anybody
+    # would choose. It happened once during development; hence this.
+    if OUTPUT.is_file():
+        try:
+            previous = json.loads(OUTPUT.read_text(encoding="utf-8")).get("companies", [])
+        except (OSError, ValueError):
+            previous = []
+        fetched_now = {record["partner_id"] for record in records}
+        kept = [record for record in previous if record["partner_id"] not in fetched_now]
+        if kept:
+            print(f"{len(kept)} companies kept from the previous fetch", file=sys.stderr)
+        records = sorted(records + kept, key=lambda record: record["partner_name"].lower())
 
     OUTPUT.write_text(
         json.dumps(

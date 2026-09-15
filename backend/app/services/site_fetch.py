@@ -81,6 +81,7 @@ class _TextExtractor(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.parts: list[str] = []
         self.links: list[tuple[str, str]] = []
+        self.description: str = ""
         self._skip_depth = 0
         self._href: str | None = None
         self._anchor: list[str] = []
@@ -89,11 +90,37 @@ class _TextExtractor(HTMLParser):
         if tag in _SKIP_CONTENT:
             self._skip_depth += 1
             return
+        if tag == "meta":
+            self._note_description(dict(attrs))
+            return
         if tag == "a":
             self._href = dict(attrs).get("href")
             self._anchor = []
         if tag in _BREAKS:
             self.parts.append("\n")
+
+    def _note_description(self, attrs: dict[str, str | None]) -> None:
+        """The company's own one-line summary of itself.
+
+        Worth more than any sentence picked out of the body: somebody at the
+        business wrote this to describe the business, and it is the same text
+        a search engine shows. The plain meta description wins over og:
+        description, which is written for social cards and is more often
+        marketing than description; the first of either is kept, because a page
+        that declares it twice means the first one.
+        """
+        name = (attrs.get("name") or "").strip().lower()
+        prop = (attrs.get("property") or "").strip().lower()
+        if name != "description" and prop != "og:description":
+            return
+        content = (attrs.get("content") or "").strip()
+        if not content:
+            return
+        if not self.description or (name == "description" and not self._exact_description):
+            self.description = " ".join(content.split())
+            self._exact_description = name == "description"
+
+    _exact_description = False
 
     def handle_endtag(self, tag: str) -> None:
         if tag in _SKIP_CONTENT:
@@ -126,6 +153,8 @@ class FetchedPage:
     url: str
     text: str
     links: tuple[tuple[str, str], ...] = field(default=())
+    description: str = ""
+    """The page's own meta description, when it has one. Empty is ordinary."""
 
     @property
     def is_substantial(self) -> bool:
@@ -262,6 +291,7 @@ def fetch_page(
         url=str(response.url),
         text=extractor.text(),
         links=tuple(extractor.links),
+        description=extractor.description,
     )
     log_event(
         logger,

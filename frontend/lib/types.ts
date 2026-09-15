@@ -256,6 +256,10 @@ export interface Partner {
   category: string | null;
   /** What that tag is called - Druckerei, Copyshop, Stickerei. */
   category_label: string | null;
+  /** The company's own one-line description of itself. Never a paraphrase. */
+  summary: string | null;
+  /** "openstreetmap" or "website" - where the address was read from. */
+  email_source: string | null;
   website: string | null;
   email: string | null;
   phone: string | null;

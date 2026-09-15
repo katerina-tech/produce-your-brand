@@ -453,7 +453,7 @@ Tiles come from `tile.openstreetmap.org` with the attribution their usage policy
 ## Companies — the directory, with its own front door
 
 **`/companies`** is 136 real Berlin production businesses with the contact
-details they published themselves — 41 of them an email address. Searchable by
+details they published themselves — 72 of them an email address. Searchable by
 name or address, filterable by kind of business, by borough and to the ones you
 can write to today, and shown on a map. Built by
 `scripts/build_berlin_partners.py` from OpenStreetMap, under the ODbL, with the
@@ -499,6 +499,54 @@ returned zero. That is now a finding rather than a gap, and it was confirmed
 against a second mirror before being recorded as one: a silent zero and a real
 zero mean opposite things, and the whole point of `incomplete_categories` is to
 keep them apart.
+
+### The address they publish but write so it cannot be read
+
+A short manual check found this, and it is the kind of gap a survey does not
+notice about itself. A&W Digitaldruck publishes `info [at] aw-digital.de` on
+its homepage; the directory said *"no email published"* beside their name. The
+survey only ever read OpenStreetMap's `email` tag, and the page text this
+product had already fetched was read for capabilities and never for contacts.
+
+`scripts/enrich_contacts.py` closes it, with **no model and no cost** — it runs
+over pages already fetched, so it asks nothing of anybody's server again.
+`app/services/contact_extract.py` undoes the obfuscations German small
+businesses actually use (`[at]`, `(at)`, `[ät]`, ` at `, and the same tricks for
+the dot), then **chooses** between the addresses a page carries. That second
+half is the one that matters: a page has a role box, sometimes a named
+employee, and often the web designer in the footer, and sending a buyer to the
+wrong one is worse than showing nothing.
+
+The ranking is explicit, and two of its rules are about people rather than data:
+
+| rule | why |
+| --- | --- |
+| the company's own domain wins | the strongest signal this address is *this* company's |
+| a role box beats a named person | `info@` is a box somebody watches; `simone.priess@` is an individual who never offered their address to a directory |
+| a `mailto:` link beats the same address spelled out | the same fact written honestly, needing no de-obfuscation |
+| frequency only breaks ties | between two addresses that are already plausible |
+
+A named person at an **unrelated** domain is not used at all — that is the web
+designer in the footer far more often than the shop.
+
+**A map tag is never overwritten.** Somebody maintains those on purpose, and a
+line scraped off a homepage is not an improvement on it. The recovery only
+fills in where there was nothing, and `email_source` says which you are looking
+at, because an address off a map tag and one off a company's own contact page
+are not equally likely to still be watched.
+
+### What each company says it is
+
+One line under the name, taken from the company's own `<meta name="description">`
+— the sentence somebody at the business wrote to describe the business, and the
+same one a search engine shows them. Not a paragraph picked out of the page
+body, which is as often a cookie notice as a description, and **not a model's
+paraphrase**: a summary this product wrote would be this product's opinion
+about a named business.
+
+Boilerplate is dropped rather than shown. A hundred and thirty-six identical
+"Willkommen auf unserer Homepage" lines would be worse than a hundred and
+thirty-six blanks, because they look like content.
 
 ### Where each company is
 
@@ -724,6 +772,7 @@ backend/
       osm_search.py      # live OpenStreetMap lookup - not a graph tool
       site_fetch.py      # fetches a company's own website; the only place the
                          #   product follows a URL somebody else wrote
+      contact_extract.py     # de-obfuscates an address and picks the right one
       capability_extract.py  # reads that text into claims, deletes unsupported
       capability_match.py    # embeddings retrieve, a model verifies, code ranks
       quote_desk.py      # supplier replies: capture, compare, chase
@@ -756,6 +805,8 @@ backend/
                               #   because each company costs a model call
     enrich_districts.py       # places each company in its Ortsteil and Bezirk
                               #   from its coordinates, politely
+    enrich_contacts.py        # recovers the email a site obfuscates, and the
+                              #   one-line summary it publishes. No model.
     demo_run.py          # the only code that calls a real model
   tests/
   Dockerfile, docker-entrypoint.sh, railway.json   # the deployed backend
@@ -984,7 +1035,7 @@ take on trust.
 | Human-in-the-loop | four gates, enforced by `interrupt()` | `test_workflow_stops_at_all_four_approval_gates` |
 | Structured logging | one config, closed event enum | `test_log_events_are_a_closed_set` |
 
-**622 backend tests, 28 frontend tests.** No test calls a live model, and none
+**655 backend tests, 28 frontend tests.** No test calls a live model, and none
 calls the real Overpass API either - `test_osm_search.py` swaps in
 `httpx.MockTransport`. The graph runs on a scripted provider and retrieval on a
 hashing embedder whose similarity is real term overlap, so the suite is free,

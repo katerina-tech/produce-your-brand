@@ -440,6 +440,20 @@ class PartnerResponse(BaseModel):
     category_label: str | None = Field(
         default=None, description="What that tag is called - Druckerei, Copyshop, Stickerei."
     )
+    summary: str | None = Field(
+        default=None,
+        description=(
+            "The company's own one-line description of itself, from its site. Never a "
+            "model's paraphrase - their line, or nothing."
+        ),
+    )
+    email_source: str | None = Field(
+        default=None,
+        description=(
+            "'openstreetmap' or 'website'. Shown because the two are not equally "
+            "likely to still be watched."
+        ),
+    )
     website: str | None
     email: str | None
     phone: str | None

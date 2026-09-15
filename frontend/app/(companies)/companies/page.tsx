@@ -250,6 +250,14 @@ export default async function DirectoryPage({
                       {partner.district && partner.address ? " · " : null}
                       {partner.address}
                     </p>
+                    {/* Their own line about themselves, from their site's meta
+                        description. Quoted rather than paraphrased, so the page
+                        never puts words in a named business's mouth. */}
+                    {partner.summary ? (
+                      <p className="mt-1.5 max-w-2xl text-sm leading-snug text-ink-soft">
+                        {partner.summary}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     {partner.verified ? <Badge tone="match">confirmed</Badge> : null}
@@ -270,6 +278,11 @@ export default async function DirectoryPage({
                     <a
                       href={`mailto:${partner.email}`}
                       className="text-accent underline underline-offset-4"
+                      title={
+                        partner.email_source === "website"
+                          ? "Read from the company's own website"
+                          : "From the company's OpenStreetMap entry"
+                      }
                     >
                       {partner.email}
                     </a>

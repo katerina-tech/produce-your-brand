@@ -15,12 +15,14 @@
       "address": null,
       "city": "Berlin",
       "website": "http://www.aw-digital.de",
-      "email": null,
+      "email": "info@aw-digital.de",
       "phone": "+49 30 4515813",
       "lat": 52.5515565,
       "lon": 13.3486931,
       "district": "Wedding",
-      "borough": "Mitte"
+      "borough": "Mitte",
+      "summary": "A&W Digitaldruck - Der Copyshop im Herzen Berlins - Wir machen Ihren Daten Druck, bieten Ihnen Beratung bei der Druckvorbereitung und garantieren die reibungslose Abwicklung.",
+      "email_source": "website"
     },
     {
       "osm_id": "node/10883113063",
@@ -31,12 +33,14 @@
       "address": "Bismarckstraße 9",
       "city": "Berlin",
       "website": "https://www.berliner-buchdruck.de/",
-      "email": null,
+      "email": "info@berliner-buchdruck.de",
       "phone": "+49 30 45804121",
       "lat": 52.5125483,
       "lon": 13.3172411,
       "district": "Charlottenburg",
-      "borough": "Charlottenburg-Wilmersdorf"
+      "borough": "Charlottenburg-Wilmersdorf",
+      "summary": "Als Druckerei für Buchdruck und Buchbindung sind wir Ihr Ansprechpartner, wenn Sie Ihr eigenes Buch drucken und binden lassen möchten.",
+      "email_source": "website"
     },
     {
       "osm_id": "node/3615221020",
@@ -47,12 +51,14 @@
       "address": "Karl-Marx-Allee 53 10243 Berlin",
       "city": "Berlin",
       "website": "http://alphacopy.berlin/",
-      "email": null,
+      "email": "mail@alphacopy.berlin",
       "phone": null,
       "lat": 52.5187321,
       "lon": 13.4300941,
       "district": "Friedrichshain",
-      "borough": "Friedrichshain-Kreuzberg"
+      "borough": "Friedrichshain-Kreuzberg",
+      "summary": "Copyshop Berlin - 7 Tage die Woche geöffnet - Offen von 7 bis 23 uhr - Druck und Kopie in allen Gröen auf allen Materialien - Abschlusarbeiten fertig in 1 Stunde - Wir drucken Flyer, Broschüren, Visitenkarten und Plakate",
+      "email_source": "website"
     },
     {
       "osm_id": "way/553786971",
@@ -63,12 +69,14 @@
       "address": "Mahlsdorfer Straße 12-14 12555 Berlin",
       "city": "Berlin",
       "website": "https://www.altmann-druck.de/",
-      "email": null,
+      "email": "info@altmann-druck.de",
       "phone": null,
       "lat": 52.4616214,
       "lon": 13.582913,
       "district": "Köpenick",
-      "borough": "Treptow-Köpenick"
+      "borough": "Treptow-Köpenick",
+      "summary": "Individuell, persönlich und direkt: das verstehen wir unter guter Beratung. Dazu gehört die Hilfe bei der Auswahl geeigneter Papiere",
+      "email_source": "website"
     },
     {
       "osm_id": "node/2824286805",
@@ -99,7 +107,9 @@
       "lat": 52.5129617,
       "lon": 13.3146589,
       "district": "Charlottenburg",
-      "borough": "Charlottenburg-Wilmersdorf"
+      "borough": "Charlottenburg-Wilmersdorf",
+      "summary": "Ihr Druck-und Kopierdienstleister aus Berlin-Charlottenburg. Wir drucken für Architekten, Agenturen, Unternehmen aber auch für Privatpersonen in Digitaldruck und in größeren Auflagen auch Offsetdruck.",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "way/147842139",
@@ -115,7 +125,9 @@
       "lat": 52.5079721,
       "lon": 13.4016861,
       "district": "Kreuzberg",
-      "borough": "Friedrichshain-Kreuzberg"
+      "borough": "Friedrichshain-Kreuzberg",
+      "summary": "Die Unternehmen der Bundesdruckerei-Gruppe sorgen mit ihren Dienstleistungen und Technologien für den Schutz digitaler Identitäten, sensibler Daten und IT-Infrastrukturen und schaffen so Vertrauen in der digitalen und…",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/13730592140",
@@ -131,7 +143,8 @@
       "lat": 52.5868158,
       "lon": 13.3552536,
       "district": "Wilhelmsruh",
-      "borough": "Pankow"
+      "borough": "Pankow",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/13874146751",
@@ -163,7 +176,9 @@
       "lat": 52.5328045,
       "lon": 13.4409787,
       "district": "Prenzlauer Berg",
-      "borough": "Pankow"
+      "borough": "Pankow",
+      "summary": "Die CENTRALSTATION Druck+Kopie GmbH ist ein etablierter Druckdienstleister in Berlin. Wir sind als Kopierservice, Digitaldruckerei, Repro- und Plotservice und als Copyshop an 6 Wochentagen für Sie da. Mit modernen…",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/5596243762",
@@ -227,7 +242,8 @@
       "lat": 52.4811633,
       "lon": 13.4407263,
       "district": "Neukölln",
-      "borough": "Neukölln"
+      "borough": "Neukölln",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/6419661885",
@@ -259,7 +275,9 @@
       "lat": 52.5241953,
       "lon": 13.3922764,
       "district": "Mitte",
-      "borough": "Mitte"
+      "borough": "Mitte",
+      "summary": "Copy Clara ist Ihr Copyshop für Druck, Kopie, Bindung, Scan und Weiterverarbeitung in Berlin. Schnell, persönlich und zuverlässig.",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/8811638326",
@@ -286,12 +304,14 @@
       "address": "Friedrich-Karl-Straße 23",
       "city": "Berlin",
       "website": "https://copydruck-yspex.de/",
-      "email": null,
+      "email": "info@copydruck-yspex.de",
       "phone": "+4930 88 49 04 64",
       "lat": 52.4559605,
       "lon": 13.379064,
       "district": "Tempelhof",
-      "borough": "Tempelhof-Schöneberg"
+      "borough": "Tempelhof-Schöneberg",
+      "summary": "Fax Scann Laminieren Flyer Visitenkarten druck Poster Bachelorarbeit Diplomarbeit Masterarbeit Plotten Bindungen Stempel T-Shirt Kissen Tassendruck kopieren",
+      "email_source": "website"
     },
     {
       "osm_id": "node/3471425375",
@@ -302,12 +322,13 @@
       "address": "Koloniestraße 13 13357 Berlin",
       "city": "Berlin",
       "website": "https://www.copy-press.de/",
-      "email": null,
+      "email": "service@copy-press.de",
       "phone": "+49 30 4944691",
       "lat": 52.5559832,
       "lon": 13.3775603,
       "district": "Gesundbrunnen",
-      "borough": "Mitte"
+      "borough": "Mitte",
+      "email_source": "website"
     },
     {
       "osm_id": "node/375759137",
@@ -323,7 +344,9 @@
       "lat": 52.511867,
       "lon": 13.3207629,
       "district": "Charlottenburg",
-      "borough": "Charlottenburg-Wilmersdorf"
+      "borough": "Charlottenburg-Wilmersdorf",
+      "summary": "Die copy print GmbH ist ein Berliner Dienstleistungsunternehmen, das seit 1980 als Garant für schnelle, termingerechte und qualitative Kopie- und Druckerzeugnisse mit fachkompetentem Service steht.",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/13606186048",
@@ -370,7 +393,9 @@
       "phone": null,
       "lat": 52.6324975,
       "lon": 13.3101385,
-      "district": "Glienicke/Nordbahn"
+      "district": "Glienicke/Nordbahn",
+      "summary": "Ob Privatpersonen, Firmen Schüler und Studenten - Copyshop Glienicke in Glienicke /Nordbahn erstellt hochwertige Drucke, Bindearbeiten, Kopien und kreative Geschenke.",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/6499431431",
@@ -418,7 +443,9 @@
       "lat": 52.4785175,
       "lon": 13.3292625,
       "district": "Wilmersdorf",
-      "borough": "Charlottenburg-Wilmersdorf"
+      "borough": "Charlottenburg-Wilmersdorf",
+      "summary": "Ihr renommierter Copyshop in Berlin mit über 35 Jahren Erfahrung. Qualität, Service und individuelle Beratung.",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/871633762",
@@ -450,7 +477,9 @@
       "lat": 52.4461565,
       "lon": 13.2926378,
       "district": "Dahlem",
-      "borough": "Steglitz-Zehlendorf"
+      "borough": "Steglitz-Zehlendorf",
+      "summary": "kopieren Berlin, Copy-Shop, Berlin, kopieren, drucken, print, Stempel, plotten, cad-plot, zeichnungen, Visitenkarten, digitalisieren, scannen, binden",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/3508893325",
@@ -466,7 +495,8 @@
       "lat": 52.5303561,
       "lon": 13.345931,
       "district": "Moabit",
-      "borough": "Mitte"
+      "borough": "Mitte",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/1247771753",
@@ -482,7 +512,9 @@
       "lat": 52.4576106,
       "lon": 13.5108963,
       "district": "Niederschöneweide",
-      "borough": "Treptow-Köpenick"
+      "borough": "Treptow-Köpenick",
+      "summary": "Druck- und Kopierleistungen",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/9271884434",
@@ -498,7 +530,9 @@
       "lat": 52.4501045,
       "lon": 13.2891971,
       "district": "Dahlem",
-      "borough": "Steglitz-Zehlendorf"
+      "borough": "Steglitz-Zehlendorf",
+      "summary": "kopieren Berlin, Copy-Shop, Berlin, kopieren, drucken, print, Stempel, plotten, cad-plot, zeichnungen, Visitenkarten, digitalisieren, scannen, binden",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/1389048017",
@@ -514,7 +548,8 @@
       "lat": 52.499843,
       "lon": 13.4386194,
       "district": "Kreuzberg",
-      "borough": "Friedrichshain-Kreuzberg"
+      "borough": "Friedrichshain-Kreuzberg",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/4714693669",
@@ -546,7 +581,9 @@
       "lat": 52.446599,
       "lon": 13.2951922,
       "district": "Lichterfelde",
-      "borough": "Steglitz-Zehlendorf"
+      "borough": "Steglitz-Zehlendorf",
+      "summary": "Copy King Berlin - Ihr kompetenter Druckdienstleister",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/7606373195",
@@ -562,7 +599,9 @@
       "lat": 52.5365364,
       "lon": 13.39704,
       "district": "Mitte",
-      "borough": "Mitte"
+      "borough": "Mitte",
+      "summary": "Ist Copyplanet Berlin der günstigste Copyshop in Berlin/Deutschland? Kopien in s/w kosten hier nur 2,5 Cent, Farbkopien nur 15 Cent - ab der ersten Kopie!",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/4116076648",
@@ -594,7 +633,8 @@
       "lat": 52.4712562,
       "lon": 13.5638927,
       "district": "Köpenick",
-      "borough": "Treptow-Köpenick"
+      "borough": "Treptow-Köpenick",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/11253590526",
@@ -605,12 +645,14 @@
       "address": "Sedanstraße 8 13581 Berlin",
       "city": "Berlin",
       "website": "https://copyshop-spandau.de/",
-      "email": null,
+      "email": "daten@copyshop-spandau.de",
       "phone": "+49 30 3326616",
       "lat": 52.5317336,
       "lon": 13.1978915,
       "district": "Spandau",
-      "borough": "Spandau"
+      "borough": "Spandau",
+      "summary": "Wir vom Copyshop Spandau sind Ihr zuverlässiger Ansprechpartner, wenn es um hochwertige Druck- und Kopierdienstleistungen geht.",
+      "email_source": "website"
     },
     {
       "osm_id": "node/4757441921",
@@ -621,12 +663,14 @@
       "address": "Warschauer Straße 38 10243 Berlin",
       "city": "Berlin",
       "website": "https://www.copyshopwarschauerstr.de/",
-      "email": null,
+      "email": "info@copyshopwarschauerstr.de",
       "phone": "+49 30 54598820",
       "lat": 52.5047346,
       "lon": 13.4480537,
       "district": "Friedrichshain",
-      "borough": "Friedrichshain-Kreuzberg"
+      "borough": "Friedrichshain-Kreuzberg",
+      "summary": "Copyshop, Druckerei, Xerox, Kopierservice, Drucken, Binden, Broschüren, Abschlussarbeiten, Druckservice Berlin, Printservice, Print, Copy, T-Shirt Print, Printingservice in Berlin: Posters, Thesis Print, Textile Print…",
+      "email_source": "website"
     },
     {
       "osm_id": "node/4624301392",
@@ -637,12 +681,13 @@
       "address": "Dieffenbachstraße 53 10967 Berlin",
       "city": "Berlin",
       "website": "https://www.copytogoberlin.de/",
-      "email": null,
+      "email": "info@copytogoberlin.de",
       "phone": null,
       "lat": 52.4923407,
       "lon": 13.4181476,
       "district": "Kreuzberg",
-      "borough": "Friedrichshain-Kreuzberg"
+      "borough": "Friedrichshain-Kreuzberg",
+      "email_source": "website"
     },
     {
       "osm_id": "node/259203949",
@@ -690,7 +735,8 @@
       "lat": 52.5440242,
       "lon": 13.4159072,
       "district": "Prenzlauer Berg",
-      "borough": "Pankow"
+      "borough": "Pankow",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/846185116",
@@ -706,7 +752,8 @@
       "lat": 52.4297258,
       "lon": 13.5308336,
       "district": "Adlershof",
-      "borough": "Treptow-Köpenick"
+      "borough": "Treptow-Köpenick",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/12529267892",
@@ -717,12 +764,14 @@
       "address": "Grenzgrabenstraße 4 13053 Berlin",
       "city": "Berlin",
       "website": "https://dbusiness.de/",
-      "email": null,
+      "email": "info@dbusiness.de",
       "phone": "+49 30 4211995",
       "lat": 52.5431287,
       "lon": 13.522568,
       "district": "Alt-Hohenschönhausen",
-      "borough": "Lichtenberg"
+      "borough": "Lichtenberg",
+      "summary": "Digitaldruckerei in Berlin-Buckow für Bücher, Broschüren, Flyer, Plakate und Kleinauflagen ab einem Exemplar – mit persönlicher Beratung.",
+      "email_source": "website"
     },
     {
       "osm_id": "node/8423150288",
@@ -802,7 +851,9 @@
       "lat": 52.5036281,
       "lon": 13.3424952,
       "district": "Schöneberg",
-      "borough": "Tempelhof-Schöneberg"
+      "borough": "Tempelhof-Schöneberg",
+      "summary": "kopieren Berlin, Copy-Shop, Berlin, kopieren, drucken, print, Stempel, plotten, cad-plot, zeichnungen, Visitenkarten, digitalisieren, scannen, binden",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/6838590541",
@@ -818,7 +869,9 @@
       "lat": 52.5072974,
       "lon": 13.3940855,
       "district": "Kreuzberg",
-      "borough": "Friedrichshain-Kreuzberg"
+      "borough": "Friedrichshain-Kreuzberg",
+      "summary": "kopieren Berlin, Copy-Shop, Berlin, kopieren, drucken, print, Stempel, plotten, cad-plot, zeichnungen, Visitenkarten, digitalisieren, scannen, binden",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/2262772641",
@@ -829,12 +882,14 @@
       "address": "Tegeler Straße 29 13353 Berlin",
       "city": "Berlin",
       "website": "https://copyshop-wedding.de/",
-      "email": null,
+      "email": "info@digitaldruck-wedding.de",
       "phone": "+49 30 4538463",
       "lat": 52.5430232,
       "lon": 13.3560478,
       "district": "Wedding",
-      "borough": "Mitte"
+      "borough": "Mitte",
+      "summary": "Digitaldruckerei und Copyshop in Berlin-Wedding: Flyer, Broschüren, Poster, Abschlussarbeiten, Aufkleber und mehr – schnell, hochwertig und direkt vor Ort.",
+      "email_source": "website"
     },
     {
       "osm_id": "node/5913456222",
@@ -925,11 +980,13 @@
       "address": "Narzissenallee 6 15738 Zeuthen",
       "city": "Zeuthen",
       "website": "http://www.druckbude-zeuthen.de",
-      "email": null,
+      "email": "info@druckbude-wildau.de",
       "phone": null,
       "lat": 52.331882,
       "lon": 13.602748,
-      "district": "Zeuthen"
+      "district": "Zeuthen",
+      "summary": "Textildruck, Beschriftung, Werbemittel, Stickerei, Design und Sonderproduktion",
+      "email_source": "website"
     },
     {
       "osm_id": "node/13005340201",
@@ -940,12 +997,14 @@
       "address": "Ackerstraße 22 10115",
       "city": "Berlin",
       "website": "https://www.drucken3000.de/",
-      "email": null,
+      "email": "riso@drucken3000.de",
       "phone": null,
       "lat": 52.5317364,
       "lon": 13.3965237,
       "district": "Mitte",
-      "borough": "Mitte"
+      "borough": "Mitte",
+      "summary": "DRUCKEN3000 besitzt einen der seltenen zweifarbigen Risographen MZ 1070 E. Wir drucken eigene Artworks, stellen unsere Druckmaschine aber auch gerne Kollegen zur Verfügung. DRUCKEN3000 by xplicit.",
+      "email_source": "website"
     },
     {
       "osm_id": "node/9957304160",
@@ -956,11 +1015,13 @@
       "address": "Iserstraße 8 14513 Teltow",
       "city": "Teltow",
       "website": "https://u-s-e.org/druck-und-medien/digitaldruck/",
-      "email": null,
+      "email": "mail@u-s-e.org",
       "phone": "+49 3328 312 40 40",
       "lat": 52.3938166,
       "lon": 13.2435483,
-      "district": "Ruhlsdorf"
+      "district": "Ruhlsdorf",
+      "summary": "Die USE gGmbH ist ein Sozialunternehmen mit einem breiten Angebot von beruflichen Rehabilitationsmaßnahmen für behinderte und benachteiligte Menschen in Berlin und Brandenburg.",
+      "email_source": "website"
     },
     {
       "osm_id": "node/1086590593",
@@ -1038,7 +1099,8 @@
       "lat": 52.4893235,
       "lon": 13.6039,
       "district": "Mahlsdorf",
-      "borough": "Marzahn-Hellersdorf"
+      "borough": "Marzahn-Hellersdorf",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/9737037062",
@@ -1065,12 +1127,14 @@
       "address": "Meyerbeerstraße 62 13088 Berlin",
       "city": "Berlin",
       "website": "https://www.druckerey.de/",
-      "email": null,
+      "email": "sekretariat@druckerey.de",
       "phone": null,
       "lat": 52.5475327,
       "lon": 13.4576612,
       "district": "Weißensee",
-      "borough": "Pankow"
+      "borough": "Pankow",
+      "summary": "Martin Z. Schröder druckt individuelle Visitenkarten, Briefpapier, Hochzeitseinladungen, Geburtsanzeigen, Trauerdrucksachen vom Bleisatz und als Letterpress (Prägung) von digitalen oder handgemachten Vorlagen auf…",
+      "email_source": "website"
     },
     {
       "osm_id": "node/11553506856",
@@ -1081,12 +1145,14 @@
       "address": null,
       "city": "Berlin",
       "website": "http://www.druckwerkstaetten.de/",
-      "email": null,
+      "email": "post@druckwerkstaetten.de",
       "phone": null,
       "lat": 52.5564763,
       "lon": 13.3857684,
       "district": "Gesundbrunnen",
-      "borough": "Mitte"
+      "borough": "Mitte",
+      "summary": "Sie suchen Ihren Partner für hochwertige Drucke in Berlin? ► T-shirt Druck, Siebdruck, Texildruck und vieles mehr - Jahrelange Erfahrung und Meisterqualität!",
+      "email_source": "website"
     },
     {
       "osm_id": "node/3219825977",
@@ -1129,12 +1195,14 @@
       "address": "Schloßstraße 66 12165 Berlin",
       "city": "Berlin",
       "website": "https://www.fritz-bergmann.de",
-      "email": null,
+      "email": "plotservice@fritz-bergmann.de",
       "phone": null,
       "lat": 52.4535937,
       "lon": 13.3166745,
       "district": "Steglitz",
-      "borough": "Steglitz-Zehlendorf"
+      "borough": "Steglitz-Zehlendorf",
+      "summary": "Professionelle Druck- und Dokumentenlösungen Als traditionsreiches Unternehmen in Berlin bietet Fritz Bergmann bereits seit über 100 Jahren professionelle Druc…",
+      "email_source": "website"
     },
     {
       "osm_id": "node/12082885211",
@@ -1150,7 +1218,8 @@
       "lat": 52.5370944,
       "lon": 13.3732021,
       "district": "Mitte",
-      "borough": "Mitte"
+      "borough": "Mitte",
+      "summary": "G.R.I.M.M. VERTRAULICH bietet Digitalisierung, Vervielfältigung und Archivierung von vertraulichen Dokumenten und Unterlagen für Rechtsanwälte, Steuerberater, Wirtschaftsprüfer, Notare,, Architekten in Berlin."
     },
     {
       "osm_id": "node/6239510065",
@@ -1198,7 +1267,9 @@
       "lat": 52.4902078,
       "lon": 13.449236,
       "district": "Alt-Treptow",
-      "borough": "Treptow-Köpenick"
+      "borough": "Treptow-Köpenick",
+      "summary": "Wir bieten Ihnen einen Rundumservice, von der Beratung über die Gestaltung bis zum fertigen Produkt. Wir sind in Berlin Kreuzberg und in Alt-Treptow für sie da.",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/7590570274",
@@ -1209,12 +1280,14 @@
       "address": null,
       "city": "Berlin",
       "website": "https://www.grossformat-berlin.de",
-      "email": null,
+      "email": "copydeluxe@grossformat-berlin.de",
       "phone": "+49 30 61 28 15 06",
       "lat": 52.4921568,
       "lon": 13.4177549,
       "district": "Kreuzberg",
-      "borough": "Friedrichshain-Kreuzberg"
+      "borough": "Friedrichshain-Kreuzberg",
+      "summary": "Wir bieten Ihnen einen Rundumservice, von der Beratung über die Gestaltung bis zum fertigen Produkt. Wir sind in Berlin Kreuzberg und in Alt-Treptow für sie da.",
+      "email_source": "website"
     },
     {
       "osm_id": "node/1901746292",
@@ -1230,7 +1303,9 @@
       "lat": 52.5526922,
       "lon": 13.3616293,
       "district": "Wedding",
-      "borough": "Mitte"
+      "borough": "Mitte",
+      "summary": "Kosten runter …auch für kleine Budgets. Qualität …ausnahmslos auf Präsentationsniveau. Kontinuität …durch langjährige Verlässlichkeit, Tag für Tag. Sehr geehrte Kundinnen und Kunden, willkommen in Deutschlands großer…",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/11494497097",
@@ -1246,7 +1321,9 @@
       "lat": 52.4765215,
       "lon": 13.4398753,
       "district": "Neukölln",
-      "borough": "Neukölln"
+      "borough": "Neukölln",
+      "summary": "Homepage des Kopie Frosch´s, copyshop Neukölln",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/12208922706",
@@ -1262,7 +1339,9 @@
       "lat": 52.4459547,
       "lon": 13.6202117,
       "district": "Friedrichshagen",
-      "borough": "Treptow-Köpenick"
+      "borough": "Treptow-Köpenick",
+      "summary": "Wir sind Ihr Partner für Kopien, Digitaldruck, Textildruck, Bindungen, Laminierung, Stempel, Gravur in Berlin - Köpenick und online | Kopier24",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/5167689746",
@@ -1273,12 +1352,13 @@
       "address": "Akazienstraße 15 10823 Berlin",
       "city": "Berlin",
       "website": "http://www.kopierblitz.de/",
-      "email": null,
+      "email": "info@kopierblitz.de",
       "phone": null,
       "lat": 52.489013,
       "lon": 13.3536326,
       "district": "Schöneberg",
-      "borough": "Tempelhof-Schöneberg"
+      "borough": "Tempelhof-Schöneberg",
+      "email_source": "website"
     },
     {
       "osm_id": "node/7705210639",
@@ -1289,12 +1369,14 @@
       "address": "Rheinstraße 28 12161 Berlin",
       "city": "Berlin",
       "website": "https://kopiercenter-berlin.de",
-      "email": null,
+      "email": "info@kopiercenter-berlin.de",
       "phone": null,
       "lat": 52.467353,
       "lon": 13.3305664,
       "district": "Friedenau",
-      "borough": "Tempelhof-Schöneberg"
+      "borough": "Tempelhof-Schöneberg",
+      "summary": "KOPIERCENTER BERLIN Drucken · Kopieren · Scannen · Binden Drucken & Kopieren in Berlin – schnell und unkompliziert Von der einfachen Kopie bis zum A0-Großformatdruck: Wir drucken Ihre Dokumente, Abschlussarbeiten…",
+      "email_source": "website"
     },
     {
       "osm_id": "node/2796281067",
@@ -1342,7 +1424,8 @@
       "lat": 52.5087494,
       "lon": 13.3090611,
       "district": "Charlottenburg",
-      "borough": "Charlottenburg-Wilmersdorf"
+      "borough": "Charlottenburg-Wilmersdorf",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/282760029",
@@ -1353,12 +1436,14 @@
       "address": "Frankfurter Allee 72 10247 Berlin",
       "city": "Berlin",
       "website": "https://www.kopierladen-berlin.de",
-      "email": null,
+      "email": "info@kopierladen-berlin.de",
       "phone": null,
       "lat": 52.5142011,
       "lon": 13.4676029,
       "district": "Friedrichshain",
-      "borough": "Friedrichshain-Kreuzberg"
+      "borough": "Friedrichshain-Kreuzberg",
+      "summary": "Professioneller Druckservice in Berlin & bundesweit. Abschlussarbeiten, Textildruck, Werbeartikel, Gravuren, Stempel & Flyer. Online bestellen, in 4 Filialen abholen oder Versand per DHL.",
+      "email_source": "website"
     },
     {
       "osm_id": "node/3385314482",
@@ -1369,12 +1454,14 @@
       "address": null,
       "city": "Berlin",
       "website": "https://www.kopierladen-berlin.de/",
-      "email": null,
+      "email": "info@kopierladen-berlin.de",
       "phone": null,
       "lat": 52.5475265,
       "lon": 13.449729,
       "district": "Weißensee",
-      "borough": "Pankow"
+      "borough": "Pankow",
+      "summary": "Professioneller Druckservice in Berlin & bundesweit. Abschlussarbeiten, Textildruck, Werbeartikel, Gravuren, Stempel & Flyer. Online bestellen, in 4 Filialen abholen oder Versand per DHL.",
+      "email_source": "website"
     },
     {
       "osm_id": "node/3446697421",
@@ -1406,7 +1493,8 @@
       "lat": 52.5427267,
       "lon": 13.5461605,
       "district": "Marzahn",
-      "borough": "Marzahn-Hellersdorf"
+      "borough": "Marzahn-Hellersdorf",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/759592761",
@@ -1422,7 +1510,9 @@
       "lat": 52.5374527,
       "lon": 13.4283891,
       "district": "Prenzlauer Berg",
-      "borough": "Pankow"
+      "borough": "Pankow",
+      "summary": "Professioneller Druckservice in Berlin & bundesweit. Abschlussarbeiten, Textildruck, Werbeartikel, Gravuren, Stempel & Flyer. Online bestellen, in 4 Filialen abholen oder Versand per DHL.",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/1575536718",
@@ -1486,7 +1576,8 @@
       "lat": 52.4616438,
       "lon": 13.5827165,
       "district": "Köpenick",
-      "borough": "Treptow-Köpenick"
+      "borough": "Treptow-Köpenick",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/7417852791",
@@ -1517,7 +1608,8 @@
       "phone": "+49 331 74007770",
       "lat": 52.3839411,
       "lon": 13.1124944,
-      "district": "Babelsberg Süd"
+      "district": "Babelsberg Süd",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/12420722659",
@@ -1549,7 +1641,8 @@
       "lat": 52.4679892,
       "lon": 13.3285957,
       "district": "Friedenau",
-      "borough": "Tempelhof-Schöneberg"
+      "borough": "Tempelhof-Schöneberg",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/12363208403",
@@ -1560,12 +1653,13 @@
       "address": "Naugarder Straße 3 10409",
       "city": "Berlin",
       "website": "https://myshirt-berlin.de/",
-      "email": null,
+      "email": "info@myshirt-berlin.de",
       "phone": "+49 30 2839 1683",
       "lat": 52.5424724,
       "lon": 13.4389105,
       "district": "Prenzlauer Berg",
-      "borough": "Pankow"
+      "borough": "Pankow",
+      "email_source": "website"
     },
     {
       "osm_id": "node/9578003307",
@@ -1591,12 +1685,14 @@
       "address": "Berliner Straße 13 10715 Berlin",
       "city": "Berlin",
       "website": "https://newprint-blue.de/",
-      "email": null,
+      "email": "mail@newprint-blue.de",
       "phone": null,
       "lat": 52.4875008,
       "lon": 13.3304558,
       "district": "Wilmersdorf",
-      "borough": "Charlottenburg-Wilmersdorf"
+      "borough": "Charlottenburg-Wilmersdorf",
+      "summary": "Ihre Druckerei in Berlin. Für professionelle Druckprodukte und Veredelung von Print-Produkten. Wir bieten Full-Service von der Druckvorstufe bis zum fertigen Produkt.",
+      "email_source": "website"
     },
     {
       "osm_id": "node/4384775429",
@@ -1612,7 +1708,8 @@
       "lat": 52.4540633,
       "lon": 13.4383269,
       "district": "Britz",
-      "borough": "Neukölln"
+      "borough": "Neukölln",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/2132999672",
@@ -1660,7 +1757,8 @@
       "lat": 52.4644085,
       "lon": 13.3302071,
       "district": "Steglitz",
-      "borough": "Steglitz-Zehlendorf"
+      "borough": "Steglitz-Zehlendorf",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/3611058071",
@@ -1687,12 +1785,14 @@
       "address": "Winsstraße 25 10405 Berlin",
       "city": "Berlin",
       "website": "https://www.printsafari.com",
-      "email": null,
+      "email": "support@printsafari.com",
       "phone": "+49 30 61081620",
       "lat": 52.5349729,
       "lon": 13.4265443,
       "district": "Prenzlauer Berg",
-      "borough": "Pankow"
+      "borough": "Pankow",
+      "summary": "#1 rated online custom printing service with best prices and highest quality. Over 18 years of experience, top customer satisfaction and fast turnarounds.",
+      "email_source": "website"
     },
     {
       "osm_id": "node/863962695",
@@ -1740,7 +1840,9 @@
       "lat": 52.5102425,
       "lon": 13.3238276,
       "district": "Charlottenburg",
-      "borough": "Charlottenburg-Wilmersdorf"
+      "borough": "Charlottenburg-Wilmersdorf",
+      "summary": "ReproBerlin ist Ihre Digitaldruckerei und Copyshop in der Hardenbergstraße 7, 10623 Berlin Charlottenburg. +49 (0)30 315 28 21, info@reproberlin.de",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/1528318281",
@@ -1767,12 +1869,13 @@
       "address": "Plauener Straße 163-165 13053 Berlin",
       "city": "Berlin",
       "website": "https://www.reproprofi.de/",
-      "email": null,
+      "email": "info@reproprofi.de",
       "phone": "+49 351 87760-50",
       "lat": 52.5459477,
       "lon": 13.5127653,
       "district": "Alt-Hohenschönhausen",
-      "borough": "Lichtenberg"
+      "borough": "Lichtenberg",
+      "email_source": "website"
     },
     {
       "osm_id": "node/1098863811",
@@ -1804,7 +1907,9 @@
       "lat": 52.5012848,
       "lon": 13.3760701,
       "district": "Kreuzberg",
-      "borough": "Friedrichshain-Kreuzberg"
+      "borough": "Friedrichshain-Kreuzberg",
+      "summary": "Digitaldruck deutschlandweit: Plots / Pläne, Kopie, Scans, Flyer, Broschüre, Poster / Plakate, Visitenkarten, Banner, Aufkleber und Klebefolie, Schilder, Roll-U",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/7700452320",
@@ -1835,7 +1940,8 @@
       "phone": "+49 3342 20 76 06",
       "lat": 52.511166,
       "lon": 13.663144,
-      "district": "Dahlwitz-Hoppegarten"
+      "district": "Dahlwitz-Hoppegarten",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/250068256",
@@ -1862,12 +1968,14 @@
       "address": "Kastanienallee 91 10435 Berlin",
       "city": "Berlin",
       "website": "https://www.solid-earth.de/",
-      "email": null,
+      "email": "info@solid-earth.de",
       "phone": "+49 30 44024402",
       "lat": 52.5383455,
       "lon": 13.4097375,
       "district": "Prenzlauer Berg",
-      "borough": "Pankow"
+      "borough": "Pankow",
+      "summary": "Druckerzeugnisse und Printprodukte in Berlin - Kopieren und klimaneutral drucken",
+      "email_source": "website"
     },
     {
       "osm_id": "node/2442886685",
@@ -1894,12 +2002,14 @@
       "address": "190 10117 Berlin",
       "city": "Berlin",
       "website": "https://www.sprintout.de/",
-      "email": null,
+      "email": "druck@sprintout.de",
       "phone": "+49 30 235538850",
       "lat": 52.5201375,
       "lon": 13.3917351,
       "district": "Mitte",
-      "borough": "Mitte"
+      "borough": "Mitte",
+      "summary": "Volltreffer! ⭐ Deine Express-Druckerei mitten in Berlin. ⭐ Wir drucken von der Visitenkarte bis zu Messestand - ALLES!",
+      "email_source": "website"
     },
     {
       "osm_id": "node/4741520226",
@@ -1910,12 +2020,14 @@
       "address": "Grunewaldstraße 18 10823 Berlin",
       "city": "Berlin",
       "website": "https://sprintout.de/",
-      "email": null,
+      "email": "druck@sprintout.de",
       "phone": "+49 30 2355380",
       "lat": 52.4898987,
       "lon": 13.3522681,
       "district": "Schöneberg",
-      "borough": "Tempelhof-Schöneberg"
+      "borough": "Tempelhof-Schöneberg",
+      "summary": "Volltreffer! ⭐ Deine Express-Druckerei mitten in Berlin. ⭐ Wir drucken von der Visitenkarte bis zu Messestand - ALLES!",
+      "email_source": "website"
     },
     {
       "osm_id": "node/4200076989",
@@ -1942,12 +2054,13 @@
       "address": null,
       "city": "Berlin",
       "website": "https://stickbar.de/",
-      "email": null,
+      "email": "info@stickbar.de",
       "phone": "+49 30 28 50 87 40",
       "lat": 52.492101,
       "lon": 13.4179698,
       "district": "Kreuzberg",
-      "borough": "Friedrichshain-Kreuzberg"
+      "borough": "Friedrichshain-Kreuzberg",
+      "email_source": "website"
     },
     {
       "osm_id": "node/739939498",
@@ -2010,7 +2123,8 @@
       "lat": 52.5170672,
       "lon": 13.3046982,
       "district": "Charlottenburg",
-      "borough": "Charlottenburg-Wilmersdorf"
+      "borough": "Charlottenburg-Wilmersdorf",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/871561400",
@@ -2026,7 +2140,9 @@
       "lat": 52.5006879,
       "lon": 13.4177661,
       "district": "Kreuzberg",
-      "borough": "Friedrichshain-Kreuzberg"
+      "borough": "Friedrichshain-Kreuzberg",
+      "summary": "Home - TRIGGER to go. Die Digitaldruckerei Berlin Kreuzberg. Wir drucken digital Flyer, Broschüren Bücher und Doktorarbeiten. Ihre Druckerei Berlin. CopyShopBerlin Nr .1 Dienstleister der Druckereien in Berlin Kreuzberg…",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/9737174242",
@@ -2057,7 +2173,8 @@
       "phone": "+49 3302 802742",
       "lat": 52.6469884,
       "lon": 13.2056433,
-      "district": "Hennigsdorf"
+      "district": "Hennigsdorf",
+      "summary": "Hier finden Sie alle Informationen rund um die Kopier-, Druck- und Scanleistungen der Firma Unikopie"
     },
     {
       "osm_id": "node/8629566354",
@@ -2089,7 +2206,9 @@
       "lat": 52.5344727,
       "lon": 13.4532998,
       "district": "Prenzlauer Berg",
-      "borough": "Pankow"
+      "borough": "Pankow",
+      "summary": "Willkommen in der Union Druckerei Berlin W Präzision und Verlässlichkeit in der Planung und Durchführung der Druckaufträge sind unser know-how. Von der Beratung über ihr Produkt bis hin zur Auslieferung finden Sie alles…",
+      "email_source": "openstreetmap"
     },
     {
       "osm_id": "node/4948602727",
@@ -2132,12 +2251,13 @@
       "address": "Leibnizstraße 74 10625 Berlin",
       "city": "Berlin",
       "website": "http://www.xcopy.de/",
-      "email": null,
+      "email": "xcopy@xcopy.de",
       "phone": "+49 30 3138938",
       "lat": 52.507215,
       "lon": 13.3137484,
       "district": "Charlottenburg",
-      "borough": "Charlottenburg-Wilmersdorf"
+      "borough": "Charlottenburg-Wilmersdorf",
+      "email_source": "website"
     },
     {
       "osm_id": "node/863962890",

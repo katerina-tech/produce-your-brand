@@ -419,3 +419,42 @@ def test_filling_in_districts_is_safe_to_run_on_every_boot(
     """It runs at startup, so running it twice has to be free - and it must not
     overwrite a district somebody corrected by hand."""
     assert partners.fill_in_districts() == 0, "already filled by the fixture's seeding"
+
+
+# --------------------------------------------------- contacts and summaries
+
+
+def test_the_recovered_addresses_reached_the_directory(partners: PartnerRepository) -> None:
+    """The gap a short manual check found: A&W Digitaldruck publishes
+    ``info [at] aw-digital.de`` and the directory said "no email published".
+    Thirty-one companies were in that position."""
+    from_site = [p for p in partners.all() if p.email_source == "website"]
+
+    assert from_site, "the recovery ran"
+    assert all(partner.email for partner in from_site)
+    assert partners.contactable_count() > 60, "41 before the recovery, 72 after"
+
+
+def test_every_address_says_where_it_came_from(partners: PartnerRepository) -> None:
+    """A map tag and a company's own contact page are not equally likely to
+    still be watched, and somebody about to write deserves to know which they
+    have."""
+    for partner in partners.all():
+        if partner.email:
+            assert partner.email_source in {"openstreetmap", "website"}
+        else:
+            assert partner.email_source is None
+
+
+def test_a_summary_is_the_company_s_own_line(partners: PartnerRepository) -> None:
+    """From their site's meta description. Never a model's paraphrase, because
+    a summary this product wrote would be this product's opinion about a named
+    business."""
+    with_summary = [p for p in partners.all() if p.summary]
+
+    assert with_summary
+    assert all(len(partner.summary or "") >= 25 for partner in with_summary)
+    assert not any(
+        (partner.summary or "").casefold().startswith("willkommen auf unserer")
+        for partner in with_summary
+    ), "boilerplate is dropped rather than shown"

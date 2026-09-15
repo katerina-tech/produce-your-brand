@@ -33,7 +33,8 @@ logger = logging.getLogger(__name__)
 
 _COLUMNS = (
     "id, name, source, verified, address, city, district, borough, "
-    "category, category_label, lat, lon, website, email, implied_method, phone"
+    "category, category_label, summary, email_source, "
+    "lat, lon, website, email, implied_method, phone"
 )
 
 
@@ -52,6 +53,8 @@ def _to_partner(row: Any) -> Partner:
         borough=(record["borough"] and str(record["borough"])) or None,
         category=(record["category"] and str(record["category"])) or None,
         category_label=(record["category_label"] and str(record["category_label"])) or None,
+        summary=(record["summary"] and str(record["summary"])) or None,
+        email_source=(record["email_source"] and str(record["email_source"])) or None,
         lat=float(record["lat"]) if record["lat"] is not None else None,
         lon=float(record["lon"]) if record["lon"] is not None else None,
         website=(record["website"] and str(record["website"])) or None,
@@ -97,7 +100,7 @@ class PartnerRepository:
             for item in raw.get("partners", []):
                 cursor = self._connection.execute(
                     f"INSERT INTO partners ({_COLUMNS}, created_at) "
-                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
                     "ON CONFLICT(id) DO NOTHING",
                     (
                         item["osm_id"],
@@ -110,6 +113,9 @@ class PartnerRepository:
                         item.get("borough"),
                         item.get("osm_category"),
                         item.get("category_label"),
+                        item.get("summary"),
+                        item.get("email_source")
+                        or ("openstreetmap" if item.get("email") else None),
                         item.get("lat"),
                         item.get("lon"),
                         item.get("website"),
@@ -248,6 +254,25 @@ class PartnerRepository:
                         "UPDATE partners SET category = ?, category_label = ? "
                         "WHERE id = ? AND category IS NULL",
                         (item["osm_category"], item.get("category_label"), item["osm_id"]),
+                    )
+                if item.get("summary"):
+                    self._connection.execute(
+                        "UPDATE partners SET summary = ? WHERE id = ? AND summary IS NULL",
+                        (item["summary"], item["osm_id"]),
+                    )
+                # Only where there is no address at all. A map tag that somebody
+                # maintains is not improved by a line scraped off a homepage,
+                # and overwriting one with the other would be this product
+                # deciding it knows better than OpenStreetMap's editors.
+                if item.get("email"):
+                    self._connection.execute(
+                        "UPDATE partners SET email = ?, email_source = ? "
+                        "WHERE id = ? AND (email IS NULL OR email = '')",
+                        (
+                            item["email"],
+                            item.get("email_source") or "openstreetmap",
+                            item["osm_id"],
+                        ),
                     )
 
         if filled:

@@ -76,6 +76,8 @@ CREATE TABLE IF NOT EXISTS partners (
     borough        TEXT,
     category       TEXT,
     category_label TEXT,
+    summary        TEXT,
+    email_source   TEXT,
     lat            REAL,
     lon            REAL,
     website        TEXT,
@@ -185,6 +187,20 @@ _MIGRATIONS: tuple[tuple[str, str, str], ...] = (
         "partners",
         "category_label",
         "ALTER TABLE partners ADD COLUMN category_label TEXT",
+    ),
+    # The company's own one-line description of itself, and where its email
+    # address was read from. The second matters to a person about to write:
+    # an address off a map tag and one off the company's own contact page are
+    # not equally likely to still be watched.
+    (
+        "partners",
+        "summary",
+        "ALTER TABLE partners ADD COLUMN summary TEXT",
+    ),
+    (
+        "partners",
+        "email_source",
+        "ALTER TABLE partners ADD COLUMN email_source TEXT",
     ),
 )
 

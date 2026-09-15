@@ -624,6 +624,8 @@ def _partner_response(partner: Partner) -> PartnerResponse:
         borough=partner.borough,
         category=partner.category,
         category_label=partner.category_label,
+        summary=partner.summary,
+        email_source=partner.email_source,
         website=partner.website,
         email=partner.email,
         phone=partner.phone,

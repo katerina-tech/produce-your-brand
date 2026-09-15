@@ -48,18 +48,39 @@ export default async function PartnerPage({
             <Badge tone="neutral">unconfirmed</Badge>
           )}
         </div>
-        {partner.address ? (
-          <p className="mt-1.5 text-sm text-ink-soft">{partner.address}</p>
+        {partner.address || partner.district ? (
+          <p className="mt-1.5 text-sm text-ink-soft">
+            {partner.district ? <span>{partner.district}</span> : null}
+            {partner.district && partner.address ? " · " : null}
+            {partner.address}
+          </p>
+        ) : null}
+
+        {/* Their own line, from their site's meta description. The page quotes
+            it rather than paraphrasing, so nothing here is this product's
+            opinion about a named business. */}
+        {partner.summary ? (
+          <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-ink-soft">
+            {partner.summary}
+          </p>
         ) : null}
 
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
           {partner.email ? (
-            <a
-              href={`mailto:${partner.email}`}
-              className="text-accent underline underline-offset-4"
-            >
-              {partner.email}
-            </a>
+            <span className="flex items-center gap-1.5">
+              <a
+                href={`mailto:${partner.email}`}
+                className="text-accent underline underline-offset-4"
+              >
+                {partner.email}
+              </a>
+              {/* Where it came from, said plainly. A map tag and a company's
+                  own contact page are not equally likely to still be watched,
+                  and somebody about to write deserves to know which they have. */}
+              <span className="text-xs text-ink-muted">
+                {partner.email_source === "website" ? "from their website" : "from OpenStreetMap"}
+              </span>
+            </span>
           ) : (
             <span className="text-xs text-ink-muted">no email published</span>
           )}

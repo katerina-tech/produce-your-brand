@@ -82,7 +82,24 @@ class Partner(BaseModel):
 
     website: str | None = None
     email: str | None = None
+    email_source: str | None = Field(
+        default=None,
+        description=(
+            "Where the address was read from: 'openstreetmap' for a map tag, "
+            "'website' for the company's own page. Shown, because the two are not "
+            "equally likely to still be watched and a person about to write deserves "
+            "to know which they have."
+        ),
+    )
     phone: str | None = None
+    summary: str | None = Field(
+        default=None,
+        description=(
+            "The company's own one-line description of itself, from its site's meta "
+            "description. Not a sentence this product chose out of their page, and "
+            "not a model's paraphrase - their line, or nothing."
+        ),
+    )
 
     implied_method: ProductionMethod | None = Field(
         default=None,
