@@ -150,8 +150,15 @@ def _resolve(host: str) -> set[str]:
         return set()
 
 
-def _is_public_address(host: str, resolve: Resolver = _resolve) -> bool:
-    """Whether a hostname resolves only to addresses on the public internet.
+def address_refusal(url: str, resolve: Resolver = _resolve) -> str | None:
+    """Why this address may not be fetched, in words, or ``None`` if it may.
+
+    The reasons are kept apart because they mean opposite things. A domain that
+    no longer resolves is a *dead company website* - a finding about stale
+    directory data, worth acting on. An address that resolves into private
+    space is an *attempted intrusion*, or a misconfiguration that would become
+    one. Reporting both as "not a public address", as this first did, made six
+    closed Berlin print shops look like blocked attacks.
 
     Every resolved address is checked, not just the first: a hostname can
     answer with one public and one private address, and a client that took the
@@ -161,15 +168,21 @@ def _is_public_address(host: str, resolve: Resolver = _resolve) -> bool:
     suite that needed the network to check an SSRF guard would be a suite that
     stopped checking it on a train.
     """
-    addresses = resolve(host)
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"}:
+        return "not an http or https address"
+    if not parsed.hostname:
+        return "no hostname in the address"
+
+    addresses = resolve(parsed.hostname)
     if not addresses:
-        return False
+        return "the domain does not resolve - the site is probably gone"
 
     for raw in addresses:
         try:
             address = ipaddress.ip_address(raw)
         except ValueError:
-            return False
+            return "the hostname resolved to something that is not an IP address"
         if (
             address.is_private
             or address.is_loopback
@@ -178,16 +191,13 @@ def _is_public_address(host: str, resolve: Resolver = _resolve) -> bool:
             or address.is_multicast
             or address.is_unspecified
         ):
-            return False
-    return True
+            return "the hostname resolves into private or reserved address space"
+    return None
 
 
 def is_fetchable(url: str, *, resolve: Resolver = _resolve) -> bool:
     """Whether this address may be requested at all."""
-    parsed = urlparse(url)
-    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
-        return False
-    return _is_public_address(parsed.hostname, resolve)
+    return address_refusal(url, resolve) is None
 
 
 def _robots_allows(url: str, client: httpx.Client) -> bool:
@@ -219,8 +229,9 @@ def fetch_page(
     page, including a refusal by robots.txt - the caller decides what a skipped
     site means, and silence would make an unread site look like an empty one.
     """
-    if not is_fetchable(url, resolve=resolve):
-        raise SiteFetchError(f"refusing to fetch {url!r}: not a public http(s) address")
+    refusal = address_refusal(url, resolve)
+    if refusal is not None:
+        raise SiteFetchError(f"not fetching {url!r}: {refusal}")
 
     owned = client is None
     http = client or httpx.Client(follow_redirects=True, headers={"User-Agent": USER_AGENT})

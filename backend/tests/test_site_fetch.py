@@ -17,6 +17,7 @@ import pytest
 from app.services.site_fetch import (
     FetchedPage,
     SiteFetchError,
+    address_refusal,
     fetch_page,
     is_fetchable,
     service_links,
@@ -101,7 +102,7 @@ def test_addresses_that_must_never_be_requested(url: str) -> None:
 def test_a_refused_address_is_not_even_attempted() -> None:
     """The check happens before the client is touched, so a blocked address
     costs no connection at all."""
-    with pytest.raises(SiteFetchError, match="not a public"):
+    with pytest.raises(SiteFetchError, match="private or reserved"):
         fetch_page("http://169.254.169.254/", client=_client())
 
 
@@ -237,3 +238,39 @@ def test_a_page_with_no_links_yields_none() -> None:
     bare = FetchedPage(url="https://spree.example/", text="words " * 60)
 
     assert service_links(bare) == ()
+
+
+# ------------------------------------------- telling the two refusals apart
+
+
+def test_a_dead_domain_and_a_blocked_address_are_different_findings() -> None:
+    """Six of eighty-nine Berlin companies in the survey had a website that no
+    longer resolves - closed businesses, not attempted intrusions. Reporting
+    both as "not a public address" made stale directory data look like a
+    security event, and hid a fact worth acting on."""
+    gone = address_refusal("https://closed-print-shop.example/", resolve=lambda _host: set())
+    blocked = address_refusal("http://169.254.169.254/", resolve=lambda _host: {"169.254.169.254"})
+
+    assert gone is not None and "does not resolve" in gone
+    assert blocked is not None and "private or reserved" in blocked
+    assert gone != blocked
+
+
+def test_an_address_that_is_fine_has_no_refusal() -> None:
+    assert address_refusal("https://spree.example/", resolve=_resolves_public) is None
+
+
+def test_a_wrong_scheme_says_which_problem_it_is() -> None:
+    refusal = address_refusal("file:///etc/passwd", resolve=_resolves_public)
+
+    assert refusal is not None and "http" in refusal
+
+
+def test_one_private_address_among_public_ones_still_refuses() -> None:
+    """A hostname can answer with both, and a client taking the first would be
+    trivially steered."""
+    mixed = address_refusal(
+        "https://sneaky.example/", resolve=lambda _host: {"93.184.216.34", "127.0.0.1"}
+    )
+
+    assert mixed is not None and "private or reserved" in mixed

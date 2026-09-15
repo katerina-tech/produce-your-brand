@@ -29,3 +29,11 @@ backend/data/uploads/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Scraped website text from real companies.
+#
+# Kept locally, never published. Reading it to extract capabilities is text and
+# data mining, which §44b UrhG permits; republishing 67 companies' own website
+# copy in a public repository is redistribution, which it does not. The script
+# that produces it is committed, so anybody can rebuild it themselves.
+backend/data/company_pages.json
