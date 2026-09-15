@@ -259,3 +259,22 @@ def test_it_does_not_retry_forever(tmp_path: Path, monkeypatch: pytest.MonkeyPat
 
 def test_a_reachable_absence_of_url_still_uses_the_file(tmp_path: Path) -> None:
     assert open_database(None, tmp_path / "t.db").dialect == "sqlite"
+
+
+def test_a_missing_driver_is_not_reported_as_an_unreachable_database(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """What actually took the deployment down, and what the message got wrong.
+
+    psycopg was in pyproject.toml but not in uv.lock, so the image never had
+    it. The error said the database could not be reached and suggested checking
+    the Postgres service - which was running perfectly. A missing package is
+    also not something retrying five times can fix.
+    """
+    from app.repositories import database as module
+    from app.repositories.database import DatabaseUnreachableError
+
+    monkeypatch.setattr(module.importlib.util, "find_spec", lambda _name: None)
+
+    with pytest.raises(DatabaseUnreachableError, match="driver is not installed"):
+        module.open_database("postgresql://host/db", tmp_path / "t.db")

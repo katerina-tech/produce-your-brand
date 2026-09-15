@@ -22,6 +22,7 @@ Two differences are handled here so no caller has to know about them:
 
 from __future__ import annotations
 
+import importlib.util
 import logging
 import re
 import sqlite3
@@ -205,6 +206,18 @@ def open_database(url: str | None, sqlite_path: Path | str) -> Database:
             "DATABASE_URL looks like two connection strings joined together. "
             "A Railway variable holding ${{Postgres.DATABASE_URL}} twice produces "
             "exactly this - it should appear once."
+        )
+
+    # Asked once, before the retry loop. A missing driver is not a database
+    # that needs another moment to wake up, and retrying it five times only
+    # delays the same answer - while the message blamed the Postgres service
+    # for a package that was never in the image. It cost an outage and twenty
+    # minutes of looking in the wrong place.
+    if importlib.util.find_spec("psycopg") is None:
+        raise DatabaseUnreachableError(
+            "DATABASE_URL is set, but the psycopg driver is not installed in this "
+            "image. The dependency is in pyproject.toml; the container builds from "
+            "uv.lock, so the lock file has to be regenerated and committed too."
         )
 
     last: Exception | None = None
