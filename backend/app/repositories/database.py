@@ -169,14 +169,43 @@ def open_postgres(url: str) -> Database:
     return Database(connection, "postgres")
 
 
+class DatabaseUnreachableError(RuntimeError):
+    """DATABASE_URL is set but cannot be used, and the reason is worth reading."""
+
+
 def open_database(url: str | None, sqlite_path: Path | str) -> Database:
     """Postgres when a URL is configured, otherwise the local file.
 
-    The URL decides, not a setting somebody has to remember to flip: Railway
-    injects DATABASE_URL when a Postgres service exists, so adding the database
-    is the whole of the switch.
+    A configured URL that does not work raises rather than falling back. The
+    fallback would be worse than the crash: the application would come up
+    looking healthy and write every project to a file nobody is backing up,
+    and the first anybody would know is when the volume is next recreated.
+
+    The message says what is wrong in words, because the alternative is a
+    psycopg traceback in a deploy log - and the most likely cause is a typo in
+    a variable, which is thirty seconds to fix once somebody knows that is what
+    it is.
     """
-    if url:
-        logger.info("using postgres", extra={"event": "api_started"})
-        return open_postgres(url)
-    return open_sqlite(sqlite_path)
+    if not url:
+        return open_sqlite(sqlite_path)
+
+    trimmed = url.strip()
+    if trimmed.count("://") > 1:
+        # Two references pasted into one variable concatenate into this.
+        raise DatabaseUnreachableError(
+            "DATABASE_URL looks like two connection strings joined together. "
+            "A Railway variable holding ${{Postgres.DATABASE_URL}} twice produces "
+            "exactly this - it should appear once."
+        )
+
+    try:
+        database = open_postgres(trimmed)
+    except Exception as failure:
+        raise DatabaseUnreachableError(
+            f"DATABASE_URL is set but the database could not be reached: "
+            f"{type(failure).__name__}. Check the variable resolves to one "
+            f"connection string, and that the Postgres service is running."
+        ) from failure
+
+    logger.info("using postgres", extra={"event": "api_started"})
+    return database

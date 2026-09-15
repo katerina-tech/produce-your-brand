@@ -186,3 +186,37 @@ def test_health_reports_which_database_is_actually_open() -> None:
         checks = client.get("/api/health").json()["checks"]
 
     assert checks["database"] in {"sqlite", "postgres"}
+
+
+# ----------------------------------------------- a URL that does not work
+
+
+def test_the_doubled_reference_is_named_for_what_it_is(tmp_path: Path) -> None:
+    """The mistake that actually happened: a Railway variable holding
+    ${{Postgres.DATABASE_URL}} twice resolves to two connection strings joined
+    end to end. Without this, the deploy log shows a psycopg parse error and
+    nobody connects it to a variable they typed."""
+    from app.repositories.database import DatabaseUnreachableError
+
+    doubled = "postgresql://u:p@host:5432/db" * 2
+
+    with pytest.raises(DatabaseUnreachableError, match="twice"):
+        open_database(doubled, tmp_path / "t.db")
+
+
+def test_an_unreachable_database_refuses_to_start_rather_than_using_a_file(
+    tmp_path: Path,
+) -> None:
+    """The fallback would be worse than the crash: the application would come
+    up looking healthy and write every project to a file nobody backs up, and
+    the first anybody would know is when the volume is next recreated."""
+    from app.repositories.database import DatabaseUnreachableError
+
+    # A URL psycopg rejects while parsing, not one it dials: a test that waits
+    # for a TCP timeout is a test that hangs the suite, which this one did.
+    with pytest.raises(DatabaseUnreachableError, match="could not be reached"):
+        open_database("postgresql://:::not a url:::", tmp_path / "t.db")
+
+
+def test_a_reachable_absence_of_url_still_uses_the_file(tmp_path: Path) -> None:
+    assert open_database(None, tmp_path / "t.db").dialect == "sqlite"
