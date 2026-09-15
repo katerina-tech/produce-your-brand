@@ -1,108 +1,149 @@
-"""The real-company directory.
+"""The real-company directory, in the database.
 
-Reads the file ``scripts/build_berlin_partners.py`` produces. Written against
-an interface rather than against SQL so that moving this to Postgres later is a
-change of implementation and not a change of every caller - the same reason
-:class:`~app.repositories.supplier_repo.SupplierRepository` is shaped this way.
+It started as a file read straight off disk, which was right while the survey
+was the only thing that ever wrote to it. It is not right any more: the next
+step is confirming what these companies can do, and a confirmation is a fact a
+person establishes - it cannot live in a file the next survey overwrites.
 
-Filtering happens in Python for now. At 135 records that is instant and the
-code is readable; at 50,000 it will not be, and that is the point at which the
-query belongs in the database rather than here. Writing it as SQL today would
-be paying for a scale that does not exist yet.
+So the file is now **seed**, not storage. It fills an empty table once; after
+that the database owns the rows, and a re-survey is an explicit act rather than
+something a deployment does to somebody's work by restarting.
+
+Filtering is SQL rather than Python because the database is where 135 rows
+become 5,000 without anybody rewriting this module. The survey metadata -
+attribution, which categories came back short - stays in the file: it describes
+how the data was gathered, not the companies, and one row of provenance does
+not want a table.
 """
 
 from __future__ import annotations
 
 import json
 import logging
+from datetime import UTC, datetime
 from pathlib import Path
-
-from pydantic import TypeAdapter
+from typing import Any
 
 from app.domain.enums import ProductionMethod
 from app.domain.partner import Partner, PartnerDirectory
 from app.logging_config import Event, log_event
+from app.repositories.database import Database
 
 logger = logging.getLogger(__name__)
 
-_PARTNERS = TypeAdapter(tuple[Partner, ...])
+_COLUMNS = (
+    "id, name, source, verified, address, city, lat, lon, website, email, implied_method, phone"
+)
 
 
-def _to_partner(raw: dict[str, object]) -> dict[str, object]:
-    """Map the build script's field names onto the domain model's.
-
-    ``method_implied_by_tag`` becomes ``implied_method``: the file says where
-    the value came from, the model says what it means.
-    """
-    return {
-        "id": raw["osm_id"],
-        "name": raw["name"],
-        "address": raw.get("address"),
-        "city": raw.get("city") or "Berlin",
-        "lat": raw.get("lat"),
-        "lon": raw.get("lon"),
-        "website": raw.get("website"),
-        "email": raw.get("email"),
-        "phone": raw.get("phone"),
-        "implied_method": raw.get("method_implied_by_tag"),
-    }
+def _to_partner(row: Any) -> Partner:
+    """One row to a Partner. Both drivers hand back a mapping, so this is the
+    same code on either database."""
+    record: dict[str, Any] = dict(row)
+    return Partner(
+        id=str(record["id"]),
+        name=str(record["name"]),
+        source=str(record["source"]),
+        verified=bool(record["verified"]),
+        address=(record["address"] and str(record["address"])) or None,
+        city=str(record["city"]),
+        lat=float(record["lat"]) if record["lat"] is not None else None,
+        lon=float(record["lon"]) if record["lon"] is not None else None,
+        website=(record["website"] and str(record["website"])) or None,
+        email=(record["email"] and str(record["email"])) or None,
+        phone=(record["phone"] and str(record["phone"])) or None,
+        implied_method=(
+            ProductionMethod(str(record["implied_method"])) if record["implied_method"] else None
+        ),
+    )
 
 
 class PartnerRepository:
-    """Loads and validates the directory once, then serves it in memory."""
+    """Companies, in the same database as the projects that will reference them."""
 
-    def __init__(self, path: Path) -> None:
-        self._path = path
-        self._directory: PartnerDirectory | None = None
+    def __init__(self, connection: Database, seed_file: Path | None = None) -> None:
+        self._connection = connection
+        self._seed_file = seed_file
 
-    def _load(self) -> PartnerDirectory:
-        if self._directory is not None:
-            return self._directory
+    # ------------------------------------------------------------- seeding
 
-        if not self._path.is_file():
-            # A missing directory is a deployment that has not run the build
-            # script, not a broken one. Empty and loud beats a crash on a page
-            # that has plenty else to show.
-            log_event(
-                logger,
-                Event.TOOL_ERROR,
-                "partner directory file not found",
-                level=logging.WARNING,
-                path=str(self._path),
-            )
-            self._directory = PartnerDirectory(
-                partners=(), attribution="", source="", area="", incomplete_categories=()
-            )
-            return self._directory
+    def seed_if_empty(self) -> int:
+        """Fill an empty table from the survey file. Returns rows inserted.
 
-        raw = json.loads(self._path.read_text(encoding="utf-8"))
-        partners = _PARTNERS.validate_python([_to_partner(item) for item in raw["partners"]])
+        Only when empty, and only rows that are missing. A deployment restarts
+        for all sorts of reasons, and none of them should overwrite a capability
+        somebody confirmed by hand - which is exactly what re-importing the file
+        on every boot would do.
+        """
+        if self._seed_file is None or not self._seed_file.is_file():
+            return 0
+        if self.count() > 0:
+            return 0
 
-        self._directory = PartnerDirectory(
-            partners=partners,
-            attribution=raw.get("attribution", ""),
-            source=raw.get("source", ""),
-            area=raw.get("area", ""),
-            incomplete_categories=tuple(raw.get("incomplete_categories") or ()),
-        )
+        raw = json.loads(self._seed_file.read_text(encoding="utf-8"))
+        now = datetime.now(UTC).isoformat(timespec="seconds")
+        inserted = 0
+
+        with self._connection:
+            for item in raw.get("partners", []):
+                self._connection.execute(
+                    f"INSERT INTO partners ({_COLUMNS}, created_at) "
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) "
+                    "ON CONFLICT(id) DO NOTHING",
+                    (
+                        item["osm_id"],
+                        item["name"],
+                        (raw.get("source") and "openstreetmap") or "unknown",
+                        0,
+                        item.get("address"),
+                        item.get("city") or "Berlin",
+                        item.get("lat"),
+                        item.get("lon"),
+                        item.get("website"),
+                        item.get("email"),
+                        item.get("method_implied_by_tag"),
+                        item.get("phone"),
+                        now,
+                    ),
+                )
+                inserted += 1
+
         log_event(
             logger,
             Event.SUPPLIER_CANDIDATES_FOUND,
-            "partner directory loaded",
-            partner_count=len(partners),
-            contactable=sum(1 for partner in partners if partner.is_contactable),
-            source=self._directory.source,
+            "partner directory seeded",
+            partner_count=inserted,
+            source=str(self._seed_file.name),
         )
-        return self._directory
+        return inserted
+
+    # ------------------------------------------------------------- reading
 
     def directory(self) -> PartnerDirectory:
-        return self._load()
+        """The companies, plus the provenance of the survey they came from."""
+        metadata: dict[str, Any] = {}
+        if self._seed_file is not None and self._seed_file.is_file():
+            metadata = json.loads(self._seed_file.read_text(encoding="utf-8"))
+
+        return PartnerDirectory(
+            partners=self.all(),
+            attribution=str(metadata.get("attribution", "")),
+            source=str(metadata.get("source", "")),
+            area=str(metadata.get("area", "")),
+            incomplete_categories=tuple(metadata.get("incomplete_categories") or ()),
+        )
 
     def all(self) -> tuple[Partner, ...]:
-        return self._load().partners
+        rows = self._connection.execute(
+            f"SELECT {_COLUMNS} FROM partners ORDER BY LOWER(name)"
+        ).fetchall()
+        return tuple(_to_partner(row) for row in rows)
 
     def get(self, partner_id: str) -> Partner | None:
-        return next((p for p in self.all() if p.id == partner_id), None)
+        row = self._connection.execute(
+            f"SELECT {_COLUMNS} FROM partners WHERE id = ?", (partner_id,)
+        ).fetchone()
+        return _to_partner(row) if row else None
 
     def search(
         self,
@@ -112,35 +153,54 @@ class PartnerRepository:
         with_email: bool = False,
         limit: int = 200,
     ) -> tuple[Partner, ...]:
-        """Filter the directory.
+        """Filter in SQL.
 
-        ``with_email`` exists because it is the question actually being asked of
-        this data: which of these can I write to today. Searching name and
-        address together, because "Kreuzberg" is how somebody looks for a
-        printer near them and it lives in the address, not the name.
+        ``with_email`` is the question actually being asked of this data: which
+        of these can I write to today. Name and address are searched together,
+        because "Kreuzberg" is how somebody looks for a printer near them and it
+        lives in the address rather than the name.
         """
-        results = list(self.all())
+        clauses: list[str] = []
+        params: list[object] = []
 
-        if query:
-            needle = query.strip().casefold()
-            results = [
-                partner
-                for partner in results
-                if needle in partner.name.casefold()
-                or (partner.address or "").casefold().find(needle) >= 0
-            ]
-
+        if query and query.strip():
+            needle = f"%{query.strip().lower()}%"
+            clauses.append("(LOWER(name) LIKE ? OR LOWER(COALESCE(address, '')) LIKE ?)")
+            params += [needle, needle]
         if method is not None:
-            results = [partner for partner in results if partner.implied_method is method]
-
+            clauses.append("implied_method = ?")
+            params.append(method.value)
         if with_email:
-            results = [partner for partner in results if partner.email]
+            clauses.append("email IS NOT NULL AND email <> ''")
 
-        results.sort(key=lambda partner: partner.name.casefold())
-        return tuple(results[:limit])
+        where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
+        params.append(limit)
+        rows = self._connection.execute(
+            f"SELECT {_COLUMNS} FROM partners{where} ORDER BY LOWER(name) LIMIT ?", tuple(params)
+        ).fetchall()
+        return tuple(_to_partner(row) for row in rows)
 
     def count(self) -> int:
-        return len(self.all())
+        row = self._connection.execute("SELECT COUNT(*) AS n FROM partners").fetchone()
+        return int(dict(row)["n"])
 
     def contactable_count(self) -> int:
-        return sum(1 for partner in self.all() if partner.email)
+        row = self._connection.execute(
+            "SELECT COUNT(*) AS n FROM partners WHERE email IS NOT NULL AND email <> ''"
+        ).fetchone()
+        return int(dict(row)["n"])
+
+    # ------------------------------------------------------------- writing
+
+    def mark_verified(self, partner_id: str, verified: bool = True) -> bool:
+        """Record that a person confirmed this company. Returns whether it existed.
+
+        The reason the file stopped being storage. A confirmation is somebody's
+        work, and it has to survive the next survey.
+        """
+        with self._connection:
+            cursor = self._connection.execute(
+                "UPDATE partners SET verified = ? WHERE id = ?",
+                (1 if verified else 0, partner_id),
+            )
+        return cursor.rowcount == 1

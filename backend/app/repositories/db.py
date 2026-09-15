@@ -65,9 +65,26 @@ CREATE TABLE IF NOT EXISTS project_quotes (
     created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS partners (
+    id             TEXT PRIMARY KEY,
+    name           TEXT NOT NULL,
+    source         TEXT NOT NULL,
+    verified       INTEGER NOT NULL DEFAULT 0,
+    address        TEXT,
+    city           TEXT NOT NULL,
+    lat            REAL,
+    lon            REAL,
+    website        TEXT,
+    email          TEXT,
+    phone          TEXT,
+    implied_method TEXT,
+    created_at     TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_events_project ON project_events(project_id);
 CREATE INDEX IF NOT EXISTS idx_quotes_project ON project_quotes(project_id);
 CREATE INDEX IF NOT EXISTS idx_projects_updated ON projects(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_partners_name ON partners(name);
 """
 
 # The only line the two dialects spell differently. Everything else - TEXT,

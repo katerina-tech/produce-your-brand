@@ -17,6 +17,7 @@ import pytest
 from app.domain.enums import ProductionMethod
 from app.domain.partner import Partner
 from app.domain.supplier import Supplier
+from app.repositories import db
 from app.repositories.partner_repo import PartnerRepository
 
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
@@ -24,8 +25,13 @@ DIRECTORY = BACKEND_ROOT / "data" / "berlin_partners.json"
 
 
 @pytest.fixture
-def partners() -> PartnerRepository:
-    return PartnerRepository(DIRECTORY)
+def partners(tmp_path: Path) -> PartnerRepository:
+    """A repository seeded from the shipped survey, as a deployment seeds itself."""
+    connection = db.connect(tmp_path / "partners.db")
+    db.initialize_schema(connection)
+    repository = PartnerRepository(connection, DIRECTORY)
+    repository.seed_if_empty()
+    return repository
 
 
 def test_the_shipped_directory_loads_and_validates(partners: PartnerRepository) -> None:
@@ -67,8 +73,9 @@ def test_what_a_tag_implies_is_named_as_an_implication(partners: PartnerReposito
     assert "supported_methods" not in Partner.model_fields
 
 
-def test_every_shipped_partner_is_unverified(partners: PartnerRepository) -> None:
-    """Nothing collected automatically has been confirmed by anybody."""
+def test_every_seeded_partner_starts_unverified(partners: PartnerRepository) -> None:
+    """Nothing collected automatically has been confirmed by anybody. Verifying
+    is a person's act, which is why it is now a column somebody can set."""
     assert all(partner.verified is False for partner in partners.all())
 
 
@@ -162,10 +169,43 @@ def test_contactable_means_any_way_of_reaching_them() -> None:
     assert Partner(id="f", name="F").is_contactable is False
 
 
-def test_a_missing_directory_file_is_empty_rather_than_fatal(tmp_path: Path) -> None:
-    """A deployment that has not run the build script has no directory, which
-    is not the same as a broken one - and the rest of the product works."""
-    repository = PartnerRepository(tmp_path / "absent.json")
+def test_a_missing_seed_file_is_empty_rather_than_fatal(tmp_path: Path) -> None:
+    """A deployment that has not run the survey has no directory, which is not
+    the same as a broken one - and the rest of the product works."""
+    connection = db.connect(tmp_path / "empty.db")
+    db.initialize_schema(connection)
+    repository = PartnerRepository(connection, tmp_path / "absent.json")
 
+    assert repository.seed_if_empty() == 0
     assert repository.all() == ()
     assert repository.count() == 0
+
+
+def test_seeding_runs_once_and_never_overwrites_afterwards(
+    partners: PartnerRepository,
+) -> None:
+    """The reason the file stopped being storage. A deployment restarts for all
+    sorts of reasons, and none of them may undo a confirmation somebody made by
+    hand."""
+    first = partners.count()
+    confirmed = partners.all()[0]
+    partners.mark_verified(confirmed.id)
+
+    assert partners.seed_if_empty() == 0, "a full table is not re-seeded"
+    assert partners.count() == first
+    reloaded = partners.get(confirmed.id)
+    assert reloaded is not None
+    assert reloaded.verified is True, "the confirmation survived"
+
+
+def test_confirming_a_company_that_does_not_exist(partners: PartnerRepository) -> None:
+    assert partners.mark_verified("node/does-not-exist") is False
+
+
+def test_the_list_reads_the_way_a_person_scans_it(partners: PartnerRepository) -> None:
+    """SQL sorts uppercase before lowercase by default, which puts
+    "Bundesdruckerei" above "bigcopy" - nonsense in a list somebody is working
+    through by eye."""
+    names = [partner.name for partner in partners.all()]
+
+    assert names == sorted(names, key=str.casefold)

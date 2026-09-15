@@ -432,6 +432,89 @@ Tiles come from `tile.openstreetmap.org` with the attribution their usage policy
 
 ---
 
+## The Berlin directory, and the database under it
+
+`/partners` is 135 real Berlin production businesses with the contact details
+they published themselves — 41 of them an email address. Searchable by name or
+address, filterable to the ones you can write to today. Built by
+`scripts/build_berlin_partners.py` from OpenStreetMap, under the ODbL, with the
+attribution travelling in the data rather than remembered by a reader.
+
+**A `Partner` is not a `Supplier`, and a test forbids them sharing a field.** A
+Supplier is a company somebody established facts about — materials, minimum
+order, lead time, whether it will touch goods a customer already owns — and
+those are what `matching.py` scores. A Partner is a company that exists at an
+address. OpenStreetMap knows the second and nothing of the first, so the
+directory says *"these are not scored matches"* on the page itself. The field
+is called `implied_method`, never `supported_methods`, so the two cannot be
+confused by a careless copy: otherwise the product would eventually tell a
+buyer that a named Berlin firm accepts customer-owned goods because a map tag
+said `printer`.
+
+**The survey admits where it is short.** Three categories could not be fetched
+when the file was built — Overpass rate-limits, being a volunteer service — and
+they are recorded in `incomplete_categories` and shown on the page. A silent
+zero and a real zero mean opposite things: "Berlin has no sign makers" is a
+finding, "we were rate-limited" is a gap.
+
+### Where it lives
+
+Partners are rows in the database, not entries in a file. The file is **seed**:
+it fills an empty table once, and after that the database owns the rows. That
+distinction is the whole point — the next step is confirming what these
+companies can do, and a confirmation is somebody's work. Re-importing the file
+on every boot would quietly undo it, so seeding is skipped entirely once the
+table has anything in it, and refreshing from a new survey is an explicit act.
+
+The survey's own provenance — attribution, area, which categories came back
+short — stays in the file. It describes how the data was gathered rather than
+any company, and one row of provenance does not want a table.
+
+---
+
+## PostgreSQL
+
+`DATABASE_URL` selects it; absent, the application uses a local SQLite file.
+That is Railway's own variable name, so adding a Postgres service and
+referencing it is the entire switch — no code change, no setting to remember.
+`GET /api/health` reports `checks.database` as `postgres` or `sqlite`, read off
+the live connection rather than off the setting, because those two disagree in
+exactly the case that matters.
+
+**Why, specifically.** A SQLite file on a Railway volume cost this project real
+data twice: once when the volume was recreated and every project vanished, and
+once when a `checkpoints.db` outlived the library that wrote it until every
+request answered 500.
+
+**How it stayed small.** All SQL lives under `app/repositories/`, and that
+containment turned out to be real: the move touched twenty-three statements'
+placeholders, one line of schema, and no call site. `app/repositories/database.py`
+holds the two differences nobody should have to think about — `?` translated to
+`%s` on the way out, skipping anything inside a quoted string; and
+`with connection:` committing on success and rolling back on failure in both,
+spelled out rather than inherited, since psycopg3's own version closes the
+connection and would turn one failed write into a dead application.
+
+**A configured URL that does not work raises rather than falling back.** The
+fallback is worse than the crash: the application would come up looking
+healthy, report itself fine, and write every project to a file nobody backs up.
+Startup retries five times over roughly fifteen seconds first, because a
+container starts before the database it depends on is reachable and treating
+that ordinary race as a failure produces a crash loop.
+
+**Graph checkpoints are still a SQLite file**, deliberately: a checkpoint is
+resumable position inside a workflow, not the record of what happened, and that
+record is now in Postgres. An unreadable checkpoint store is rebuilt at startup
+rather than crashing the deployment — see `checkpointer_for`.
+
+Tests: `tests/test_database.py` covers the translation and the transactions;
+`tests/test_database_postgres.py` runs the whole repository layer against a real
+server behind `PYS_TEST_DATABASE_URL`, and **skips loudly** when none is
+configured, because a migration nobody exercised against the real database is a
+migration nobody has tested.
+
+---
+
 ## Offers & recommendation perspectives
 
 Added per the first customer-discovery interview (see [Product hypothesis](#product-hypothesis)). A supplier record answers "can they do this?" — an `Offer` (`app/domain/offer.py`) answers "what would it cost, and is there a current deal?", which is the structured intelligence a generic ChatGPT/Google search can't surface.
@@ -486,15 +569,24 @@ backend/
       rfq_builder.py     # deterministic RFQ assembly
       project_service.py # graph pause/resume + persistence + feedback
       osm_search.py      # live OpenStreetMap lookup - not a graph tool
+      site_fetch.py      # fetches a company's own website; the only place the
+                         #   product follows a URL somebody else wrote
+      capability_extract.py  # reads that text into claims, deletes unsupported
+      capability_match.py    # embeddings retrieve, a model verifies, code ranks
+      quote_desk.py      # supplier replies: capture, compare, chase
+      outreach.py        # the approved RFQ as an email - opens, never sends
     rag/
       store.py           # THE vector store: load, chunk, embed, index, search
       retriever.py       # retrieval + the routing decision
-    repositories/        # SQLite + supplier + offer data access
+    repositories/        # data access; SQL lives here and nowhere else
+      database.py        # one interface over SQLite and PostgreSQL
+      partner_repo.py    # the Berlin directory, seeded once from the survey
     security/
       guard.py           # layered injection screening
       uploads.py         # magic-byte validation, inert storage
   data/
     suppliers.json       # 24 curated records — single source of truth
+    berlin_partners.json # 135 real Berlin businesses (ODbL) - seeds the table
     offers.json          # demo/seed offers only (is_demo: true) - single source
     knowledge/           # 13 curated documents - the only KB directory
     index/               # generated FAISS index (gitignored, rebuildable)
@@ -502,19 +594,24 @@ backend/
     audit_architecture.py
     run_eval.py          # 19-case behavioural eval -> docs/eval.md
     build_index.py       # thin entry point to the one builder
+    build_berlin_partners.py  # surveys OpenStreetMap into the directory
+    fetch_company_pages.py    # stores their page text for capability reading
     demo_run.py          # the only code that calls a real model
   tests/
   Dockerfile, docker-entrypoint.sh, railway.json   # the deployed backend
 frontend/
   app/
     page.tsx             # marketing homepage - full-bleed, its own chrome
-    (app)/                # dashboard, new project, workflow shell
+    impressum/, privacy/ # § 5 DDG and Art. 13 GDPR, linked from every page
+    (app)/                # dashboard, new project, partners, account, workflow
   components/
     ui.tsx               # presentation primitives
     Logo.tsx             # the one place the brand mark is drawn
     workflow/            # one component per gate, plus NearbyStudios.tsx,
-                         #   StudioMap.tsx (Leaflet, lazy + no SSR)
+                         #   StudioMap.tsx (Leaflet, lazy + no SSR),
+                         #   QuoteDesk.tsx, ContactPartner.tsx
                          #   and FeedbackSurvey.tsx
+    VoiceDictation.tsx   # dictate a brief; browser speech, no model, no key
   lib/
     api.ts               # the only contact with the backend
     actions.ts           # server actions
@@ -722,7 +819,7 @@ take on trust.
 | Human-in-the-loop | four gates, enforced by `interrupt()` | `test_workflow_stops_at_all_four_approval_gates` |
 | Structured logging | one config, closed event enum | `test_log_events_are_a_closed_set` |
 
-**569 backend tests, 28 frontend tests.** No test calls a live model, and none
+**572 backend tests, 28 frontend tests.** No test calls a live model, and none
 calls the real Overpass API either - `test_osm_search.py` swaps in
 `httpx.MockTransport`. The graph runs on a scripted provider and retrieval on a
 hashing embedder whose similarity is real term overlap, so the suite is free,

@@ -85,7 +85,11 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     # inexplicably empty match list.
     suppliers = SupplierRepository(settings.suppliers_file)
     app.state.supplier_repository = suppliers
-    app.state.partner_repository = PartnerRepository(settings.partners_file)
+    # The survey file seeds an empty table once; after that the database owns
+    # the rows, so a restart cannot overwrite a capability somebody confirmed.
+    partners = PartnerRepository(connection, settings.partners_file)
+    partners.seed_if_empty()
+    app.state.partner_repository = partners
     try:
         app.state.supplier_count = suppliers.count()
     except (OSError, ValueError):
