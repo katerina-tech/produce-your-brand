@@ -48,11 +48,16 @@ from your machine.
      breaks; it is not stored anywhere and does not need to be memorable.
    - `PYS_SESSION_COOKIE_SECURE` = `true` on any deployment served over
      https, so the session cookie is never sent in clear.
-   - Nothing for the database: add a **PostgreSQL** service to the project
-     (**+ New → Database → Add PostgreSQL**) and Railway injects `DATABASE_URL`
-     into the backend by itself. The application reads that exact name, so
-     adding the database is the whole of the switch - no code change and no
-     setting to remember.
+   - `DATABASE_URL` - **a reference to the Postgres service, not a pasted
+     password.** Add a PostgreSQL service to the project first (**+ New →
+     Database → Add PostgreSQL**), then on the backend add a variable named
+     `DATABASE_URL` whose value is `${{Postgres.DATABASE_URL}}`; Railway's
+     variable editor offers a picker for this, which is the reliable way to get
+     the service name right.
+
+     A reference rather than a copied connection string because Railway rotates
+     those: a pasted one works until it does not, and then the backend cannot
+     reach its own database for a reason nobody remembers.
 
      Without it the backend falls back to a SQLite file on the volume, which
      works and has twice cost this project real data: once when the volume was
