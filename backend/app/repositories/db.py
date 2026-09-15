@@ -81,6 +81,27 @@ CREATE TABLE IF NOT EXISTS partners (
     created_at     TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS partner_capabilities (
+    partner_id    TEXT PRIMARY KEY REFERENCES partners(id) ON DELETE CASCADE,
+    partner_name  TEXT NOT NULL,
+    source_urls   TEXT NOT NULL,
+    extracted_on  TEXT NOT NULL,
+    dropped_count INTEGER NOT NULL DEFAULT 0,
+    blocked       INTEGER NOT NULL DEFAULT 0,
+    model_failed  INTEGER NOT NULL DEFAULT 0,
+    created_at    TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS partner_claims (
+    partner_id TEXT NOT NULL REFERENCES partner_capabilities(partner_id) ON DELETE CASCADE,
+    position   INTEGER NOT NULL,
+    text       TEXT NOT NULL,
+    quote      TEXT NOT NULL,
+    kind       TEXT NOT NULL,
+    method     TEXT,
+    PRIMARY KEY (partner_id, position)
+);
+
 CREATE INDEX IF NOT EXISTS idx_events_project ON project_events(project_id);
 CREATE INDEX IF NOT EXISTS idx_quotes_project ON project_quotes(project_id);
 CREATE INDEX IF NOT EXISTS idx_projects_updated ON projects(updated_at DESC);

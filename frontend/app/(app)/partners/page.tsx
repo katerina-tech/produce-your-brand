@@ -1,6 +1,7 @@
 import Link from "next/link";
 
-import { Badge, Card, Notice } from "@/components/ui";
+import { CapabilitySearch } from "@/components/partners/CapabilitySearch";
+import { Badge, Card, CardHeader, Notice } from "@/components/ui";
 import { getPartners } from "@/lib/api";
 import type { Partner } from "@/lib/types";
 
@@ -74,6 +75,16 @@ export default async function PartnersPage({
       ) : null}
 
       <Card>
+        <CardHeader
+          title="Who can do this job?"
+          hint="Searched against what each company wrote about itself, not against its name."
+        />
+        <div className="px-5 py-4 sm:px-6">
+          <CapabilitySearch />
+        </div>
+      </Card>
+
+      <Card>
         <form className="flex flex-wrap items-end gap-3 border-b border-line px-5 py-4 sm:px-6">
           <div className="min-w-0 flex-1">
             <label htmlFor="q" className="mb-1.5 block text-sm font-medium">
@@ -128,16 +139,24 @@ export default async function PartnersPage({
               <li key={partner.id} className="border-t border-line px-5 py-4 sm:px-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-[15px] font-semibold">{partner.name}</p>
+                    <Link
+                      href={`/partners/${partner.id}`}
+                      className="text-[15px] font-semibold underline decoration-line-strong underline-offset-4 hover:text-accent"
+                    >
+                      {partner.name}
+                    </Link>
                     {partner.address ? (
                       <p className="mt-0.5 text-xs text-ink-muted">{partner.address}</p>
                     ) : null}
                   </div>
-                  <Badge tone="neutral">
-                    {partner.implied_method
-                      ? partner.implied_method.replace(/_/g, " ")
-                      : "unclassified"}
-                  </Badge>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {partner.verified ? <Badge tone="match">confirmed</Badge> : null}
+                    <Badge tone="neutral">
+                      {partner.implied_method
+                        ? partner.implied_method.replace(/_/g, " ")
+                        : "unclassified"}
+                    </Badge>
+                  </div>
                 </div>
 
                 <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">

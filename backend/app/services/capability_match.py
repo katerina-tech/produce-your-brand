@@ -196,15 +196,14 @@ def verify_candidate(
     otherwise would put a similarity score in front of a buyer as if it were a
     judgement.
     """
-    unclear = VerifiedMatch(
-        candidate=candidate,
-        can_do_it=None,
-        reason="Not checked: no model available.",
-        quote="",
-        quote_verified=False,
-    )
+
+    def unchecked(reason: str) -> VerifiedMatch:
+        return VerifiedMatch(
+            candidate=candidate, can_do_it=None, reason=reason, quote="", quote_verified=False
+        )
+
     if provider is None:
-        return unclear
+        return unchecked("Not checked: no model is configured.")
 
     try:
         verdict = provider.structured(
@@ -213,7 +212,12 @@ def verify_candidate(
             purpose="classifier",
         )
     except LLMError:
-        return unclear
+        # Distinct from the sentence above on purpose. "No model is configured"
+        # sends somebody to the settings; "the check did not run" sends them to
+        # the gateway, which is where an exhausted balance or a rate limit
+        # actually is. Conflating the two cost twenty minutes of looking in the
+        # wrong place once already.
+        return unchecked("Not checked: the verification call did not go through.")
 
     # The same rule as everywhere else: a claim the company did not make cannot
     # be used to recommend them.

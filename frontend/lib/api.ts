@@ -13,11 +13,14 @@
 
 import { sessionHeader } from "./auth";
 import type {
+  CapabilityMatches,
   FeedbackRequest,
   GeneratedDesign,
   Health,
   NearbyStudiosResponse,
   Outreach,
+  Partner,
+  PartnerDetail,
   PartnerDirectory,
   ProjectState,
   QuoteDesk,
@@ -202,6 +205,45 @@ export async function getPartners(options: {
   if (options.limit) query.set("limit", String(options.limit));
   const suffix = query.toString();
   return request<PartnerDirectory>(`/partners${suffix ? `?${suffix}` : ""}`);
+}
+
+/**
+ * One company and what its own website says it does.
+ *
+ * The id carries a slash ("node/6532305050"), so it goes into the path as-is
+ * behind an endpoint whose last segment is greedy. Encoding it would turn the
+ * slash into %2F, which proxies are entitled to normalise back and some reject
+ * outright.
+ */
+export async function getPartnerDetail(id: string): Promise<PartnerDetail | null> {
+  try {
+    return await request<PartnerDetail>(`/partners/detail/${id}`);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
+}
+
+/** Record that a person checked a reading and stands behind it. */
+export async function setPartnerVerification(
+  id: string,
+  verified: boolean,
+): Promise<Partner> {
+  return request<Partner>(`/partners/verification/${id}`, {
+    method: "POST",
+    body: JSON.stringify({ verified }),
+  });
+}
+
+/** Which companies can do this, by their own words. */
+export async function matchPartners(
+  requirement: string,
+  limit = 8,
+): Promise<CapabilityMatches> {
+  return request<CapabilityMatches>("/partners/match", {
+    method: "POST",
+    body: JSON.stringify({ requirement, limit }),
+  });
 }
 
 /** Everything the quote screen renders, in one read. */

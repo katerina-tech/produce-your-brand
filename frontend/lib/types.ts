@@ -269,6 +269,55 @@ export interface PartnerDirectory {
   incomplete_categories: string[];
 }
 
+/** One thing a company said it can do, with the words it said it in. */
+export interface CapabilityClaim {
+  text: string;
+  quote: string;
+  kind: string;
+  method: string | null;
+}
+
+/**
+ * One company, plus whatever was read from its website.
+ *
+ * `extracted_on` is null when nobody has read the site yet, which is a
+ * different thing from a reading that found nothing - and the two have to stay
+ * distinguishable or "we have not looked" quietly becomes "there is nothing
+ * there".
+ */
+export interface PartnerDetail {
+  partner: Partner;
+  claims: CapabilityClaim[];
+  source_urls: string[];
+  extracted_on: string | null;
+  dropped_count: number;
+  reading_note: string;
+}
+
+/**
+ * One company retrieval found and a model then checked.
+ *
+ * `can_do_it` is three-valued on purpose. Null is the honest answer more often
+ * than either of the others, and the companies it applies to are the ones worth
+ * a phone call rather than ones to hide.
+ */
+export interface CapabilityMatch {
+  partner_id: string;
+  partner_name: string;
+  similarity: number;
+  can_do_it: boolean | null;
+  reason: string;
+  quote: string;
+  quote_verified: boolean;
+  supported: boolean;
+}
+
+export interface CapabilityMatches {
+  matches: CapabilityMatch[];
+  companies_indexed: number;
+  note: string;
+}
+
 export interface FieldEvidenceItem {
   field: string;
   quote: string;

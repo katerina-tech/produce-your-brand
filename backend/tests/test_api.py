@@ -98,6 +98,15 @@ def test_openapi_exposes_exactly_the_intended_surface(api: TestClient) -> None:
         # Real businesses, browsable. Not under /projects because it belongs to
         # nobody's project - it is the directory the whole product draws on.
         "/api/partners",
+        # Retrieval over what the companies wrote about themselves, then a model
+        # check per candidate. A POST because the requirement is a paragraph,
+        # and paragraphs do not belong in a query string.
+        "/api/partners/match",
+        # "detail" and "verification" lead rather than follow because the id is
+        # an OpenStreetMap reference with a slash in it, and the segment that
+        # swallows a slash has to be the last one in the path.
+        "/api/partners/detail/{partner_id}",
+        "/api/partners/verification/{partner_id}",
         "/api/projects",
         "/api/projects/{project_id}",
         "/api/projects/{project_id}/resume",

@@ -318,7 +318,9 @@ Two things to know:
 
 ## HTTP API
 
-Nine paths, ten operations. Only one of them advances the workflow.
+22 paths, 24 operations. **Only one of them advances the workflow.**
+`test_api.py` pins the whole list, so a new endpoint is a deliberate decision
+rather than something that appeared.
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -327,11 +329,27 @@ Nine paths, ten operations. Only one of them advances the workflow.
 | `GET` | `/api/projects` | dashboard list |
 | `GET` | `/api/projects/{id}` | full current state — the "leave and come back" endpoint |
 | `POST` | `/api/projects/{id}/resume` | answer whichever gate the workflow is paused at |
+| `POST` | `/api/projects/{id}/claim` | attach an anonymous project to the signed-in account |
 | `GET` | `/api/projects/{id}/nearby-studios` | live, unscored OpenStreetMap leads for the confirmed method |
+| `GET` | `/api/projects/{id}/outreach` | the approved RFQ rendered as an email — opened, never sent |
+| `GET`, `POST` | `/api/projects/{id}/quotes` | the Quote Desk: read it, capture a supplier's reply into it |
+| `POST` | `/api/projects/{id}/quotes/{quote_id}/confirm` | a human confirms one captured quote |
+| `DELETE` | `/api/projects/{id}/quotes/{quote_id}` | remove one |
 | `POST` | `/api/uploads` | validated design file, metadata only |
 | `POST` | `/api/designs/generate` | generate a design from a text prompt (real per-image cost) |
+| `GET` | `/api/partners` | the Berlin directory, filtered server-side |
+| `GET` | `/api/partners/detail/{id}` | one company and what its own site says it does |
+| `POST` | `/api/partners/verification/{id}` | record that a person confirmed that reading |
+| `POST` | `/api/partners/match` | retrieval + verification over the companies' own words |
+| `POST` | `/api/auth/register`, `/api/auth/login`, `/api/auth/logout` | stateless signed sessions |
+| `GET` | `/api/auth/me` | who the cookie says you are |
 | `POST` | `/api/projects/{id}/feedback` | record one product-validation response (never touches the graph) |
 | `GET` | `/api/analytics/feedback` | flat read of every recorded response, newest first |
+
+The two partner paths put `detail` and `verification` *before* the id rather
+than after it. The id is an OpenStreetMap reference with a slash in it —
+`node/6532305050` — so the segment that carries it has to be the last one in the
+path; percent-encoding the slash is not an option a proxy is obliged to respect.
 
 `resume` takes a discriminated action: `answer_clarification`, `restart_request`, `confirm_brief`, `edit_brief`, `confirm_method`, `select_supplier`, `approve_rfq`, `edit_rfq`. One endpoint rather than eight, **because the graph is the authority on where it is** — a client cannot talk it into skipping a human approval by calling a different path. A mismatched action gets `409` naming the action actually expected, so a stale browser tab receives a correctable answer instead of silently resuming the wrong branch.
 
@@ -472,6 +490,79 @@ any company, and one row of provenance does not want a table.
 
 ---
 
+## From listings to capabilities
+
+The reviewer's recommendation, built: *scrape supplier pages, extract what they
+offer, match via embeddings + LLM verification.* Four steps, each of which can
+fail honestly rather than silently.
+
+**1. Fetch** — `scripts/fetch_company_pages.py` reads the companies' own
+websites: robots.txt obeyed, one company at a time, a pause between them, at
+most a handful of pages each. 89 companies answered, 67 with enough text to
+read. The text is kept so the expensive step can be re-run after a prompt
+change without asking ninety German print shops for their homepage again. SSRF
+is refused by address, not by hostname: every resolved address is checked, and
+private, loopback, link-local, reserved and multicast space is refused.
+
+**2. Extract** — `scripts/extract_capabilities.py` reads that text with a model
+into `CapabilityClaim`s, then a **pure-Python verifier deletes every claim whose
+quoted words are not on the page**. Case and soft hyphens are forgiven; nothing
+else is. These claims decide which companies a buyer is shown, and they are
+claims about a named business — a model that inferred "they probably do
+embroidery too" from a photo caption would have this product speaking for a real
+Berlin firm. The page is screened by the injection guard on the same footing as
+a supplier's emailed reply, because it is text this product did not write,
+fetched from an address anybody could edit into a map.
+
+**3. Retrieve** — `CapabilityIndex` embeds each company's claims and searches by
+cosine similarity. This is what no keyword search could do: a buyer writes "gold
+logo onto PVC yoga mats I already own", and the shop whose site says
+"Transferdruck auf beschichteten Oberflächen" is found. In memory over a few
+thousand short vectors; FAISS earns its place in the knowledge base, where the
+corpus is fixed and worth persisting, and would be machinery guarding nothing
+here.
+
+**4. Verify** — similarity is a hint, not an answer. "Textildruck" and
+"Textilreinigung" sit close together in any embedding space and one of them
+cannot print a logo. So each candidate is checked by a model that **must quote
+the company's own claim**, and the same literal verifier deletes any quote the
+company did not make. An unverified quote demotes the verdict to *unclear*
+rather than dropping the company — all that was established is that the model
+could not point at where they said it.
+
+`can_do_it` is three-valued and stays that way on screen. Null is the honest
+answer far more often than either of the others, and the companies it applies to
+are the list worth a phone call.
+
+### The step that is not automatable
+
+`/partners/<id>` shows what was read from one company beside the sentences it
+was read from, and one button: **confirm this reading is right**. That is the
+only fact in the directory no amount of scraping produces. A model read the page
+and a verifier checked its quotes; neither of those is a person saying "yes,
+this is what they do", and until somebody does, a company here is a lead rather
+than a partner.
+
+Confirmation lives on the company (`partners.verified`), never on the reading,
+so re-reading a site cannot quietly undo it. It is reversible, because a
+confirmation nobody can take back is one people stop making.
+
+**Kinds of emptiness are kept apart**, because they call for different actions
+and look identical if you only count claims:
+
+| what happened | shown as | next run |
+| --- | --- | --- |
+| nobody looked yet | "not been read yet" | reads it |
+| read, said nothing specific | that sentence | skips it — same answer, same price |
+| refused by the injection screen | says so | skips it — it will be refused again |
+| the model call failed | "did not complete" | **retries it** — that row records an outage, not a company |
+
+That last row is why extraction is resumable rather than idempotent-by-id: an
+exhausted API balance once answered 402 for every company in a run, and treating
+those rows as read would have written off everything a bad afternoon touched.
+
+---
+
 ## PostgreSQL
 
 `DATABASE_URL` selects it; absent, the application uses a local SQLite file.
@@ -581,6 +672,9 @@ backend/
     repositories/        # data access; SQL lives here and nowhere else
       database.py        # one interface over SQLite and PostgreSQL
       partner_repo.py    # the Berlin directory, seeded once from the survey
+      capability_repo.py # what was read from each company's site, plus why a
+                         #   reading is thin - so an outage is not mistaken for
+                         #   a company with nothing to say
     security/
       guard.py           # layered injection screening
       uploads.py         # magic-byte validation, inert storage
@@ -596,6 +690,8 @@ backend/
     build_index.py       # thin entry point to the one builder
     build_berlin_partners.py  # surveys OpenStreetMap into the directory
     fetch_company_pages.py    # stores their page text for capability reading
+    extract_capabilities.py   # reads that text into verified claims; resumable,
+                              #   because each company costs a model call
     demo_run.py          # the only code that calls a real model
   tests/
   Dockerfile, docker-entrypoint.sh, railway.json   # the deployed backend
@@ -605,6 +701,8 @@ frontend/
     impressum/, privacy/ # § 5 DDG and Art. 13 GDPR, linked from every page
     (app)/                # dashboard, new project, partners, account, workflow
   components/
+    partners/            # CapabilitySearch.tsx (ask by job, not by name),
+                         #   ConfirmReading.tsx (the one un-automatable step)
     ui.tsx               # presentation primitives
     Logo.tsx             # the one place the brand mark is drawn
     workflow/            # one component per gate, plus NearbyStudios.tsx,
@@ -819,7 +917,7 @@ take on trust.
 | Human-in-the-loop | four gates, enforced by `interrupt()` | `test_workflow_stops_at_all_four_approval_gates` |
 | Structured logging | one config, closed event enum | `test_log_events_are_a_closed_set` |
 
-**572 backend tests, 28 frontend tests.** No test calls a live model, and none
+**600 backend tests, 28 frontend tests.** No test calls a live model, and none
 calls the real Overpass API either - `test_osm_search.py` swaps in
 `httpx.MockTransport`. The graph runs on a scripted provider and retrieval on a
 hashing embedder whose similarity is real term overlap, so the suite is free,

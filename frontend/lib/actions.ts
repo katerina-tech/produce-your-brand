@@ -22,11 +22,14 @@ import {
   deleteQuote,
   generateDesign,
   getNearbyStudios,
+  matchPartners,
   resumeProject,
+  setPartnerVerification,
   submitFeedback,
   uploadDesign,
 } from "./api";
 import type {
+  CapabilityMatches,
   FeedbackRequest,
   GeneratedDesign,
   NearbyStudio,
@@ -293,4 +296,63 @@ export async function editRfq(
   rfq: Record<string, unknown>,
 ): Promise<ActionResult> {
   return advance(projectId, "edit_rfq", { rfq, approved: true });
+}
+
+export interface VerificationResult extends ActionResult {
+  verified?: boolean;
+}
+
+/**
+ * Record that a person checked what was read from a company's site.
+ *
+ * The one fact in the directory no amount of scraping can produce. A model read
+ * the page and a verifier checked that every quote is really on it; neither of
+ * those is somebody saying "yes, this is what they do".
+ */
+export async function setVerificationAction(
+  partnerId: string,
+  verified: boolean,
+): Promise<VerificationResult> {
+  try {
+    const partner = await setPartnerVerification(partnerId, verified);
+    revalidatePath("/partners");
+    revalidatePath(`/partners/${partnerId}`);
+    return { verified: partner.verified };
+  } catch (error) {
+    return {
+      error:
+        error instanceof ApiError
+          ? error.message
+          : "The confirmation could not be saved.",
+    };
+  }
+}
+
+export interface MatchResult extends ActionResult {
+  matches?: CapabilityMatches;
+}
+
+/**
+ * Search the companies by what they said they can do.
+ *
+ * A failure costs the panel and never the page: the directory and the
+ * deterministic matcher both work without retrieval, and a search that cannot
+ * run is not a reason to show somebody an error screen instead of 135
+ * companies.
+ */
+export async function matchPartnersAction(requirement: string): Promise<MatchResult> {
+  const trimmed = requirement.trim();
+  if (trimmed.length < 3) {
+    return { error: "Describe what you need in a few more words." };
+  }
+  try {
+    return { matches: await matchPartners(trimmed) };
+  } catch (error) {
+    return {
+      error:
+        error instanceof ApiError
+          ? error.message
+          : "The search could not be run just now.",
+    };
+  }
 }

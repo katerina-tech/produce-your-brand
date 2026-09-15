@@ -28,6 +28,7 @@ from app.llm.factory import get_image_provider, get_provider
 from app.logging_config import Event, configure_logging, log_event
 from app.observability import flush_traces
 from app.repositories import db
+from app.repositories.capability_repo import CapabilityRepository
 from app.repositories.partner_repo import PartnerRepository
 from app.repositories.project_repo import ProjectRepository
 from app.repositories.quote_repo import QuoteRepository
@@ -90,6 +91,11 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     partners = PartnerRepository(connection, settings.partners_file)
     partners.seed_if_empty()
     app.state.partner_repository = partners
+    # What was read from those companies' own websites. The search index over
+    # it is built on first use rather than here: embedding every company on
+    # every boot would be a model call nobody asked for.
+    app.state.capability_repository = CapabilityRepository(connection)
+    app.state.capability_index = None
     try:
         app.state.supplier_count = suppliers.count()
     except (OSError, ValueError):

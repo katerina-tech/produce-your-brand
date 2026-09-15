@@ -21,6 +21,10 @@ from pydantic import ValidationError
 
 from app.api.dto import (
     AccountResponse,
+    CapabilityClaimResponse,
+    CapabilityMatchesResponse,
+    CapabilityMatchRequest,
+    CapabilityMatchResponse,
     CaptureQuoteRequest,
     ComparisonRowResponse,
     ConfirmQuoteRequest,
@@ -38,6 +42,7 @@ from app.api.dto import (
     NearbyStudioResponse,
     NearbyStudiosResponse,
     OutreachResponse,
+    PartnerDetailResponse,
     PartnerDirectoryResponse,
     PartnerResponse,
     ProjectListResponse,
@@ -48,13 +53,22 @@ from app.api.dto import (
     ReadinessChecks,
     ResumeRequest,
     UploadResponse,
+    VerificationRequest,
 )
 from app.config import Settings, get_settings
 from app.domain.enums import ProductionMethod
 from app.domain.outreach import SAMPLE_ADDRESS_SUFFIX
+from app.domain.partner import Partner
 from app.domain.project import Project
 from app.domain.quote import SupplierQuote
-from app.llm.factory import ImageProvider
+from app.llm.factory import (
+    ImageProvider,
+    LLMProvider,
+    get_embedding_provider,
+    get_provider,
+)
+from app.logging_config import Event
+from app.repositories.capability_repo import CapabilityRepository
 from app.repositories.partner_repo import PartnerRepository
 from app.repositories.supplier_repo import SupplierRepository
 from app.repositories.user_repo import EmailAlreadyRegisteredError, UserRepository
@@ -70,6 +84,7 @@ from app.services.auth import (
     validate_credentials,
     verify_password,
 )
+from app.services.capability_match import CapabilityIndex, find_matches
 from app.services.design_service import DesignGenerationError, generate_design
 from app.services.osm_search import OSMSearchError, OverpassStudioSearch
 from app.services.outreach import RFQNotApprovedError, render_email
@@ -140,6 +155,16 @@ def get_suppliers(request: Request) -> SupplierRepository | None:
 def get_partners(request: Request) -> PartnerRepository:
     """The real-company directory built at startup."""
     repository: PartnerRepository | None = getattr(request.app.state, "partner_repository", None)
+    if repository is None:
+        raise HTTPException(status_code=503, detail="The service is not ready.")
+    return repository
+
+
+def get_capabilities(request: Request) -> CapabilityRepository:
+    """What has been read from the companies' own websites."""
+    repository: CapabilityRepository | None = getattr(
+        request.app.state, "capability_repository", None
+    )
     if repository is None:
         raise HTTPException(status_code=503, detail="The service is not ready.")
     return repository
@@ -585,6 +610,24 @@ def project_outreach(
     )
 
 
+def _partner_response(partner: Partner) -> PartnerResponse:
+    """One directory entry on the wire. Written once, because the list and the
+    detail view must never drift into disagreeing about the same company."""
+    return PartnerResponse(
+        id=partner.id,
+        name=partner.name,
+        address=partner.address,
+        city=partner.city,
+        website=partner.website,
+        email=partner.email,
+        phone=partner.phone,
+        implied_method=partner.implied_method,
+        lat=partner.lat,
+        lon=partner.lon,
+        verified=partner.verified,
+    )
+
+
 @router.get("/partners", response_model=PartnerDirectoryResponse, tags=["partners"])
 def list_partners(
     q: str | None = None,
@@ -603,22 +646,7 @@ def list_partners(
     found = partners.search(query=q, method=method, with_email=with_email, limit=limit)
 
     return PartnerDirectoryResponse(
-        partners=[
-            PartnerResponse(
-                id=partner.id,
-                name=partner.name,
-                address=partner.address,
-                city=partner.city,
-                website=partner.website,
-                email=partner.email,
-                phone=partner.phone,
-                implied_method=partner.implied_method,
-                lat=partner.lat,
-                lon=partner.lon,
-                verified=partner.verified,
-            )
-            for partner in found
-        ],
+        partners=[_partner_response(partner) for partner in found],
         total=partners.count(),
         contactable=partners.contactable_count(),
         shown=len(found),
@@ -626,6 +654,166 @@ def list_partners(
         area=directory.area,
         incomplete_categories=list(directory.incomplete_categories),
     )
+
+
+def _capability_index(request: Request) -> CapabilityIndex:
+    """The claim index, built on first use and kept.
+
+    Not built at startup on purpose. Embedding every company costs a model call
+    per boot, and a deployment restarts for reasons that have nothing to do with
+    anybody searching. Built when somebody actually asks, kept afterwards, and
+    rebuilt by a restart - which is also how a fresh extraction becomes visible.
+    """
+    existing: CapabilityIndex | None = getattr(request.app.state, "capability_index", None)
+    if existing is not None:
+        return existing
+
+    index = CapabilityIndex(get_embedding_provider(get_settings()))
+    index.build(get_capabilities(request).all())
+    request.app.state.capability_index = index
+    return index
+
+
+@router.post("/partners/match", response_model=CapabilityMatchesResponse, tags=["partners"])
+def match_partners(
+    payload: CapabilityMatchRequest,
+    request: Request,
+    capabilities: CapabilityRepository = Depends(get_capabilities),
+) -> CapabilityMatchesResponse:
+    """Which companies can do this, by their own words.
+
+    Retrieval over what the companies wrote about themselves, then a model
+    check on each candidate that must quote the company's claim, then a literal
+    verifier that deletes any quote the company did not make. Nothing here
+    scores or ranks a company on a model's judgement: the order is retrieval
+    similarity, and the reason a buyer reads is the company's own sentence.
+    """
+    indexed = capabilities.with_claims_count()
+    if indexed == 0:
+        return CapabilityMatchesResponse(
+            matches=[],
+            companies_indexed=0,
+            note=(
+                "No company websites have been read yet, so there is nothing to search. "
+                "Run scripts/extract_capabilities.py to build this."
+            ),
+        )
+
+    index = _capability_index(request)
+    if index.size == 0:
+        return CapabilityMatchesResponse(
+            matches=[],
+            companies_indexed=indexed,
+            note=(
+                "The claims could not be embedded, so retrieval is unavailable. "
+                "The directory and the deterministic matcher are unaffected."
+            ),
+        )
+
+    # Verification degrades to "unclear" without a model rather than failing the
+    # request - but a provider that cannot even be built is a configuration
+    # fault, and swallowing it silently would show every company as unclear with
+    # nothing anywhere saying why.
+    provider: LLMProvider | None
+    try:
+        provider = get_provider(get_settings())
+    except Exception:
+        logger.exception(
+            "capability verification has no model provider",
+            extra={"event": Event.LLM_ERROR.value},
+        )
+        provider = None
+
+    found = find_matches(payload.requirement, index, provider, limit=payload.limit)
+    supported = sum(1 for match in found if match.is_supported)
+
+    return CapabilityMatchesResponse(
+        matches=[
+            CapabilityMatchResponse(
+                partner_id=match.candidate.partner_id,
+                partner_name=match.candidate.partner_name,
+                similarity=match.candidate.similarity,
+                can_do_it=match.can_do_it,
+                reason=match.reason,
+                quote=match.quote,
+                quote_verified=match.quote_verified,
+                supported=match.is_supported,
+            )
+            for match in found
+        ],
+        companies_indexed=index.size,
+        note=(
+            ""
+            if supported
+            else "Nothing here plainly covers the request. These are the companies worth asking."
+        ),
+    )
+
+
+# The id is an OpenStreetMap reference - "node/6532305050" - and the slash in
+# it is why these two read as they do. A plain path parameter stops at a slash,
+# so the id needs the greedy converter, and a greedy converter has to be the
+# last thing in the path or it swallows whatever follows. Rewriting 135 ids in
+# a live database to make a URL prettier would be the wrong trade.
+@router.get(
+    "/partners/detail/{partner_id:path}", response_model=PartnerDetailResponse, tags=["partners"]
+)
+def get_partner(
+    partner_id: str,
+    partners: PartnerRepository = Depends(get_partners),
+    capabilities: CapabilityRepository = Depends(get_capabilities),
+) -> PartnerDetailResponse:
+    """One company, and what its own website says it does."""
+    partner = partners.get(partner_id)
+    if partner is None:
+        raise HTTPException(status_code=404, detail="No such company.")
+
+    reading = capabilities.get(partner_id)
+    response = PartnerDetailResponse(partner=_partner_response(partner))
+    if reading is None:
+        response.reading_note = "This company's website has not been read yet."
+        return response
+
+    record = reading.capabilities
+    response.claims = [
+        CapabilityClaimResponse(
+            text=claim.text, quote=claim.quote, kind=claim.kind, method=claim.method
+        )
+        for claim in record.claims
+    ]
+    response.source_urls = list(record.source_urls)
+    response.extracted_on = record.extracted_on.isoformat()
+    response.dropped_count = record.dropped_count
+    response.reading_note = reading.explanation
+    return response
+
+
+@router.post(
+    "/partners/verification/{partner_id:path}", response_model=PartnerResponse, tags=["partners"]
+)
+def set_partner_verification(
+    partner_id: str,
+    payload: VerificationRequest,
+    request: Request,
+    partners: PartnerRepository = Depends(get_partners),
+) -> PartnerResponse:
+    """Record that a person checked this reading and stands behind it.
+
+    The one fact in the directory that no amount of scraping can produce. A
+    model read the page and a verifier checked the quotes; neither of those is
+    somebody saying "yes, this is what they do".
+    """
+    if not partners.mark_verified(partner_id, payload.verified):
+        raise HTTPException(status_code=404, detail="No such company.")
+
+    partner = partners.get(partner_id)
+    if partner is None:  # pragma: no cover - it existed one statement ago
+        raise HTTPException(status_code=404, detail="No such company.")
+
+    # A confirmation changes what the index should hold, and the index is a
+    # cache. Dropping it is cheaper and more honest than patching it in place.
+    request.app.state.capability_index = None
+    return _partner_response(partner)
 
 
 @router.get("/projects/{project_id}/quotes", response_model=QuoteDeskResponse, tags=["quotes"])

@@ -20,7 +20,7 @@ from app.services.capability_match import (
     find_matches,
     verify_candidate,
 )
-from tests.fakes import FailingEmbedder, HashingEmbedder, ScriptedProvider
+from tests.fakes import FailingEmbedder, FailingProvider, HashingEmbedder, ScriptedProvider
 
 TODAY = date(2026, 9, 15)
 
@@ -192,7 +192,25 @@ def test_without_a_model_nothing_is_claimed() -> None:
 
     assert match.can_do_it is None
     assert match.is_supported is False
-    assert "no model" in match.reason.lower()
+    assert "no model is configured" in match.reason.lower()
+
+
+def test_a_failed_call_does_not_read_as_a_missing_model() -> None:
+    """Two different repairs, so two different sentences.
+
+    "No model is configured" sends somebody to the settings. A call that did not
+    go through sends them to the gateway - which is where an exhausted balance
+    or a rate limit actually is, and where this product's real outage was while
+    its own message pointed elsewhere.
+    """
+    candidate = _index().search("Siebdruck Baumwolle")[0]
+
+    match = verify_candidate("100 cotton shirts", candidate, FailingProvider())
+
+    assert match.can_do_it is None
+    assert match.is_supported is False
+    assert "did not go through" in match.reason
+    assert "no model is configured" not in match.reason.lower()
 
 
 # ------------------------------------------------------------ the two together

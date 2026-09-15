@@ -501,3 +501,90 @@ class AccountResponse(BaseModel):
 
     id: str
     email: str
+
+
+class CapabilityClaimResponse(BaseModel):
+    """One thing a company said it can do, with the words it said it in.
+
+    The quote is not decoration. It is the difference between "this product
+    believes they do screen printing" and "their own page says so, here" - and
+    it is what a person reads before confirming the reading is right.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    text: str
+    quote: str
+    kind: str
+    method: ProductionMethod | None = None
+
+
+class PartnerDetailResponse(BaseModel):
+    """One company, plus whatever was read from its website."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    partner: PartnerResponse
+    claims: list[CapabilityClaimResponse] = []
+    source_urls: list[str] = []
+    extracted_on: str | None = Field(
+        default=None, description="None when nobody has read this company's site yet."
+    )
+    dropped_count: int = Field(
+        default=0,
+        description=(
+            "Claims the verifier deleted because their words were not on the page. "
+            "Shown rather than hidden: a reading that dropped half of what the model "
+            "proposed is a reading worth a closer look."
+        ),
+    )
+    reading_note: str = Field(
+        default="",
+        description="Why this company has no claims, when it has none. Empty otherwise.",
+    )
+
+
+class VerificationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    verified: bool = True
+
+
+class CapabilityMatchRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    requirement: str = Field(min_length=3, max_length=2000)
+    limit: int = Field(default=8, ge=1, le=25)
+
+
+class CapabilityMatchResponse(BaseModel):
+    """One company retrieval found and a model then checked.
+
+    ``can_do_it`` is deliberately three-valued. Null is the honest answer more
+    often than either of the others, and collapsing it into false would throw
+    away the list of companies worth a phone call.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    partner_id: str
+    partner_name: str
+    similarity: float
+    can_do_it: bool | None = None
+    reason: str = ""
+    quote: str = ""
+    quote_verified: bool = False
+    supported: bool = False
+
+
+class CapabilityMatchesResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    matches: list[CapabilityMatchResponse] = []
+    companies_indexed: int = Field(
+        description="Companies whose claims were searched. Zero means nothing has been read yet."
+    )
+    note: str = Field(
+        default="",
+        description="Why the result is empty or thin, in words. Empty when it is neither.",
+    )
