@@ -12,13 +12,13 @@ codebase that knows what a correct password looks like.
 from __future__ import annotations
 
 import logging
-import sqlite3
 import uuid
 from datetime import UTC, datetime
 
 from pydantic import BaseModel, ConfigDict
 
 from app.logging_config import Event, log_event
+from app.repositories.database import INTEGRITY_ERRORS, Database
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ class EmailAlreadyRegisteredError(Exception):
 class UserRepository:
     """Accounts, in the same SQLite database as the projects they own."""
 
-    def __init__(self, connection: sqlite3.Connection) -> None:
+    def __init__(self, connection: Database) -> None:
         self._connection = connection
 
     def create(self, email: str, password_hash: str) -> User:
@@ -67,7 +67,7 @@ class UserRepository:
                     "INSERT INTO users (id, email, password_hash, created_at) VALUES (?, ?, ?, ?)",
                     (user_id, email, password_hash, created_at),
                 )
-        except sqlite3.IntegrityError as clash:
+        except INTEGRITY_ERRORS as clash:
             raise EmailAlreadyRegisteredError(email) from clash
 
         log_event(logger, Event.PROJECT_PERSISTED, "account created", user_id=user_id)

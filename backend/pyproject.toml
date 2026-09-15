@@ -21,6 +21,10 @@ dependencies = [
     "pyyaml==6.0.3",
     "python-multipart==0.0.32",
     "httpx==0.28.1",
+    # Postgres, so a deployment is not a file on a volume that has
+    # already been recreated out from under this application twice.
+    "psycopg[binary]==3.3.5",
+    "langgraph-checkpoint-postgres==3.1.2",
     "fastembed==0.8.0",
     "langfuse>=4.15.2",
 ]

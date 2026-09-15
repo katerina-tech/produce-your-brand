@@ -16,11 +16,11 @@ from __future__ import annotations
 
 import json
 import logging
-import sqlite3
 from datetime import UTC, datetime
 
 from app.domain.quote import SupplierQuote
 from app.logging_config import Event, log_event
+from app.repositories.database import Database
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 class QuoteRepository:
     """Quotes, in the same SQLite database as the projects they answer."""
 
-    def __init__(self, connection: sqlite3.Connection) -> None:
+    def __init__(self, connection: Database) -> None:
         self._connection = connection
 
     def save(self, quote: SupplierQuote) -> SupplierQuote:

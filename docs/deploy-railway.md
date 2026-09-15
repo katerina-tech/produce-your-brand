@@ -48,6 +48,16 @@ from your machine.
      breaks; it is not stored anywhere and does not need to be memorable.
    - `PYS_SESSION_COOKIE_SECURE` = `true` on any deployment served over
      https, so the session cookie is never sent in clear.
+   - Nothing for the database: add a **PostgreSQL** service to the project
+     (**+ New → Database → Add PostgreSQL**) and Railway injects `DATABASE_URL`
+     into the backend by itself. The application reads that exact name, so
+     adding the database is the whole of the switch - no code change and no
+     setting to remember.
+
+     Without it the backend falls back to a SQLite file on the volume, which
+     works and has twice cost this project real data: once when the volume was
+     recreated and every project vanished, once when a checkpoint file outlived
+     the library that wrote it and every request answered 500.
    - Leave everything else at its default for now.
 4. **Settings → Volumes → New Volume**:
    - **Mount path**: `/app/data`

@@ -13,14 +13,15 @@ from __future__ import annotations
 
 import json
 import logging
-import sqlite3
 from datetime import UTC, datetime
+from typing import Any
 
 from pydantic import TypeAdapter
 
 from app.domain.matching import MatchResult
 from app.domain.project import FeedbackEntry, Project, ProjectEvent, ProjectSummary
 from app.logging_config import Event, log_event
+from app.repositories.database import Database
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ def _now() -> datetime:
 class ProjectRepository:
     """CRUD for projects and their audit events."""
 
-    def __init__(self, connection: sqlite3.Connection) -> None:
+    def __init__(self, connection: Database) -> None:
         self._connection = connection
 
     # ------------------------------------------------------------- writing
@@ -259,7 +260,7 @@ class ProjectRepository:
     # ------------------------------------------------------------ mapping
 
     @staticmethod
-    def _to_project(row: sqlite3.Row) -> Project:
+    def _to_project(row: Any) -> Project:
         """Row to aggregate. Pydantic does the parsing, so types stay enforced."""
         return Project.model_validate(
             {

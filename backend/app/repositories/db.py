@@ -1,19 +1,25 @@
-"""SQLite connection and schema.
+"""Schema, in both dialects.
 
-All SQL in the application lives under ``app/repositories/``. That containment is
-what makes the PostgreSQL swap a contained change: ``TEXT`` JSON columns become
-``JSONB``, this module grows a driver branch, and no call site moves.
+All SQL in the application lives under ``app/repositories/``, and that
+containment turned out to be true: the PostgreSQL swap touched twenty-three
+statements' placeholders and exactly one line of schema, and moved no call site.
+
+Connections come from :mod:`app.repositories.database`, which hides the
+differences the application does not want to know about. What remains here is
+the schema itself, and the one place the two dialects genuinely disagree: an
+auto-incrementing integer key.
 
 This database holds the durable business record only. LangGraph's conversation
-checkpoints live in a separate file owned by ``langgraph-checkpoint-sqlite``; we
-never write to that one.
+checkpoints live in their own store, owned by the checkpoint library; we never
+write to that one.
 """
 
 from __future__ import annotations
 
 import logging
-import sqlite3
 from pathlib import Path
+
+from app.repositories.database import Database, Dialect, open_database, open_sqlite
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +50,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS project_events (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    id           {autoincrement},
     project_id   TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     event_type   TEXT NOT NULL,
     actor        TEXT NOT NULL,
@@ -64,22 +70,30 @@ CREATE INDEX IF NOT EXISTS idx_quotes_project ON project_quotes(project_id);
 CREATE INDEX IF NOT EXISTS idx_projects_updated ON projects(updated_at DESC);
 """
 
+# The only line the two dialects spell differently. Everything else - TEXT,
+# INTEGER, REFERENCES, CREATE TABLE IF NOT EXISTS, ON CONFLICT DO UPDATE - is
+# the same sentence in both.
+_AUTOINCREMENT: dict[Dialect, str] = {
+    "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT",
+    "postgres": "INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY",
+}
 
-def connect(path: Path | str) -> sqlite3.Connection:
-    """Open a connection with the settings this application depends on.
 
-    ``check_same_thread=False`` because FastAPI serves requests on a thread pool.
-    Access is serialised by SQLite's own locking plus short-lived transactions,
-    which is sufficient at MVP concurrency.
+def schema_for(dialect: Dialect) -> str:
+    return SCHEMA.format(autoincrement=_AUTOINCREMENT[dialect])
+
+
+def connect(path: Path | str, *, url: str | None = None) -> Database:
+    """Open the application database.
+
+    ``url`` wins when it is set, which is how a deployment moves to Postgres
+    without a code change: Railway injects DATABASE_URL the moment a Postgres
+    service exists. Without one, a local file - which is right for development
+    and for a test suite that must not need a server.
     """
-    if isinstance(path, Path):
-        path.parent.mkdir(parents=True, exist_ok=True)
-
-    connection = sqlite3.connect(str(path), check_same_thread=False)
-    connection.row_factory = sqlite3.Row
-    connection.execute("PRAGMA foreign_keys = ON")
-    connection.execute("PRAGMA journal_mode = WAL")
-    return connection
+    if url:
+        return open_database(url, path)
+    return open_sqlite(path)
 
 
 # Additive migrations for databases created before a column existed.
@@ -104,10 +118,9 @@ _MIGRATIONS: tuple[tuple[str, str, str], ...] = (
 )
 
 
-def _apply_migrations(connection: sqlite3.Connection) -> None:
+def _apply_migrations(connection: Database) -> None:
     for table, column, statement in _MIGRATIONS:
-        existing = {row["name"] for row in connection.execute(f"PRAGMA table_info({table})")}
-        if column in existing:
+        if column in connection.column_names(table):
             continue
         with connection:
             connection.execute(statement)
@@ -117,10 +130,9 @@ def _apply_migrations(connection: sqlite3.Connection) -> None:
         )
 
 
-def initialize_schema(connection: sqlite3.Connection) -> None:
+def initialize_schema(connection: Database) -> None:
     """Create tables if absent, then apply any additive migrations. Idempotent."""
-    with connection:
-        connection.executescript(SCHEMA)
+    connection.executescript(schema_for(connection.dialect))
     _apply_migrations(connection)
     # Indexes over migrated columns come last: on a database created before the
     # column existed, the column is only there once migrations have run.

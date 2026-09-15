@@ -12,7 +12,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import AliasChoices, Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
@@ -129,6 +129,16 @@ class Settings(BaseSettings):
     knowledge_dir: Path = BACKEND_ROOT / "data" / "knowledge"
     index_dir: Path = BACKEND_ROOT / "data" / "index"
     upload_dir: Path = BACKEND_ROOT / "data" / "uploads"
+    database_url: str = Field(
+        default="",
+        validation_alias=AliasChoices("DATABASE_URL", "PYS_DATABASE_URL"),
+        description=(
+            "PostgreSQL connection string. Read from DATABASE_URL without the PYS_ "
+            "prefix because that is the name Railway injects when a Postgres service "
+            "exists - so adding the database is the whole of the switch, with no "
+            "setting anybody has to remember to flip. Empty means the local file."
+        ),
+    )
     app_db_path: Path = BACKEND_ROOT / "data" / "app.db"
     checkpoint_db_path: Path = BACKEND_ROOT / "data" / "checkpoints.db"
 

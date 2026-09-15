@@ -59,7 +59,7 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     """
     settings: Settings = app.state.settings
 
-    connection = db.connect(settings.app_db_path)
+    connection = db.connect(settings.app_db_path, url=settings.database_url)
     db.initialize_schema(connection)
 
     deps = production_deps(settings)

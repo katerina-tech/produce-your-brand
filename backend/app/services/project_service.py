@@ -13,7 +13,6 @@ the evidence that a person, not the agent, made each call.
 from __future__ import annotations
 
 import logging
-import sqlite3
 import uuid
 from datetime import UTC, date, datetime
 from typing import Any
@@ -28,6 +27,7 @@ from app.domain.enums import Stage
 from app.domain.project import FeedbackEntry, Project, ProjectSummary
 from app.graph.state import ProductionState, initial_state
 from app.logging_config import Event, log_event, redact_text
+from app.repositories.database import Database
 from app.repositories.project_repo import ProjectRepository
 from app.security.uploads import get_upload
 
@@ -378,7 +378,7 @@ class ProjectService:
 
 def build_service(
     workflow: CompiledStateGraph[ProductionState, None, Any, Any],
-    connection: sqlite3.Connection,
+    connection: Database,
     today: date | None = None,
 ) -> ProjectService:
     """Assemble the service from an open connection and a compiled workflow."""
