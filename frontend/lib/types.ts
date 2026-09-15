@@ -359,6 +359,8 @@ export interface HealthChecks {
   /** Whether this deployment can issue sessions. False means sign-in is off
    *  and everything else works exactly as it did before accounts existed. */
   sign_in_configured: boolean;
+  /** Which database this deployment actually opened. */
+  database: string;
   suppliers_file_present: boolean;
   supplier_count: number;
   knowledge_dir_present: boolean;

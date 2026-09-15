@@ -282,6 +282,18 @@ def _to_response(view: ProjectView, *, mine: bool = False) -> ProjectStateRespon
 # --------------------------------------------------------------------- system
 
 
+def _database_dialect(request: Request) -> str:
+    """Which database the running application actually opened.
+
+    Read off the live connection rather than off the setting: a URL that is
+    configured but unreachable would have the setting say postgres while every
+    write went somewhere else entirely.
+    """
+    service: ProjectService | None = getattr(request.app.state, "project_service", None)
+    dialect = getattr(getattr(service, "_projects", None), "_connection", None)
+    return str(getattr(dialect, "dialect", "unknown"))
+
+
 def _readiness(settings: Settings, request: Request) -> ReadinessChecks:
     knowledge_docs = (
         sorted(settings.knowledge_dir.glob("*.md")) if settings.knowledge_dir.is_dir() else []
@@ -295,6 +307,7 @@ def _readiness(settings: Settings, request: Request) -> ReadinessChecks:
         search_index_built=(settings.index_dir / "index.faiss").is_file(),
         injection_guard_enabled=settings.injection_classifier_enabled,
         sign_in_configured=sign_in_available(settings),
+        database=_database_dialect(request),
     )
 
 

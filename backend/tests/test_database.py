@@ -169,3 +169,20 @@ def test_the_schema_applies_cleanly_twice(tmp_path: Path) -> None:
         row["name"] for row in database.execute("SELECT name FROM sqlite_master WHERE type='table'")
     }
     assert {"projects", "users", "project_events", "project_quotes"} <= tables
+
+
+def test_health_reports_which_database_is_actually_open() -> None:
+    """Read off the live connection, not off the setting.
+
+    A URL that is configured but unreachable would have the setting say
+    postgres while every write went to a file - and after a migration, that
+    difference is the difference between keeping data and losing it.
+    """
+    from fastapi.testclient import TestClient
+
+    from app.main import create_app
+
+    with TestClient(create_app()) as client:
+        checks = client.get("/api/health").json()["checks"]
+
+    assert checks["database"] in {"sqlite", "postgres"}

@@ -50,6 +50,15 @@ class ReadinessChecks(BaseModel):
     search_index_built: bool
     injection_guard_enabled: bool
     sign_in_configured: bool = False
+    database: str = Field(
+        default="sqlite",
+        description=(
+            "Which database this deployment is actually using. Reported because "
+            "'it looks like it worked' is not the same as knowing, and after a "
+            "migration the difference between postgres and a file on a volume is "
+            "the difference between keeping data and losing it."
+        ),
+    )
 
 
 class HealthResponse(BaseModel):
