@@ -73,9 +73,7 @@ def test_set_up_cost_is_part_of_what_the_buyer_pays() -> None:
 def test_an_unstated_price_basis_blocks_the_total() -> None:
     """Net against gross is a 19% error in Germany - large enough to reverse a
     ranking, and invisible once both are in one column."""
-    comparison = compare(
-        [_quote(price_basis=PriceBasis.UNSTATED)], requested_quantity=100
-    )
+    comparison = compare([_quote(price_basis=PriceBasis.UNSTATED)], requested_quantity=100)
 
     row = comparison.rows[0]
     assert row.comparable_total_eur is None

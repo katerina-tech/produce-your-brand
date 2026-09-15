@@ -248,9 +248,7 @@ def test_a_follow_up_asks_only_what_was_left_unanswered(desk: QuoteDesk) -> None
 
 def test_a_supplier_who_answered_everything_is_not_chased(desk: QuoteDesk) -> None:
     """A chaser with nothing in it costs goodwill the next enquiry will need."""
-    desk._provider = ScriptedProvider(
-        {QuoteExtraction: _extraction(answered_indices=(0, 1, 2))}
-    )
+    desk._provider = ScriptedProvider({QuoteExtraction: _extraction(answered_indices=(0, 1, 2))})
     project = _project()
     desk.capture(project, REPLY)
 
