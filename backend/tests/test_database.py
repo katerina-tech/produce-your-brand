@@ -218,5 +218,44 @@ def test_an_unreachable_database_refuses_to_start_rather_than_using_a_file(
         open_database("postgresql://:::not a url:::", tmp_path / "t.db")
 
 
+def test_startup_waits_for_a_database_that_is_not_ready_yet(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A container starts before the database it depends on is reachable. On
+    Railway the private hostname takes a few seconds to resolve, so connecting
+    once and giving up turns an ordinary startup race into a crash loop."""
+    from app.repositories import database as module
+
+    attempts = {"n": 0}
+
+    def flaky(url: str) -> Database:
+        attempts["n"] += 1
+        if attempts["n"] < 3:
+            raise OSError("could not translate host name")
+        return open_sqlite(tmp_path / "stand-in.db")
+
+    monkeypatch.setattr(module, "open_postgres", flaky)
+    monkeypatch.setattr(module, "CONNECT_BACKOFF_SECONDS", 0.0)
+
+    module.open_database("postgresql://host/db", tmp_path / "t.db")
+
+    assert attempts["n"] == 3, "it kept trying rather than crashing on the first miss"
+
+
+def test_it_does_not_retry_forever(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A database that is genuinely gone must still fail, and say so."""
+    from app.repositories import database as module
+    from app.repositories.database import DatabaseUnreachableError
+
+    def always_fails(url: str) -> Database:
+        raise OSError("connection refused")
+
+    monkeypatch.setattr(module, "open_postgres", always_fails)
+    monkeypatch.setattr(module, "CONNECT_BACKOFF_SECONDS", 0.0)
+
+    with pytest.raises(DatabaseUnreachableError, match="attempts"):
+        module.open_database("postgresql://host/db", tmp_path / "t.db")
+
+
 def test_a_reachable_absence_of_url_still_uses_the_file(tmp_path: Path) -> None:
     assert open_database(None, tmp_path / "t.db").dialect == "sqlite"

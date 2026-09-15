@@ -25,6 +25,7 @@ from __future__ import annotations
 import logging
 import re
 import sqlite3
+import time
 from pathlib import Path
 from types import TracebackType
 from typing import Any, Literal, Protocol
@@ -44,6 +45,14 @@ except ImportError:  # pragma: no cover - a SQLite-only install is still valid
     _DRIVER_INTEGRITY = ()
 
 INTEGRITY_ERRORS: tuple[type[Exception], ...] = (sqlite3.IntegrityError, *_DRIVER_INTEGRITY)
+
+# A container starts before the database it depends on is reachable. On Railway
+# the private hostname takes a few seconds to resolve after the container comes
+# up, so connecting once and giving up turns an ordinary startup race into a
+# crash loop - which is exactly what it did. Roughly fifteen seconds in total,
+# which is longer than that race and far shorter than a human noticing.
+CONNECT_ATTEMPTS = 5
+CONNECT_BACKOFF_SECONDS = 1.5
 
 
 class Cursor(Protocol):
@@ -198,14 +207,29 @@ def open_database(url: str | None, sqlite_path: Path | str) -> Database:
             "exactly this - it should appear once."
         )
 
-    try:
-        database = open_postgres(trimmed)
-    except Exception as failure:
-        raise DatabaseUnreachableError(
-            f"DATABASE_URL is set but the database could not be reached: "
-            f"{type(failure).__name__}. Check the variable resolves to one "
-            f"connection string, and that the Postgres service is running."
-        ) from failure
+    last: Exception | None = None
+    for attempt in range(1, CONNECT_ATTEMPTS + 1):
+        try:
+            database = open_postgres(trimmed)
+        except Exception as failure:
+            last = failure
+            if attempt < CONNECT_ATTEMPTS:
+                logger.warning(
+                    "database not ready yet, retrying",
+                    extra={
+                        "event": "api_started",
+                        "attempt": attempt,
+                        "error_type": type(failure).__name__,
+                    },
+                )
+                time.sleep(CONNECT_BACKOFF_SECONDS * attempt)
+            continue
+        logger.info("using postgres", extra={"event": "api_started"})
+        return database
 
-    logger.info("using postgres", extra={"event": "api_started"})
-    return database
+    raise DatabaseUnreachableError(
+        f"DATABASE_URL is set but the database could not be reached after "
+        f"{CONNECT_ATTEMPTS} attempts: {type(last).__name__}: {last}. Check that "
+        f"the Postgres service is running and that the variable resolves to one "
+        f"connection string."
+    ) from last
