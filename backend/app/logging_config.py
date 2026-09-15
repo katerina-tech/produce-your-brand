@@ -50,6 +50,7 @@ class Event(StrEnum):
     SUPPLIER_SELECTED = "supplier_selected"
     RFQ_GENERATED = "rfq_generated"
     SUPPLIER_QUOTE_CAPTURED = "supplier_quote_captured"
+    COMPANY_PAGE_FETCHED = "company_page_fetched"
     RFQ_APPROVED = "rfq_approved"
     INJECTION_SUSPECTED = "injection_suspected"
     UPLOAD_REJECTED = "upload_rejected"
