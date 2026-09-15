@@ -18,6 +18,7 @@ from app.domain.enums import ProductionMethod
 from app.domain.partner import Partner
 from app.domain.supplier import Supplier
 from app.repositories import db
+from app.repositories.database import Database
 from app.repositories.partner_repo import PartnerRepository
 
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
@@ -25,17 +26,22 @@ DIRECTORY = BACKEND_ROOT / "data" / "berlin_partners.json"
 
 
 @pytest.fixture
-def partners(tmp_path: Path) -> PartnerRepository:
+def connection(tmp_path: Path) -> Database:
+    database = db.connect(tmp_path / "partners.db")
+    db.initialize_schema(database)
+    return database
+
+
+@pytest.fixture
+def partners(connection: Database) -> PartnerRepository:
     """A repository seeded from the shipped survey, as a deployment seeds itself."""
-    connection = db.connect(tmp_path / "partners.db")
-    db.initialize_schema(connection)
     repository = PartnerRepository(connection, DIRECTORY)
-    repository.seed_if_empty()
+    repository.seed_missing()
     return repository
 
 
 def test_the_shipped_directory_loads_and_validates(partners: PartnerRepository) -> None:
-    assert partners.count() > 100, "the Berlin survey found 135; a collapse here is a broken file"
+    assert partners.count() > 100, "the survey found 136; a collapse here is a broken file"
     assert partners.contactable_count() > 0
 
 
@@ -176,26 +182,134 @@ def test_a_missing_seed_file_is_empty_rather_than_fatal(tmp_path: Path) -> None:
     db.initialize_schema(connection)
     repository = PartnerRepository(connection, tmp_path / "absent.json")
 
-    assert repository.seed_if_empty() == 0
+    assert repository.seed_missing() == 0
     assert repository.all() == ()
     assert repository.count() == 0
 
 
-def test_seeding_runs_once_and_never_overwrites_afterwards(
+def test_seeding_adds_what_is_missing_and_touches_nothing_else(
     partners: PartnerRepository,
 ) -> None:
-    """The reason the file stopped being storage. A deployment restarts for all
-    sorts of reasons, and none of them may undo a confirmation somebody made by
-    hand."""
+    """The reason the file stopped being storage - and the reason it did not
+    stop being a source.
+
+    Seeding used to refuse to run at all once the table had rows, which was
+    safe and also wrong: a re-survey found a new Berlin business and nothing
+    would ever have brought it in. It now inserts what is missing, and leaves
+    every existing row alone - so a confirmation somebody made by hand survives
+    both a restart and a re-survey.
+    """
     first = partners.count()
     confirmed = partners.all()[0]
     partners.mark_verified(confirmed.id)
 
-    assert partners.seed_if_empty() == 0, "a full table is not re-seeded"
+    assert partners.seed_missing() == 0, "nothing in the file is missing from the table"
     assert partners.count() == first
     reloaded = partners.get(confirmed.id)
     assert reloaded is not None
     assert reloaded.verified is True, "the confirmation survived"
+
+
+def test_a_company_added_by_a_later_survey_arrives(
+    partners: PartnerRepository, connection: Database, tmp_path: Path
+) -> None:
+    """What the old "only when empty" rule made impossible. The survey is
+    re-run when Overpass is having a better day, and what it finds has to be
+    able to reach the database."""
+    survey = json.loads(DIRECTORY.read_text(encoding="utf-8"))
+    survey["partners"].append(
+        {
+            "osm_id": "node/999999999",
+            "name": "Neue Druckerei",
+            "method_implied_by_tag": "digital_printing",
+            "osm_category": "craft=printer",
+            "category_label": "Druckerei",
+            "address": "Teststraße 1",
+            "city": "Berlin",
+            "district": "Wedding",
+            "borough": "Mitte",
+            "website": None,
+            "email": None,
+            "phone": None,
+            "lat": 52.55,
+            "lon": 13.35,
+        }
+    )
+    larger = tmp_path / "larger.json"
+    larger.write_text(json.dumps(survey), encoding="utf-8")
+    before = partners.count()
+
+    added = PartnerRepository(connection, larger).seed_missing()
+
+    assert added == 1
+    assert partners.count() == before + 1
+    assert partners.get("node/999999999") is not None
+
+
+# ------------------------------------------------------------ kind of business
+
+
+def test_every_company_says_what_kind_of_business_it_is(
+    partners: PartnerRepository,
+) -> None:
+    """The tag it was found under, kept. The derived production method could
+    not answer this: three of the survey's seven tags mean "digital printing",
+    so filtering by method showed 134 of 135 companies."""
+    labelled = [partner for partner in partners.all() if partner.category_label]
+
+    assert len(labelled) == partners.count()
+
+
+def test_the_label_and_the_tag_travel_together(partners: PartnerRepository) -> None:
+    """A filter that said "Druckerei" with nothing behind it would be this
+    product's opinion about a named business. The tag is what makes the claim
+    checkable against the public map it came from."""
+    for partner in partners.all():
+        assert partner.category, f"{partner.name} has a label with no tag behind it"
+        assert "=" in partner.category
+
+
+def test_one_label_per_tag(partners: PartnerRepository) -> None:
+    """A Druckerei and a Copyshop are different shops to anybody in Berlin, and
+    two tags sharing a label would make the filter answer a question nobody
+    asked."""
+    pairs = {(tag, label) for tag, label, _ in partners.categories()}
+    labels = [label for _, label in pairs]
+
+    assert len(set(labels)) == len(labels)
+
+
+def test_the_kinds_are_counted_rather_than_listed(partners: PartnerRepository) -> None:
+    counts = partners.categories()
+
+    assert counts
+    assert all(count > 0 for _, _, count in counts)
+    assert [count for _, _, count in counts] == sorted(
+        (count for _, _, count in counts), reverse=True
+    )
+
+
+def test_filtering_by_kind_of_business(partners: PartnerRepository) -> None:
+    tag, _, expected = partners.categories()[0]
+
+    found = partners.search(category=tag)
+
+    assert len(found) == expected
+    assert all(partner.category == tag for partner in found)
+
+
+def test_kind_and_borough_narrow_together(partners: PartnerRepository) -> None:
+    """ "Druckereien in Pankow" is the question somebody actually has, and it
+    needs both filters to survive each other."""
+    tag = partners.categories()[0][0]
+    borough = partners.boroughs()[0][0]
+
+    both = partners.search(category=tag, borough=borough)
+
+    assert both
+    assert all(p.category == tag and p.borough == borough for p in both)
+    assert len(both) <= len(partners.search(category=tag))
+    assert len(both) <= len(partners.search(borough=borough))
 
 
 def test_confirming_a_company_that_does_not_exist(partners: PartnerRepository) -> None:

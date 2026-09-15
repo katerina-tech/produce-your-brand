@@ -341,3 +341,36 @@ def test_the_borough_list_does_not_shrink_as_you_filter(client: TestClient) -> N
     filtered = client.get(f"/api/partners?borough={name}&limit=1").json()["boroughs"]
 
     assert filtered == unfiltered
+
+
+def test_the_kinds_of_business_come_back_with_their_counts(client: TestClient) -> None:
+    """So the filter is drawn from the data rather than from a constant list
+    that can drift out of step with it."""
+    body = client.get("/api/partners?limit=1").json()
+
+    assert body["categories"]
+    assert all(item["count"] > 0 for item in body["categories"])
+    assert all("=" in item["tag"] for item in body["categories"])
+
+
+def test_filtering_to_one_kind_of_business(client: TestClient) -> None:
+    body = client.get("/api/partners?limit=1").json()
+    kind = body["categories"][0]
+
+    filtered = client.get(f"/api/partners?category={kind['tag']}").json()
+
+    assert filtered["shown"] == kind["count"]
+    assert all(partner["category"] == kind["tag"] for partner in filtered["partners"])
+
+
+def test_the_two_filters_narrow_together(client: TestClient) -> None:
+    """ "Druckereien in Pankow" - the question somebody actually arrives with."""
+    body = client.get("/api/partners?limit=1").json()
+    tag = body["categories"][0]["tag"]
+    borough = body["boroughs"][0]["name"]
+
+    both = client.get(f"/api/partners?category={tag}&borough={borough}").json()
+
+    assert all(
+        partner["category"] == tag and partner["borough"] == borough for partner in both["partners"]
+    )

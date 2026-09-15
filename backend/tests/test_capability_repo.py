@@ -31,7 +31,7 @@ def connection(tmp_path: Path) -> Database:
     at a company, so the company has to be there first."""
     database = db.connect(tmp_path / "caps.db")
     db.initialize_schema(database)
-    PartnerRepository(database, DIRECTORY).seed_if_empty()
+    PartnerRepository(database, DIRECTORY).seed_missing()
     return database
 
 

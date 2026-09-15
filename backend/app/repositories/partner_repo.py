@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 _COLUMNS = (
     "id, name, source, verified, address, city, district, borough, "
-    "lat, lon, website, email, implied_method, phone"
+    "category, category_label, lat, lon, website, email, implied_method, phone"
 )
 
 
@@ -50,6 +50,8 @@ def _to_partner(row: Any) -> Partner:
         city=str(record["city"]),
         district=(record["district"] and str(record["district"])) or None,
         borough=(record["borough"] and str(record["borough"])) or None,
+        category=(record["category"] and str(record["category"])) or None,
+        category_label=(record["category_label"] and str(record["category_label"])) or None,
         lat=float(record["lat"]) if record["lat"] is not None else None,
         lon=float(record["lon"]) if record["lon"] is not None else None,
         website=(record["website"] and str(record["website"])) or None,
@@ -70,17 +72,21 @@ class PartnerRepository:
 
     # ------------------------------------------------------------- seeding
 
-    def seed_if_empty(self) -> int:
-        """Fill an empty table from the survey file. Returns rows inserted.
+    def seed_missing(self) -> int:
+        """Insert the survey's companies that this table does not have yet.
 
-        Only when empty, and only rows that are missing. A deployment restarts
-        for all sorts of reasons, and none of them should overwrite a capability
-        somebody confirmed by hand - which is exactly what re-importing the file
-        on every boot would do.
+        Returns how many were added. Existing rows are never touched - that is
+        ``ON CONFLICT DO NOTHING``, not a guard that has to be remembered - so
+        a deployment restarting, or a re-survey, cannot undo a capability
+        somebody confirmed by hand.
+
+        This used to refuse to run at all once the table had anything in it,
+        which was safe and also wrong: the survey found a new Berlin business
+        and nothing would ever have brought it in. Adding what is missing is
+        the behaviour that was actually wanted; leaving existing rows alone is
+        the part that mattered.
         """
         if self._seed_file is None or not self._seed_file.is_file():
-            return 0
-        if self.count() > 0:
             return 0
 
         raw = json.loads(self._seed_file.read_text(encoding="utf-8"))
@@ -89,9 +95,9 @@ class PartnerRepository:
 
         with self._connection:
             for item in raw.get("partners", []):
-                self._connection.execute(
+                cursor = self._connection.execute(
                     f"INSERT INTO partners ({_COLUMNS}, created_at) "
-                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
                     "ON CONFLICT(id) DO NOTHING",
                     (
                         item["osm_id"],
@@ -102,6 +108,8 @@ class PartnerRepository:
                         item.get("city") or "Berlin",
                         item.get("district"),
                         item.get("borough"),
+                        item.get("osm_category"),
+                        item.get("category_label"),
                         item.get("lat"),
                         item.get("lon"),
                         item.get("website"),
@@ -111,15 +119,20 @@ class PartnerRepository:
                         now,
                     ),
                 )
-                inserted += 1
+                # Counted from the statement rather than the loop: with
+                # ON CONFLICT DO NOTHING, "attempted" and "inserted" differ on
+                # every run after the first, and reporting the wrong one would
+                # log 136 new companies each time a deployment restarts.
+                inserted += cursor.rowcount or 0
 
-        log_event(
-            logger,
-            Event.SUPPLIER_CANDIDATES_FOUND,
-            "partner directory seeded",
-            partner_count=inserted,
-            source=str(self._seed_file.name),
-        )
+        if inserted:
+            log_event(
+                logger,
+                Event.SUPPLIER_CANDIDATES_FOUND,
+                "companies added from the survey",
+                partner_count=inserted,
+                source=str(self._seed_file.name),
+            )
         return inserted
 
     # ------------------------------------------------------------- reading
@@ -156,6 +169,7 @@ class PartnerRepository:
         query: str | None = None,
         method: ProductionMethod | None = None,
         borough: str | None = None,
+        category: str | None = None,
         with_email: bool = False,
         limit: int = 200,
     ) -> tuple[Partner, ...]:
@@ -179,6 +193,9 @@ class PartnerRepository:
         if borough and borough.strip():
             clauses.append("borough = ?")
             params.append(borough.strip())
+        if category and category.strip():
+            clauses.append("category = ?")
+            params.append(category.strip())
         if with_email:
             clauses.append("email IS NOT NULL AND email <> ''")
 
@@ -226,6 +243,12 @@ class PartnerRepository:
                     (item.get("district"), item.get("borough"), item["osm_id"]),
                 )
                 filled += cursor.rowcount or 0
+                if item.get("osm_category"):
+                    self._connection.execute(
+                        "UPDATE partners SET category = ?, category_label = ? "
+                        "WHERE id = ? AND category IS NULL",
+                        (item["osm_category"], item.get("category_label"), item["osm_id"]),
+                    )
 
         if filled:
             log_event(
@@ -236,6 +259,26 @@ class PartnerRepository:
                 source=str(self._seed_file.name),
             )
         return filled
+
+    def categories(self) -> tuple[tuple[str, str, int], ...]:
+        """Each kind of business present, with its label and how many, most first.
+
+        ``(tag, label, count)``. The tag travels with the label so the filter's
+        claim stays checkable against the public map it came from.
+        """
+        rows = self._connection.execute(
+            "SELECT category, category_label, COUNT(*) AS n FROM partners "
+            "WHERE category IS NOT NULL AND category <> '' "
+            "GROUP BY category, category_label ORDER BY n DESC, category_label"
+        ).fetchall()
+        return tuple(
+            (
+                str(dict(row)["category"]),
+                str(dict(row)["category_label"] or dict(row)["category"]),
+                int(dict(row)["n"]),
+            )
+            for row in rows
+        )
 
     def boroughs(self) -> tuple[tuple[str, int], ...]:
         """Each Bezirk that has businesses, with how many, most first.

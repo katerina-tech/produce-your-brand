@@ -56,6 +56,26 @@ TAG_MEANS = {
     ("craft", "sign_maker"): "laser_engraving",
 }
 
+# What each tag is called by the people who run these businesses. One label per
+# tag, never two tags sharing one - a "Druckerei" and a "Copyshop" are
+# different shops to anybody in Berlin, and collapsing them would make the
+# filter answer a question nobody asked.
+#
+# This is kept separate from TAG_MEANS because the two say different things:
+# the method is what the shop can physically do, and the label is what it calls
+# itself. Six of these labels map onto three methods, which is exactly why the
+# method was useless as a filter - 134 of 135 companies came back
+# "digital printing".
+TAG_LABELS = {
+    ("craft", "printer"): "Druckerei",
+    ("shop", "copyshop"): "Copyshop",
+    ("shop", "printing"): "Druckservice",
+    ("craft", "embroiderer"): "Stickerei",
+    ("craft", "engraver"): "Gravur",
+    ("shop", "trophy"): "Pokale & Gravuren",
+    ("craft", "sign_maker"): "Schilder & Werbetechnik",
+}
+
 ENDPOINTS = (
     "https://overpass-api.de/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter",
@@ -120,7 +140,9 @@ def _address(tags: dict[str, str]) -> str | None:
     return joined or None
 
 
-def _record(element: dict[str, Any], method: str) -> dict[str, Any] | None:
+def _record(
+    element: dict[str, Any], method: str, category: str, label: str
+) -> dict[str, Any] | None:
     tags: dict[str, str] = element.get("tags") or {}
     name = tags.get("name")
     if not name:
@@ -133,6 +155,12 @@ def _record(element: dict[str, Any], method: str) -> dict[str, Any] | None:
         "osm_id": f"{element['type']}/{element['id']}",
         "name": name,
         "method_implied_by_tag": method,
+        # The tag this business was found under, and what that tag is called.
+        # Kept because the derived method turned out to answer almost nothing:
+        # three of the seven tags mean "digital printing", so filtering by it
+        # showed 134 of 135 companies.
+        "osm_category": category,
+        "category_label": label,
         "address": _address(tags),
         "city": tags.get("addr:city") or "Berlin",
         "website": _tag(tags, "website", "contact:website"),
@@ -143,28 +171,68 @@ def _record(element: dict[str, Any], method: str) -> dict[str, Any] | None:
     }
 
 
+def _previous() -> dict[str, dict[str, Any]]:
+    """What the last survey found, by id.
+
+    Read so that a re-survey adds to the record rather than replacing it. Two
+    reasons, and the second is the important one:
+
+    * Placing each company in its Ortsteil costs 135 requests to a donated
+      geocoder, and throwing that away on every re-survey would mean asking for
+      it again.
+    * Overpass is volunteer-run. A run where one mirror hiccups would otherwise
+      silently delete every company under that tag, and a directory that
+      quietly shrinks is worse than one that is out of date.
+    """
+    if not OUTPUT.is_file():
+        return {}
+    try:
+        existing = json.loads(OUTPUT.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return {record["osm_id"]: record for record in existing.get("partners", [])}
+
+
+# Facts this survey does not gather and must therefore never overwrite: they
+# were derived afterwards, by other scripts, at a cost.
+DERIVED_FIELDS = ("district", "borough")
+
+
 def main() -> int:
     collected: dict[str, dict[str, Any]] = {}
 
     missed: list[str] = []
+    known = _previous()
 
     for (key, value), method in TAG_MEANS.items():
+        category = f"{key}={value}"
         try:
             elements = _fetch(key, value)
         except TagUnavailableError:
-            missed.append(f"{key}={value}")
-            print(f"{key}={value:14} -> NOT FETCHED", file=sys.stderr)
+            missed.append(category)
+            print(f"{category:20} -> NOT FETCHED", file=sys.stderr)
             time.sleep(8)
             continue
         for element in elements:
-            record = _record(element, method)
+            record = _record(element, method, category, TAG_LABELS[(key, value)])
             if record is None:
                 continue
             # First tag wins, so a business tagged twice keeps one entry and the
             # narrower meaning it was found under first.
             collected.setdefault(record["osm_id"], record)
-        print(f"{key}={value:14} -> {len(elements):4} elements", file=sys.stderr)
+        print(f"{category:20} -> {len(elements):4} elements", file=sys.stderr)
         time.sleep(8)
+
+    # Carry the derived fields across, and keep anybody this run did not reach.
+    for osm_id, record in collected.items():
+        for field in DERIVED_FIELDS:
+            if known.get(osm_id, {}).get(field):
+                record[field] = known[osm_id][field]
+    kept = [record for osm_id, record in known.items() if osm_id not in collected]
+    if kept:
+        print(f"{len(kept)} companies kept from the previous survey", file=sys.stderr)
+    for record in kept:
+        collected[record["osm_id"]] = record
 
     partners = sorted(collected.values(), key=lambda record: record["name"].lower())
     contactable = [p for p in partners if p["email"]]

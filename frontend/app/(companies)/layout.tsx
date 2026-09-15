@@ -22,7 +22,7 @@ export default function DirectoryLayout({ children }: { children: ReactNode }) {
     <>
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
-          <Link href="/directory" className="flex items-center gap-3">
+          <Link href="/companies" className="flex items-center gap-3">
             <Logo size={22} />
             <span className="hidden border-l border-line pl-3 text-sm font-medium text-ink-soft sm:inline">
               Berlin Production Directory
@@ -30,7 +30,7 @@ export default function DirectoryLayout({ children }: { children: ReactNode }) {
           </Link>
           <div className="flex items-center gap-5">
             <Link
-              href="/directory"
+              href="/companies"
               className="text-sm font-medium text-ink-soft transition-colors hover:text-ink"
             >
               Companies

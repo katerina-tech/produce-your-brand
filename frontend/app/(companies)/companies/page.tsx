@@ -24,25 +24,27 @@ export const dynamic = "force-dynamic";
 export default async function DirectoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; email?: string; borough?: string }>;
+  searchParams: Promise<{ q?: string; email?: string; borough?: string; type?: string }>;
 }) {
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
   const borough = params.borough?.trim() ?? "";
+  const category = params.type?.trim() ?? "";
   const onlyContactable = params.email === "1";
-  const filtered = Boolean(query || borough || onlyContactable);
+  const filtered = Boolean(query || borough || category || onlyContactable);
 
   const directory = await getPartners({
     q: query || undefined,
     borough: borough || undefined,
+    category: category || undefined,
     withEmail: onlyContactable,
   }).catch(() => null);
 
   if (!directory) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-semibold tracking-tight">Berlin Production Directory</h1>
-        <Notice tone="error" title="The directory could not be loaded">
+        <h1 className="text-3xl font-semibold tracking-tight">Berlin production companies</h1>
+        <Notice tone="error" title="The companies could not be loaded">
           The API is not reachable from this deployment.
         </Notice>
       </div>
@@ -55,7 +57,7 @@ export default async function DirectoryPage({
     <div className="space-y-8">
       <header className="max-w-3xl">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          Berlin Production Directory
+          Berlin production companies
         </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-ink-soft">
           Every printing, textile, engraving and finishing business in Berlin
@@ -154,24 +156,48 @@ export default async function DirectoryPage({
             </button>
           </div>
 
+          {/* Links rather than selects: each filtered view is its own URL, so
+              "Druckereien in Pankow" is something you can send to somebody. */}
+          {directory.categories.length > 0 ? (
+            <div>
+              <p className="mb-2 text-sm font-medium">Kind of business</p>
+              <div className="flex flex-wrap gap-1.5">
+                <FilterChip
+                  label="All kinds"
+                  count={directory.total}
+                  query={queryFor({ query, onlyContactable, borough, category: "" })}
+                  active={!category}
+                />
+                {directory.categories.map((item) => (
+                  <FilterChip
+                    key={item.tag}
+                    label={item.label}
+                    count={item.count}
+                    title={item.tag}
+                    query={queryFor({ query, onlyContactable, borough, category: item.tag })}
+                    active={category === item.tag}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           {directory.boroughs.length > 0 ? (
             <div>
               <p className="mb-2 text-sm font-medium">Borough</p>
-              {/* Links rather than a select: each borough is its own URL, so a
-                  view of Pankow is something you can send to somebody. */}
               <div className="flex flex-wrap gap-1.5">
-                <BoroughLink
-                  label="All"
+                <FilterChip
+                  label="All of Berlin"
                   count={directory.total}
-                  query={queryFor({ query, onlyContactable, borough: "" })}
+                  query={queryFor({ query, onlyContactable, borough: "", category })}
                   active={!borough}
                 />
                 {directory.boroughs.map((item) => (
-                  <BoroughLink
+                  <FilterChip
                     key={item.name}
                     label={item.name}
                     count={item.count}
-                    query={queryFor({ query, onlyContactable, borough: item.name })}
+                    query={queryFor({ query, onlyContactable, borough: item.name, category })}
                     active={borough === item.name}
                   />
                 ))}
@@ -193,7 +219,7 @@ export default async function DirectoryPage({
           </p>
           {filtered ? (
             <Link
-              href="/directory"
+              href="/companies"
               className="text-xs text-ink-muted underline underline-offset-4 hover:text-ink"
             >
               Clear filters
@@ -212,7 +238,7 @@ export default async function DirectoryPage({
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <Link
-                      href={`/directory/${partner.id}`}
+                      href={`/companies/${partner.id}`}
                       className="text-[15px] font-semibold underline decoration-line-strong underline-offset-4 hover:text-accent"
                     >
                       {partner.name}
@@ -227,10 +253,14 @@ export default async function DirectoryPage({
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     {partner.verified ? <Badge tone="match">confirmed</Badge> : null}
+                    {/* What the business calls itself, not the method derived
+                        from it: three of the survey's tags mean "digital
+                        printing", so the method said the same thing about 134
+                        of 135 companies. */}
                     <Badge tone="neutral">
-                      {partner.implied_method
-                        ? partner.implied_method.replace(/_/g, " ")
-                        : "unclassified"}
+                      {partner.category_label ??
+                        partner.implied_method?.replace(/_/g, " ") ??
+                        "unclassified"}
                     </Badge>
                   </div>
                 </div>
@@ -273,21 +303,24 @@ export default async function DirectoryPage({
   );
 }
 
-/** One borough chip. A link, so the filtered view has its own address. */
-function BoroughLink({
+/** One filter chip. A link, so the filtered view has its own address. */
+function FilterChip({
   label,
   count,
   query,
   active,
+  title,
 }: {
   label: string;
   count: number;
   query: Record<string, string>;
   active: boolean;
+  title?: string;
 }) {
   return (
     <Link
-      href={{ pathname: "/directory", query }}
+      title={title}
+      href={{ pathname: "/companies", query }}
       className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs transition-colors ${
         active
           ? "border-ink bg-ink text-white"
@@ -306,14 +339,17 @@ function queryFor({
   query,
   onlyContactable,
   borough,
+  category,
 }: {
   query: string;
   onlyContactable: boolean;
   borough: string;
+  category: string;
 }): Record<string, string> {
   const params: Record<string, string> = {};
   if (query) params.q = query;
   if (onlyContactable) params.email = "1";
   if (borough) params.borough = borough;
+  if (category) params.type = category;
   return params;
 }

@@ -131,7 +131,7 @@ function popupHtml(partner: Partner): string {
     );
   }
   parts.push(
-    `<div style="margin-top:5px;"><a href="/directory/${escapeHtml(partner.id)}" ` +
+    `<div style="margin-top:5px;"><a href="/companies/${escapeHtml(partner.id)}" ` +
       `style="color:#3240EB;">What they say they do →</a></div>`,
   );
   return `<div style="font-family:inherit;font-size:12.5px;line-height:1.45;">${parts.join(

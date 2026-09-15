@@ -434,6 +434,12 @@ class PartnerResponse(BaseModel):
             "outside the city. The filter reads this; the screen shows the district."
         ),
     )
+    category: str | None = Field(
+        default=None, description="The source tag, e.g. 'craft=printer'. What the filter reads."
+    )
+    category_label: str | None = Field(
+        default=None, description="What that tag is called - Druckerei, Copyshop, Stickerei."
+    )
     website: str | None
     email: str | None
     phone: str | None
@@ -460,12 +466,29 @@ class BoroughCount(BaseModel):
     count: int
 
 
+class CategoryCount(BaseModel):
+    """One kind of business, and how many there are.
+
+    The tag travels beside the label so a filter's claim stays checkable
+    against the public map the label came from.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    tag: str
+    label: str
+    count: int
+
+
 class PartnerDirectoryResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     partners: list[PartnerResponse] = []
     boroughs: list[BoroughCount] = Field(
         default=[], description="Every Bezirk with businesses, most first."
+    )
+    categories: list[CategoryCount] = Field(
+        default=[], description="Every kind of business present, most first."
     )
     total: int = Field(description="Businesses in the whole directory, before filtering.")
     contactable: int = Field(description="How many of the total publish an email address.")

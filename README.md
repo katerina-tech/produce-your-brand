@@ -337,7 +337,7 @@ rather than something that appeared.
 | `DELETE` | `/api/projects/{id}/quotes/{quote_id}` | remove one |
 | `POST` | `/api/uploads` | validated design file, metadata only |
 | `POST` | `/api/designs/generate` | generate a design from a text prompt (real per-image cost) |
-| `GET` | `/api/partners` | the Berlin directory, filtered server-side by name, borough and contactability |
+| `GET` | `/api/partners` | the directory, filtered server-side by name, kind of business, borough and contactability |
 | `GET` | `/api/partners/detail/{id}` | one company and what its own site says it does |
 | `POST` | `/api/partners/verification/{id}` | record that a person confirmed that reading |
 | `POST` | `/api/partners/match` | retrieval + verification over the companies' own words |
@@ -450,33 +450,62 @@ Tiles come from `tile.openstreetmap.org` with the attribution their usage policy
 
 ---
 
-## The Berlin directory — its own front door
+## Companies — the directory, with its own front door
 
-**`/directory`** is 135 real Berlin production businesses with the contact
+**`/companies`** is 136 real Berlin production businesses with the contact
 details they published themselves — 41 of them an email address. Searchable by
-name or address, filterable by borough and to the ones you can write to today,
-and shown on a map. Built by `scripts/build_berlin_partners.py` from
-OpenStreetMap, under the ODbL, with the attribution travelling in the data
-rather than remembered by a reader.
+name or address, filterable by kind of business, by borough and to the ones you
+can write to today, and shown on a map. Built by
+`scripts/build_berlin_partners.py` from OpenStreetMap, under the ODbL, with the
+attribution travelling in the data rather than remembered by a reader.
 
 **It has its own chrome, and that is the whole of the separation.** Three
 layouts now serve three audiences: `/` sells the product, `(app)` is the
-working tool behind an optional sign-in, and `(directory)` is a public
+working tool behind an optional sign-in, and `(companies)` is a public
 reference anybody can read without an account and without a project — somebody
 looking for a print shop in Kreuzberg should not be met with "My projects" and
 "New project". A separate *deployment* was considered and rejected: it would
 have bought a second domain at the price of a second design system, a second
 API client and a second Impressum (§ 5 DDG applies per site), while the
 directory's whole point is that confirmed companies feed the matcher next door.
-The old `/partners` URLs redirect permanently, so nothing already linked
-breaks.
+The earlier `/partners` and `/directory` addresses redirect permanently, so
+nothing already linked breaks.
+
+### What kind of business each one is
+
+Druckerei, Copyshop, Druckservice, Stickerei, Pokale & Gravuren — the words the
+owners would use, one label per source tag and never two tags sharing one. The
+tag travels beside the label (`craft=printer`), so a filter's claim stays
+checkable against the public map it came from.
+
+**The derived production method could not do this job**, which is why the tag
+is now kept. Three of the survey's seven tags mean "digital printing", so
+filtering by method returned 134 of 135 companies and told nobody anything. The
+method is what a shop can physically do; the label is what it calls itself, and
+those are different questions.
+
+**Re-running the survey is now additive.** Seeding used to refuse to run at all
+once the table had rows — safe, and also wrong: the re-survey found a new Berlin
+business and nothing would ever have brought it in. It now inserts what is
+missing and leaves every existing row alone (`ON CONFLICT DO NOTHING`, not a
+guard somebody has to remember), so a confirmation made by hand survives both a
+restart and a re-survey. The derived fields — district, borough — are carried
+across rather than recomputed, because placing 135 companies costs 135 requests
+to a donated geocoder.
+
+**The re-survey also closed the gap the old one admitted.** All seven tags came
+back this time, and two of them — `craft=engraver` and `craft=sign_maker` —
+returned zero. That is now a finding rather than a gap, and it was confirmed
+against a second mirror before being recorded as one: a silent zero and a real
+zero mean opposite things, and the whole point of `incomplete_categories` is to
+keep them apart.
 
 ### Where each company is
 
-Derived from its coordinates, never parsed out of the street line. All 135
-records have a position; only 82 have an address containing a postcode, so
-parsing would have answered for three companies in five and left a filter
-looking complete while hiding a third of the directory.
+Derived from its coordinates, never parsed out of the street line. Every record
+has a position; only 82 have an address containing a postcode, so parsing would
+have answered for three companies in five and left a filter looking complete
+while hiding a third of the directory.
 `scripts/enrich_districts.py` reverse-geocodes each one through Nominatim — one
 request a second and an identifying User-Agent, as their usage policy asks —
 and stores two names, because they answer different questions. The **Ortsteil**
@@ -569,7 +598,7 @@ are the list worth a phone call.
 
 ### The step that is not automatable
 
-`/directory/<id>` shows what was read from one company beside the sentences it
+`/companies/<id>` shows what was read from one company beside the sentences it
 was read from, and one button: **confirm this reading is right**. That is the
 only fact in the directory no amount of scraping produces. A model read the page
 and a verifier checked its quotes; neither of those is a person saying "yes,
@@ -713,7 +742,7 @@ backend/
       uploads.py         # magic-byte validation, inert storage
   data/
     suppliers.json       # 24 curated records — single source of truth
-    berlin_partners.json # 135 real Berlin businesses (ODbL) - seeds the table
+    berlin_partners.json # 136 real Berlin businesses (ODbL) - seeds the table
     offers.json          # demo/seed offers only (is_demo: true) - single source
     knowledge/           # 13 curated documents - the only KB directory
     index/               # generated FAISS index (gitignored, rebuildable)
@@ -721,7 +750,7 @@ backend/
     audit_architecture.py
     run_eval.py          # 19-case behavioural eval -> docs/eval.md
     build_index.py       # thin entry point to the one builder
-    build_berlin_partners.py  # surveys OpenStreetMap into the directory
+    build_berlin_partners.py  # surveys OpenStreetMap; additive, keeps derived fields
     fetch_company_pages.py    # stores their page text for capability reading
     extract_capabilities.py   # reads that text into verified claims; resumable,
                               #   because each company costs a model call
@@ -735,7 +764,7 @@ frontend/
     page.tsx             # marketing homepage - full-bleed, its own chrome
     impressum/, privacy/ # § 5 DDG and Art. 13 GDPR, linked from every page
     (app)/                # dashboard, new project, account, workflow
-    (directory)/          # the public company directory - its own chrome,
+    (companies)/          # the public company directory - its own chrome,
                           #   no sign-in, nothing tied to an account
   components/
     partners/            # CapabilitySearch.tsx (ask by job, not by name),
@@ -955,7 +984,7 @@ take on trust.
 | Human-in-the-loop | four gates, enforced by `interrupt()` | `test_workflow_stops_at_all_four_approval_gates` |
 | Structured logging | one config, closed event enum | `test_log_events_are_a_closed_set` |
 
-**612 backend tests, 28 frontend tests.** No test calls a live model, and none
+**622 backend tests, 28 frontend tests.** No test calls a live model, and none
 calls the real Overpass API either - `test_osm_search.py` swaps in
 `httpx.MockTransport`. The graph runs on a scripted provider and retrieval on a
 hashing embedder whose similarity is real term overlap, so the suite is free,

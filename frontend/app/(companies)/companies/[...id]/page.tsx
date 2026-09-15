@@ -37,7 +37,7 @@ export default async function PartnerPage({
 
   return (
     <div className="space-y-6">
-      <BackLink href="/directory">← All companies</BackLink>
+      <BackLink href="/companies">← All companies</BackLink>
 
       <div>
         <div className="flex flex-wrap items-start justify-between gap-3">

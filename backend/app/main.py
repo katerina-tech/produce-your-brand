@@ -89,7 +89,7 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     # The survey file seeds an empty table once; after that the database owns
     # the rows, so a restart cannot overwrite a capability somebody confirmed.
     partners = PartnerRepository(connection, settings.partners_file)
-    partners.seed_if_empty()
+    partners.seed_missing()
     # Where each business sits was added to the survey after the table existed,
     # so a deployment seeded before then is brought up to date rather than
     # re-seeded - which would be the one operation that could undo a

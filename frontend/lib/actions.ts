@@ -315,8 +315,8 @@ export async function setVerificationAction(
 ): Promise<VerificationResult> {
   try {
     const partner = await setPartnerVerification(partnerId, verified);
-    revalidatePath("/directory");
-    revalidatePath(`/directory/${partnerId}`);
+    revalidatePath("/companies");
+    revalidatePath(`/companies/${partnerId}`);
     return { verified: partner.verified };
   } catch (error) {
     return {

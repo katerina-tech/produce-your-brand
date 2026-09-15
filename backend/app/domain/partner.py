@@ -59,6 +59,24 @@ class Partner(BaseModel):
             "is the honest answer rather than the nearest Berlin name."
         ),
     )
+    category: str | None = Field(
+        default=None,
+        description=(
+            "The source tag this business was found under, e.g. 'craft=printer'. "
+            "Carried alongside the label so a filter's claim stays checkable against "
+            "the map anybody can look at."
+        ),
+    )
+    category_label: str | None = Field(
+        default=None,
+        description=(
+            "What that tag is called by the people who run these businesses - "
+            "Druckerei, Copyshop, Stickerei. One label per tag, never two tags "
+            "sharing one: a Druckerei and a Copyshop are different shops to "
+            "anybody in Berlin."
+        ),
+    )
+
     lat: float | None = None
     lon: float | None = None
 

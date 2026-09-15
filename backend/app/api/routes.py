@@ -27,6 +27,7 @@ from app.api.dto import (
     CapabilityMatchRequest,
     CapabilityMatchResponse,
     CaptureQuoteRequest,
+    CategoryCount,
     ComparisonRowResponse,
     ConfirmQuoteRequest,
     CreateProjectRequest,
@@ -621,6 +622,8 @@ def _partner_response(partner: Partner) -> PartnerResponse:
         city=partner.city,
         district=partner.district,
         borough=partner.borough,
+        category=partner.category,
+        category_label=partner.category_label,
         website=partner.website,
         email=partner.email,
         phone=partner.phone,
@@ -636,6 +639,7 @@ def list_partners(
     q: str | None = None,
     method: ProductionMethod | None = None,
     borough: str | None = None,
+    category: str | None = None,
     with_email: bool = False,
     limit: int = 200,
     partners: PartnerRepository = Depends(get_partners),
@@ -648,7 +652,12 @@ def list_partners(
     """
     directory = partners.directory()
     found = partners.search(
-        query=q, method=method, borough=borough, with_email=with_email, limit=limit
+        query=q,
+        method=method,
+        borough=borough,
+        category=category,
+        with_email=with_email,
+        limit=limit,
     )
 
     return PartnerDirectoryResponse(
@@ -657,6 +666,10 @@ def list_partners(
         # filter: a filter that removes its own options is one you cannot get
         # back out of without knowing to clear it.
         boroughs=[BoroughCount(name=name, count=count) for name, count in partners.boroughs()],
+        categories=[
+            CategoryCount(tag=tag, label=label, count=count)
+            for tag, label, count in partners.categories()
+        ],
         total=partners.count(),
         contactable=partners.contactable_count(),
         shown=len(found),

@@ -74,6 +74,8 @@ CREATE TABLE IF NOT EXISTS partners (
     city           TEXT NOT NULL,
     district       TEXT,
     borough        TEXT,
+    category       TEXT,
+    category_label TEXT,
     lat            REAL,
     lon            REAL,
     website        TEXT,
@@ -170,6 +172,20 @@ _MIGRATIONS: tuple[tuple[str, str, str], ...] = (
         "borough",
         "ALTER TABLE partners ADD COLUMN borough TEXT",
     ),
+    # What kind of business this is, in the words its owners would use. The
+    # derived production method could not answer this: three of the survey's
+    # seven tags mean "digital printing", so filtering by method showed 134 of
+    # 135 companies and told nobody anything.
+    (
+        "partners",
+        "category",
+        "ALTER TABLE partners ADD COLUMN category TEXT",
+    ),
+    (
+        "partners",
+        "category_label",
+        "ALTER TABLE partners ADD COLUMN category_label TEXT",
+    ),
 )
 
 
@@ -194,4 +210,5 @@ def initialize_schema(connection: Database) -> None:
     with connection:
         connection.execute("CREATE INDEX IF NOT EXISTS idx_projects_owner ON projects(owner_id)")
         connection.execute("CREATE INDEX IF NOT EXISTS idx_partners_borough ON partners(borough)")
+        connection.execute("CREATE INDEX IF NOT EXISTS idx_partners_category ON partners(category)")
     logger.debug("schema ready", extra={"event": "schema_initialised"})

@@ -197,12 +197,14 @@ export async function getOutreach(id: string): Promise<Outreach | null> {
 export async function getPartners(options: {
   q?: string;
   borough?: string;
+  category?: string;
   withEmail?: boolean;
   limit?: number;
 } = {}): Promise<PartnerDirectory> {
   const query = new URLSearchParams();
   if (options.q) query.set("q", options.q);
   if (options.borough) query.set("borough", options.borough);
+  if (options.category) query.set("category", options.category);
   if (options.withEmail) query.set("with_email", "true");
   if (options.limit) query.set("limit", String(options.limit));
   const suffix = query.toString();

@@ -14,13 +14,15 @@ const nextConfig: NextConfig = {
   // tree copied in. Only affects `next build` output, not `next dev`.
   output: "standalone",
 
-  // The directory used to live at /partners, inside the working app. It is its
-  // own thing now - its own front door, its own chrome, no sign-in - so it has
-  // its own address. Anything already linked or bookmarked still arrives.
+  // This section used to live at /partners inside the working app, and briefly
+  // at /directory. It is "Companies" now, because that is what a person
+  // looking for a print shop would click. Both old addresses still arrive.
   async redirects() {
     return [
-      { source: "/partners", destination: "/directory", permanent: true },
-      { source: "/partners/:path*", destination: "/directory/:path*", permanent: true },
+      { source: "/partners", destination: "/companies", permanent: true },
+      { source: "/partners/:path*", destination: "/companies/:path*", permanent: true },
+      { source: "/directory", destination: "/companies", permanent: true },
+      { source: "/directory/:path*", destination: "/companies/:path*", permanent: true },
     ];
   },
 };

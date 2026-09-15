@@ -252,6 +252,10 @@ export interface Partner {
   district: string | null;
   /** One of Berlin's twelve Bezirke, or null just outside the city. The filter reads this. */
   borough: string | null;
+  /** The source tag, e.g. "craft=printer". What the type filter reads. */
+  category: string | null;
+  /** What that tag is called - Druckerei, Copyshop, Stickerei. */
+  category_label: string | null;
   website: string | null;
   email: string | null;
   phone: string | null;
@@ -267,10 +271,19 @@ export interface BoroughCount {
   count: number;
 }
 
+/** One kind of business, with the tag it came from so the label stays checkable. */
+export interface CategoryCount {
+  tag: string;
+  label: string;
+  count: number;
+}
+
 export interface PartnerDirectory {
   partners: Partner[];
   /** Every Bezirk with businesses, most first. Counted, never a constant list. */
   boroughs: BoroughCount[];
+  /** Every kind of business present, most first. Counted the same way. */
+  categories: CategoryCount[];
   total: number;
   contactable: number;
   shown: number;
