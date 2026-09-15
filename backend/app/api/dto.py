@@ -399,6 +399,51 @@ class QuoteDeskResponse(BaseModel):
     followups: list[FollowUpResponse] = []
 
 
+class PartnerResponse(BaseModel):
+    """One real business from the directory.
+
+    Deliberately carries no capability field. A Partner is a company that
+    exists; a Supplier is one somebody established facts about, and keeping the
+    wire shapes as different as the domain types stops a directory entry from
+    drifting into the matcher.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    name: str
+    address: str | None
+    city: str
+    website: str | None
+    email: str | None
+    phone: str | None
+    implied_method: ProductionMethod | None = Field(
+        default=None,
+        description="What the source category suggests, not what the business confirmed.",
+    )
+    lat: float | None = None
+    lon: float | None = None
+    verified: bool = False
+
+
+class PartnerDirectoryResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    partners: list[PartnerResponse] = []
+    total: int = Field(description="Businesses in the whole directory, before filtering.")
+    contactable: int = Field(description="How many of the total publish an email address.")
+    shown: int = Field(description="How many matched the current filters.")
+    attribution: str = ""
+    area: str = ""
+    incomplete_categories: list[str] = Field(
+        default=[],
+        description=(
+            "Source categories missing from this build entirely. Reported so an "
+            "absence is not read as a finding."
+        ),
+    )
+
+
 class FeedbackResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

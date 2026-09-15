@@ -38,6 +38,8 @@ from app.api.dto import (
     NearbyStudioResponse,
     NearbyStudiosResponse,
     OutreachResponse,
+    PartnerDirectoryResponse,
+    PartnerResponse,
     ProjectListResponse,
     ProjectStateResponse,
     ProjectSummaryResponse,
@@ -48,10 +50,12 @@ from app.api.dto import (
     UploadResponse,
 )
 from app.config import Settings, get_settings
+from app.domain.enums import ProductionMethod
 from app.domain.outreach import SAMPLE_ADDRESS_SUFFIX
 from app.domain.project import Project
 from app.domain.quote import SupplierQuote
 from app.llm.factory import ImageProvider
+from app.repositories.partner_repo import PartnerRepository
 from app.repositories.supplier_repo import SupplierRepository
 from app.repositories.user_repo import EmailAlreadyRegisteredError, UserRepository
 from app.security.uploads import UploadRejectedError, store_upload
@@ -130,6 +134,14 @@ def get_suppliers(request: Request) -> SupplierRepository | None:
     that needs it here degrades to an empty address box, which is a worse
     experience and not a broken one."""
     repository: SupplierRepository | None = getattr(request.app.state, "supplier_repository", None)
+    return repository
+
+
+def get_partners(request: Request) -> PartnerRepository:
+    """The real-company directory built at startup."""
+    repository: PartnerRepository | None = getattr(request.app.state, "partner_repository", None)
+    if repository is None:
+        raise HTTPException(status_code=503, detail="The service is not ready.")
     return repository
 
 
@@ -557,6 +569,49 @@ def project_outreach(
         mailto_url=email.mailto_url,
         fits_in_a_url=email.fits_in_a_url,
         address_is_sample=email.to.endswith(SAMPLE_ADDRESS_SUFFIX),
+    )
+
+
+@router.get("/partners", response_model=PartnerDirectoryResponse, tags=["partners"])
+def list_partners(
+    q: str | None = None,
+    method: ProductionMethod | None = None,
+    with_email: bool = False,
+    limit: int = 200,
+    partners: PartnerRepository = Depends(get_partners),
+) -> PartnerDirectoryResponse:
+    """Real Berlin businesses, as they published themselves.
+
+    Not the matcher's dataset and never scored: these carry identity and contact
+    details and nothing about materials, minimum orders or lead times, because
+    the source does not know those and this product does not invent them.
+    """
+    directory = partners.directory()
+    found = partners.search(query=q, method=method, with_email=with_email, limit=limit)
+
+    return PartnerDirectoryResponse(
+        partners=[
+            PartnerResponse(
+                id=partner.id,
+                name=partner.name,
+                address=partner.address,
+                city=partner.city,
+                website=partner.website,
+                email=partner.email,
+                phone=partner.phone,
+                implied_method=partner.implied_method,
+                lat=partner.lat,
+                lon=partner.lon,
+                verified=partner.verified,
+            )
+            for partner in found
+        ],
+        total=partners.count(),
+        contactable=partners.contactable_count(),
+        shown=len(found),
+        attribution=directory.attribution,
+        area=directory.area,
+        incomplete_categories=list(directory.incomplete_categories),
     )
 
 

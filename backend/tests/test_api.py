@@ -95,6 +95,9 @@ def test_openapi_exposes_exactly_the_intended_surface(api: TestClient) -> None:
 
     assert paths == {
         "/api/health",
+        # Real businesses, browsable. Not under /projects because it belongs to
+        # nobody's project - it is the directory the whole product draws on.
+        "/api/partners",
         "/api/projects",
         "/api/projects/{project_id}",
         "/api/projects/{project_id}/resume",

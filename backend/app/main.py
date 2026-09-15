@@ -28,6 +28,7 @@ from app.llm.factory import get_image_provider, get_provider
 from app.logging_config import Event, configure_logging, log_event
 from app.observability import flush_traces
 from app.repositories import db
+from app.repositories.partner_repo import PartnerRepository
 from app.repositories.project_repo import ProjectRepository
 from app.repositories.quote_repo import QuoteRepository
 from app.repositories.supplier_repo import SupplierRepository
@@ -84,6 +85,7 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     # inexplicably empty match list.
     suppliers = SupplierRepository(settings.suppliers_file)
     app.state.supplier_repository = suppliers
+    app.state.partner_repository = PartnerRepository(settings.partners_file)
     try:
         app.state.supplier_count = suppliers.count()
     except (OSError, ValueError):

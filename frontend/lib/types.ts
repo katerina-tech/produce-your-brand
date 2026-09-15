@@ -243,6 +243,32 @@ export interface NearbyStudiosResponse {
   note: string;
 }
 
+export interface Partner {
+  id: string;
+  name: string;
+  address: string | null;
+  city: string;
+  website: string | null;
+  email: string | null;
+  phone: string | null;
+  /** What the source category suggests, never what the business confirmed. */
+  implied_method: string | null;
+  lat: number | null;
+  lon: number | null;
+  verified: boolean;
+}
+
+export interface PartnerDirectory {
+  partners: Partner[];
+  total: number;
+  contactable: number;
+  shown: number;
+  attribution: string;
+  area: string;
+  /** Source categories missing from this build entirely - a gap, not a finding. */
+  incomplete_categories: string[];
+}
+
 export interface FieldEvidenceItem {
   field: string;
   quote: string;

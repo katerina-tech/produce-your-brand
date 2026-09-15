@@ -31,6 +31,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
               My projects
             </Link>
             <Link
+              href="/partners"
+              className="hidden text-sm font-medium text-ink-soft transition-colors hover:text-ink sm:inline"
+            >
+              Directory
+            </Link>
+            <Link
               href="/account"
               className="hidden text-sm font-medium text-ink-soft transition-colors hover:text-ink sm:inline"
               title={account ? account.email : "Sign in - optional"}

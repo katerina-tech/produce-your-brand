@@ -1,0 +1,106 @@
+"""A real company, as opposed to a scored supplier.
+
+The distinction this module exists to hold: a :class:`~app.domain.supplier.Supplier`
+is something the matcher can score, because somebody established its materials,
+minimum order and lead time. A :class:`Partner` is a real business that exists
+at an address - and nothing more is claimed about it.
+
+Keeping them as separate types is what stops the two from blurring. A scraped
+directory entry that could be passed to the scorer would eventually be passed
+to the scorer, and the product would start making claims about named companies
+that nobody ever asked them.
+
+What a Partner carries, it carries because the business published it. What it
+does not carry is absent rather than guessed.
+"""
+
+from __future__ import annotations
+
+import math
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.domain.enums import ProductionMethod
+
+
+class Partner(BaseModel):
+    """A real business, with the details it published itself."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    id: str = Field(description="Stable id from the source, e.g. 'way/553786971'.")
+    name: str
+    source: str = Field(default="openstreetmap", description="Where this record came from.")
+    verified: bool = Field(
+        default=False,
+        description=(
+            "Whether a human confirmed this business can do what the record suggests. "
+            "False for everything collected automatically, which is everything so far."
+        ),
+    )
+
+    address: str | None = None
+    city: str = "Berlin"
+    lat: float | None = None
+    lon: float | None = None
+
+    website: str | None = None
+    email: str | None = None
+    phone: str | None = None
+
+    implied_method: ProductionMethod | None = Field(
+        default=None,
+        description=(
+            "What the source's own category suggests, not what the business confirmed. "
+            "A shop tagged 'printer' certainly prints; whether it screen-prints on PVC "
+            "is a question for the shop. Named separately from Supplier.supported_methods "
+            "so the two can never be mistaken for each other."
+        ),
+    )
+
+    @property
+    def is_contactable(self) -> bool:
+        """Whether there is any way to reach them from this record alone."""
+        return bool(self.email or self.phone or self.website)
+
+    def distance_km(self, lat: float, lon: float) -> float | None:
+        """Great-circle distance, or ``None`` when this record has no position.
+
+        Kilometres rather than "same city": a business two streets away in
+        Kreuzberg and one in Spandau are both "Berlin", and only one of them is
+        somewhere you would drive a pallet of mats to.
+        """
+        if self.lat is None or self.lon is None:
+            return None
+
+        radius_km = 6371.0
+        lat1, lon1, lat2, lon2 = map(math.radians, (self.lat, self.lon, lat, lon))
+        a = (
+            math.sin((lat2 - lat1) / 2) ** 2
+            + math.cos(lat1) * math.cos(lat2) * math.sin((lon2 - lon1) / 2) ** 2
+        )
+        return round(2 * radius_km * math.asin(math.sqrt(a)), 2)
+
+
+class PartnerDirectory(BaseModel):
+    """The collected set, with the provenance that travels with it.
+
+    ``attribution`` is not decoration: OpenStreetMap data is licensed under the
+    ODbL, which requires it, and a derived database that dropped it would be a
+    licence breach rather than an oversight.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    partners: tuple[Partner, ...]
+    attribution: str
+    source: str
+    area: str
+    incomplete_categories: tuple[str, ...] = Field(
+        default=(),
+        description=(
+            "Source categories that could not be fetched when this was built, so their "
+            "businesses are missing entirely. Recorded because a silent zero and a real "
+            "zero mean opposite things."
+        ),
+    )

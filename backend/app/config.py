@@ -113,6 +113,7 @@ class Settings(BaseSettings):
 
     # --- paths (all derived; never user-supplied) ---------------------------
     data_dir: Path = BACKEND_ROOT / "data"
+    partners_file: Path = BACKEND_ROOT / "data" / "berlin_partners.json"
     suppliers_file: Path = BACKEND_ROOT / "data" / "suppliers.json"
     offers_file: Path = BACKEND_ROOT / "data" / "offers.json"
     track_records_file: Path = BACKEND_ROOT / "data" / "track_records.json"

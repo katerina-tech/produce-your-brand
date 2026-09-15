@@ -18,6 +18,7 @@ import type {
   Health,
   NearbyStudiosResponse,
   Outreach,
+  PartnerDirectory,
   ProjectState,
   QuoteDesk,
   ProjectSummary,
@@ -187,6 +188,20 @@ export async function getOutreach(id: string): Promise<Outreach | null> {
     if (error instanceof ApiError && error.status === 409) return null;
     throw error;
   }
+}
+
+/** The directory of real businesses. Filtering happens on the server. */
+export async function getPartners(options: {
+  q?: string;
+  withEmail?: boolean;
+  limit?: number;
+} = {}): Promise<PartnerDirectory> {
+  const query = new URLSearchParams();
+  if (options.q) query.set("q", options.q);
+  if (options.withEmail) query.set("with_email", "true");
+  if (options.limit) query.set("limit", String(options.limit));
+  const suffix = query.toString();
+  return request<PartnerDirectory>(`/partners${suffix ? `?${suffix}` : ""}`);
 }
 
 /** Everything the quote screen renders, in one read. */
