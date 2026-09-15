@@ -22,6 +22,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.domain.capability import CapabilityClaim, ClaimKind, SupplierCapabilities
 from app.domain.enums import ProductionMethod
+from app.llm import prompts
 from app.llm.factory import LLMError, LLMProvider
 from app.logging_config import Event, log_event
 from app.security.guard import InjectionGuard, Provenance
@@ -70,24 +71,6 @@ class ExtractionOutcome:
     @property
     def nothing_was_read(self) -> bool:
         return self.capabilities.is_empty
-
-
-_PROMPT = """You are reading a production company's own website to record what it says it can do.
-
-Rules:
-- Report only what the page states. Never infer a capability from a photo, a
-  client logo, or an industry the company merely mentions.
-- Every claim must carry `quote`: an exact, verbatim substring of the page text.
-  If you cannot quote it, do not report it.
-- Keep `text` close to the company's own wording. Do not translate it into a
-  category it did not use.
-- Set `method` only when the text plainly names one of the known methods.
-  Leaving it empty is normal and correct.
-
-Page text:
----
-{page_text}
----"""
 
 
 def _verify(claims: tuple[ExtractedClaim, ...], source: str) -> tuple[list[CapabilityClaim], int]:
@@ -171,7 +154,8 @@ def extract_capabilities(
     try:
         reading = provider.structured(
             ExtractedCapabilities,
-            [{"role": "user", "content": _PROMPT.format(page_text=screening.text)}],  # type: ignore[list-item]
+            prompts.capability_extraction_messages(screening.text),
+            purpose="classifier",
         )
     except LLMError:
         log_event(

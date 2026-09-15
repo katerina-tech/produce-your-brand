@@ -429,3 +429,71 @@ def injection_classifier_messages(text: str) -> list[BaseMessage]:
             )
         ),
     ]
+
+
+# ------------------------------------------------- reading a company's website
+
+CAPABILITY_EXTRACTION_TASK = """You read a production company's own website and \
+record what it says it can do. You do not evaluate the company, compare it with \
+others, or infer anything.
+
+Report only what the page states. Never take a capability from a photo, a client \
+logo, an award, or an industry the company merely mentions serving.
+
+Every claim carries a source span: an exact, verbatim substring of the page. If \
+you cannot quote it, do not report it - a claim without a span is deleted before \
+it is stored, so reporting one costs the reader nothing and costs you accuracy.
+
+Keep the wording close to the company's own. Do not translate "Transferdruck auf \
+beschichteten Oberflaechen" into a category it did not use; the phrase itself is \
+what makes this company findable. Set a production method only when the text \
+plainly names one. Leaving it empty is normal and correct."""
+
+
+def capability_extraction_messages(page_text: str) -> list[BaseMessage]:
+    """Read one company's pages. Untrusted: this text came off the open web."""
+    return [
+        _system(CAPABILITY_EXTRACTION_TASK),
+        HumanMessage(
+            content=(
+                f"{UNTRUSTED_PREAMBLE}\n\n"
+                f"{fence('company_website', page_text)}\n\n"
+                "Report what this company states it can do, with a source span "
+                "for every claim."
+            )
+        ),
+    ]
+
+
+# ------------------------------------------- checking one company against a job
+
+MATCH_VERIFICATION_TASK = """You are given one buyer's requirement and one \
+company's own description of itself. You answer a single question: can this \
+company do this job?
+
+Answer only from what the company wrote. Say yes only when one of their claims \
+plainly covers the request. Say "unclear" whenever it is not plain - that is the \
+honest answer far more often than yes or no, and a confident yes that turns out \
+wrong costs a buyer a wasted enquiry and a supplier a wasted reply.
+
+Never carry a capability across to an adjacent one. Printing on textiles is not \
+printing on PVC. Engraving metal is not engraving wood.
+
+Quote the company's claim that supports your answer, copied exactly from the \
+list given. A quote that is not in that list is deleted, and your answer is \
+demoted to unclear - so an approximate quote helps nobody."""
+
+
+def match_verification_messages(requirement: str, claims: str) -> list[BaseMessage]:
+    """Check one retrieved company against one requirement."""
+    return [
+        _system(MATCH_VERIFICATION_TASK),
+        HumanMessage(
+            content=(
+                f"{UNTRUSTED_PREAMBLE}\n\n"
+                f"{fence('buyer_requirement', requirement)}\n\n"
+                f"{fence('company_claims', claims)}\n\n"
+                "Can this company do this job? Quote the claim that shows it."
+            )
+        ),
+    ]
