@@ -653,3 +653,70 @@ class CapabilityMatchesResponse(BaseModel):
         default="",
         description="Why the result is empty or thin, in words. Empty when it is neither.",
     )
+
+
+class TenderResponse(BaseModel):
+    """One public contract notice, as its buyer published it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    title: str
+    description: str = ""
+    cpv: str
+    family_prefix: str
+    family_label: str
+    implied_method: ProductionMethod | None = Field(
+        default=None, description="What the CPV family implies, never what the tender confirmed."
+    )
+    buyer: str = ""
+    buyer_city: str = ""
+    place_city: str = ""
+    place_region: str = ""
+    in_berlin: bool = False
+    estimated_value: float | None = Field(
+        default=None,
+        description="Euros when the buyer stated one. Very often they do not, and null says so.",
+    )
+    currency: str = ""
+    published_on: str
+    deadline: str | None = Field(
+        default=None,
+        description=(
+            "When bids close. Null for an award or prior-information notice, which has "
+            "no submission deadline by nature."
+        ),
+    )
+    suitable_for_smes: bool | None = Field(
+        default=None,
+        description=(
+            "The buyer's own declaration, three-valued. Null means they did not say, "
+            "which is not the same as no."
+        ),
+    )
+    procedure_type: str = ""
+    notice_type: str = ""
+    source_url: str = ""
+
+
+class TenderFamilyCount(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    prefix: str
+    label: str
+    count: int
+
+
+class TenderBoardResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    tenders: list[TenderResponse] = []
+    families: list[TenderFamilyCount] = []
+    total: int = Field(description="Notices held, before filtering.")
+    berlin: int = Field(description="How many of the total are Berlin work.")
+    shown: int
+    attribution: str = Field(
+        default="",
+        description="Where the data came from and under what terms. Travels with the data.",
+    )
+    imported_at: str = ""

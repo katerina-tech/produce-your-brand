@@ -33,6 +33,7 @@ from app.repositories.partner_repo import PartnerRepository
 from app.repositories.project_repo import ProjectRepository
 from app.repositories.quote_repo import QuoteRepository
 from app.repositories.supplier_repo import SupplierRepository
+from app.repositories.tender_repo import TenderRepository
 from app.repositories.user_repo import UserRepository
 from app.security.guard import build_guard
 from app.services.osm_search import get_osm_search
@@ -101,6 +102,9 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     # every boot would be a model call nobody asked for.
     app.state.capability_repository = CapabilityRepository(connection)
     app.state.capability_index = None
+    # Public contracts. Filled by scripts/fetch_tenders.py rather than at
+    # startup: a boot should not depend on a federal server being awake.
+    app.state.tender_repository = TenderRepository(connection)
     try:
         app.state.supplier_count = suppliers.count()
     except (OSError, ValueError):

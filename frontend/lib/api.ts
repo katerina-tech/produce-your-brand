@@ -26,6 +26,8 @@ import type {
   QuoteDesk,
   ProjectSummary,
   ResumeAction,
+  Tender,
+  TenderBoard,
   UploadResponse,
 } from "./types";
 
@@ -248,6 +250,41 @@ export async function matchPartners(
     method: "POST",
     body: JSON.stringify({ requirement, limit }),
   });
+}
+
+/** German public contracts for printing, textiles and engraving. */
+export async function getTenders(options: {
+  q?: string;
+  family?: string;
+  berlin?: boolean;
+  smes?: boolean;
+  includeClosed?: boolean;
+  limit?: number;
+} = {}): Promise<TenderBoard> {
+  const query = new URLSearchParams();
+  if (options.q) query.set("q", options.q);
+  if (options.family) query.set("family", options.family);
+  if (options.berlin) query.set("berlin", "true");
+  if (options.smes) query.set("smes", "true");
+  if (options.includeClosed) query.set("include_closed", "true");
+  if (options.limit) query.set("limit", String(options.limit));
+  const suffix = query.toString();
+  return request<TenderBoard>(`/tenders${suffix ? `?${suffix}` : ""}`);
+}
+
+/** One notice. */
+export async function getTender(id: string): Promise<Tender | null> {
+  try {
+    return await request<Tender>(`/tenders/detail/${id}`);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
+}
+
+/** Which companies in the directory say they can do this contract. */
+export async function matchTender(id: string): Promise<CapabilityMatches> {
+  return request<CapabilityMatches>(`/tenders/detail/${id}/matches`, { method: "POST" });
 }
 
 /** Everything the quote screen renders, in one read. */

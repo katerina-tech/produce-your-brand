@@ -36,6 +36,12 @@ export default function DirectoryLayout({ children }: { children: ReactNode }) {
               Companies
             </Link>
             <Link
+              href="/tenders"
+              className="text-sm font-medium text-ink-soft transition-colors hover:text-ink"
+            >
+              Tenders
+            </Link>
+            <Link
               href="/new"
               className="rounded-lg border border-line-strong bg-surface px-3.5 py-2 text-sm font-medium text-ink transition-colors hover:bg-canvas"
             >

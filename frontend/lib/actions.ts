@@ -23,6 +23,7 @@ import {
   generateDesign,
   getNearbyStudios,
   matchPartners,
+  matchTender,
   resumeProject,
   setPartnerVerification,
   submitFeedback,
@@ -353,6 +354,23 @@ export async function matchPartnersAction(requirement: string): Promise<MatchRes
         error instanceof ApiError
           ? error.message
           : "The search could not be run just now.",
+    };
+  }
+}
+
+/**
+ * Which companies say they can do one public contract.
+ *
+ * A failure costs the panel and never the page: a tender is worth reading
+ * whether or not this product can tell you who might bid for it.
+ */
+export async function matchTenderAction(tenderId: string): Promise<MatchResult> {
+  try {
+    return { matches: await matchTender(tenderId) };
+  } catch (error) {
+    return {
+      error:
+        error instanceof ApiError ? error.message : "The search could not be run just now.",
     };
   }
 }

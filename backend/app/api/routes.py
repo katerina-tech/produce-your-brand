@@ -54,6 +54,9 @@ from app.api.dto import (
     QuoteResponse,
     ReadinessChecks,
     ResumeRequest,
+    TenderBoardResponse,
+    TenderFamilyCount,
+    TenderResponse,
     UploadResponse,
     VerificationRequest,
 )
@@ -63,6 +66,7 @@ from app.domain.outreach import SAMPLE_ADDRESS_SUFFIX
 from app.domain.partner import Partner
 from app.domain.project import Project
 from app.domain.quote import SupplierQuote
+from app.domain.tender import Tender
 from app.llm.factory import (
     ImageProvider,
     LLMProvider,
@@ -73,6 +77,7 @@ from app.logging_config import Event
 from app.repositories.capability_repo import CapabilityRepository
 from app.repositories.partner_repo import PartnerRepository
 from app.repositories.supplier_repo import SupplierRepository
+from app.repositories.tender_repo import TenderRepository
 from app.repositories.user_repo import EmailAlreadyRegisteredError, UserRepository
 from app.security.uploads import UploadRejectedError, store_upload
 from app.services.auth import (
@@ -86,7 +91,7 @@ from app.services.auth import (
     validate_credentials,
     verify_password,
 )
-from app.services.capability_match import CapabilityIndex, find_matches
+from app.services.capability_match import DEFAULT_CANDIDATES, CapabilityIndex, find_matches
 from app.services.design_service import DesignGenerationError, generate_design
 from app.services.osm_search import OSMSearchError, OverpassStudioSearch
 from app.services.outreach import RFQNotApprovedError, render_email
@@ -157,6 +162,14 @@ def get_suppliers(request: Request) -> SupplierRepository | None:
 def get_partners(request: Request) -> PartnerRepository:
     """The real-company directory built at startup."""
     repository: PartnerRepository | None = getattr(request.app.state, "partner_repository", None)
+    if repository is None:
+        raise HTTPException(status_code=503, detail="The service is not ready.")
+    return repository
+
+
+def get_tenders(request: Request) -> TenderRepository:
+    """The public-contract board built at startup."""
+    repository: TenderRepository | None = getattr(request.app.state, "tender_repository", None)
     if repository is None:
         raise HTTPException(status_code=503, detail="The service is not ready.")
     return repository
@@ -713,6 +726,19 @@ def match_partners(
     scores or ranks a company on a model's judgement: the order is retrieval
     similarity, and the reason a buyer reads is the company's own sentence.
     """
+    return _matches_for(request, capabilities, payload.requirement, limit=payload.limit)
+
+
+def _matches_for(
+    request: Request,
+    capabilities: CapabilityRepository,
+    requirement: str,
+    *,
+    limit: int = DEFAULT_CANDIDATES,
+) -> CapabilityMatchesResponse:
+    """Retrieve, verify, answer. Shared by the directory search and the tender
+    board, because "who can do this" is the same question whether the words
+    came from a buyer's box or from a government's notice."""
     indexed = capabilities.with_claims_count()
     if indexed == 0:
         return CapabilityMatchesResponse(
@@ -749,7 +775,7 @@ def match_partners(
         )
         provider = None
 
-    found = find_matches(payload.requirement, index, provider, limit=payload.limit)
+    found = find_matches(requirement, index, provider, limit=limit)
     supported = sum(1 for match in found if match.is_supported)
 
     return CapabilityMatchesResponse(
@@ -839,6 +865,117 @@ def set_partner_verification(
     # cache. Dropping it is cheaper and more honest than patching it in place.
     request.app.state.capability_index = None
     return _partner_response(partner)
+
+
+ATTRIBUTION = (
+    "Bekanntmachungsservice / Datenservice Öffentlicher Einkauf (Beschaffungsamt des BMI), "
+    "released as open data under CC0 1.0. Reproduced, not endorsed."
+)
+
+
+def _tender_response(tender: Tender) -> TenderResponse:
+    """One notice on the wire. Written once, so the board and the detail view
+    cannot drift into disagreeing about the same contract."""
+    return TenderResponse(
+        id=tender.id,
+        title=tender.title,
+        description=tender.description,
+        cpv=tender.cpv,
+        family_prefix=tender.family_prefix,
+        family_label=tender.family_label,
+        implied_method=tender.implied_method,
+        buyer=tender.buyer,
+        buyer_city=tender.buyer_city,
+        place_city=tender.place_city,
+        place_region=tender.place_region,
+        in_berlin=tender.is_berlin,
+        estimated_value=tender.estimated_value,
+        currency=tender.currency,
+        published_on=tender.published_on.isoformat(),
+        deadline=tender.deadline.isoformat() if tender.deadline else None,
+        suitable_for_smes=tender.suitable_for_smes,
+        procedure_type=tender.procedure_type,
+        notice_type=tender.notice_type,
+        source_url=tender.source_url,
+    )
+
+
+@router.get("/tenders", response_model=TenderBoardResponse, tags=["tenders"])
+def list_tenders(
+    q: str | None = None,
+    family: str | None = None,
+    berlin: bool = False,
+    smes: bool = False,
+    include_closed: bool = False,
+    limit: int = 100,
+    tenders: TenderRepository = Depends(get_tenders),
+) -> TenderBoardResponse:
+    """German public contracts for printing, textiles and engraving.
+
+    Open ones first and soonest deadline first, because a board of closed
+    tenders is a board nobody can use. The data is CC0 open data from the
+    federal Bekanntmachungsservice - reproduced here with its attribution
+    travelling in the response rather than remembered by a reader.
+    """
+    found = tenders.search(
+        query=q,
+        family=family,
+        berlin_only=berlin,
+        smes_only=smes,
+        open_only=not include_closed,
+        limit=limit,
+    )
+    return TenderBoardResponse(
+        tenders=[_tender_response(tender) for tender in found],
+        # The whole list every time, not only the families surviving the
+        # current filter: a filter that removes its own options is one you
+        # cannot get back out of.
+        families=[
+            TenderFamilyCount(prefix=prefix, label=label, count=count)
+            for prefix, label, count in tenders.families()
+        ],
+        total=tenders.count(),
+        berlin=tenders.berlin_count(),
+        shown=len(found),
+        attribution=ATTRIBUTION,
+        imported_at=tenders.latest_import(),
+    )
+
+
+@router.get("/tenders/detail/{tender_id}", response_model=TenderResponse, tags=["tenders"])
+def get_tender(tender_id: str, tenders: TenderRepository = Depends(get_tenders)) -> TenderResponse:
+    """One notice. The id is a UUID, so this one needs no path converter."""
+    tender = tenders.get(tender_id)
+    if tender is None:
+        raise HTTPException(status_code=404, detail="No such tender.")
+    return _tender_response(tender)
+
+
+@router.post(
+    "/tenders/detail/{tender_id}/matches",
+    response_model=CapabilityMatchesResponse,
+    tags=["tenders"],
+)
+def match_tender(
+    tender_id: str,
+    request: Request,
+    tenders: TenderRepository = Depends(get_tenders),
+    capabilities: CapabilityRepository = Depends(get_capabilities),
+) -> CapabilityMatchesResponse:
+    """Which companies in the directory say they can do this contract.
+
+    The thing a tender aggregator cannot do and this one can: the other side of
+    the market is already here. Retrieval over what the companies wrote about
+    themselves, then a model that must quote the company's own claim, then the
+    same literal verifier that deletes any quote they did not make.
+
+    The buyer's own title and description are the query. Nothing here rewrites
+    the tender into what this product would rather it said.
+    """
+    tender = tenders.get(tender_id)
+    if tender is None:
+        raise HTTPException(status_code=404, detail="No such tender.")
+    return _matches_for(request, capabilities, tender.searchable_text)
 
 
 @router.get("/projects/{project_id}/quotes", response_model=QuoteDeskResponse, tags=["quotes"])

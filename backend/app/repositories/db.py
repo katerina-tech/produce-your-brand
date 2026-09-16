@@ -108,6 +108,32 @@ CREATE TABLE IF NOT EXISTS partner_claims (
     PRIMARY KEY (partner_id, position)
 );
 
+CREATE TABLE IF NOT EXISTS tenders (
+    id               TEXT PRIMARY KEY,
+    title            TEXT NOT NULL,
+    description      TEXT NOT NULL DEFAULT '',
+    cpv              TEXT NOT NULL,
+    family_prefix    TEXT NOT NULL,
+    family_label     TEXT NOT NULL,
+    implied_method   TEXT,
+    buyer            TEXT NOT NULL DEFAULT '',
+    buyer_city       TEXT NOT NULL DEFAULT '',
+    place_city       TEXT NOT NULL DEFAULT '',
+    place_region     TEXT NOT NULL DEFAULT '',
+    estimated_value  REAL,
+    currency         TEXT NOT NULL DEFAULT '',
+    published_on     TEXT NOT NULL,
+    deadline         TEXT,
+    suitable_for_smes INTEGER,
+    procedure_type   TEXT NOT NULL DEFAULT '',
+    notice_type      TEXT NOT NULL DEFAULT '',
+    source_url       TEXT NOT NULL DEFAULT '',
+    imported_at      TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_tenders_published ON tenders(published_on DESC);
+CREATE INDEX IF NOT EXISTS idx_tenders_family ON tenders(family_prefix);
+CREATE INDEX IF NOT EXISTS idx_tenders_region ON tenders(place_region);
 CREATE INDEX IF NOT EXISTS idx_events_project ON project_events(project_id);
 CREATE INDEX IF NOT EXISTS idx_quotes_project ON project_quotes(project_id);
 CREATE INDEX IF NOT EXISTS idx_projects_updated ON projects(updated_at DESC);

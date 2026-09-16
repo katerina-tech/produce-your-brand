@@ -485,3 +485,46 @@ export const WORKFLOW_STAGES: Stage[] = [
 export function titleise(value: string): string {
   return value.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
 }
+
+/** One public contract notice, as its buyer published it. */
+export interface Tender {
+  id: string;
+  title: string;
+  description: string;
+  cpv: string;
+  family_prefix: string;
+  family_label: string;
+  implied_method: string | null;
+  buyer: string;
+  buyer_city: string;
+  place_city: string;
+  place_region: string;
+  in_berlin: boolean;
+  estimated_value: number | null;
+  currency: string;
+  published_on: string;
+  /** Null for an award notice, which has no submission deadline by nature. */
+  deadline: string | null;
+  /** Three-valued: null means the buyer did not say, which is not "no". */
+  suitable_for_smes: boolean | null;
+  procedure_type: string;
+  notice_type: string;
+  source_url: string;
+}
+
+export interface TenderFamilyCount {
+  prefix: string;
+  label: string;
+  count: number;
+}
+
+export interface TenderBoard {
+  tenders: Tender[];
+  families: TenderFamilyCount[];
+  total: number;
+  berlin: number;
+  shown: number;
+  /** Travels with the data rather than being remembered by a reader. */
+  attribution: string;
+  imported_at: string;
+}

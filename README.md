@@ -673,6 +673,73 @@ those rows as read would have written off everything a bad afternoon touched.
 
 ---
 
+## Public tenders
+
+`/tenders` is the other half of the market. The directory answers *who can make
+this*; a tender is a buyer who has already said what they want, in public, with
+a deadline — and 136 Berlin companies who have never heard of it.
+
+**This is an API, not a scrape.** Germany's *Datenservice Öffentlicher Einkauf*
+publishes every federal, state and municipal notice as open data under **CC0** —
+public domain, meant to be consumed. `scripts/fetch_tenders.py` pulls it; there
+is no robots.txt to weigh and no terms to read twice.
+
+It also carries **below-threshold** notices, which never reach the EU journal.
+That is the half that matters here: an EU-threshold contract is too large for a
+copyshop, and the small municipal ones are the reachable work.
+
+**CPV is the gate, and it is a controlled vocabulary.** The EU's Common
+Procurement Vocabulary says what is being bought, in codes chosen by the buyer
+rather than inferred by us — so it is exactly what this codebase already
+trusts, the same discipline as the OpenStreetMap tag map. Six families, each
+because a Berlin printer, textile shop or engraver could actually bid:
+Druckerzeugnisse, Druckdienstleistungen, Geschäftsdrucksachen, Pokale &
+Gravuren, Arbeitskleidung & Textilien, Werbung & Kampagnen. About **23,000
+notices a month become 200**, and a model never decides whether a tender is
+about printing.
+
+### The part an aggregator cannot copy
+
+A list of contracts is a commodity. What is not: **the other side of the market
+is in the same database.** One button on a tender runs the existing pipeline —
+embeddings over what the companies wrote about themselves, then a model that
+must quote the company's own claim, then the same literal verifier that deletes
+any quote they did not make. The answer is not "here is a contract" but "here
+is a contract, and these four Berlin printers say, in their own words, that
+they do this".
+
+It runs on a click rather than on page load: each candidate costs a model call,
+and a public board that spent money on everybody browsing would not stay public.
+
+### Three things the data does not do, said plainly
+
+**The submission deadline is in none of the tabular formats.** The CSV export
+does not carry one and neither does OCDS — both were checked. It exists only in
+the eForms XML, as `TenderSubmissionDeadlinePeriod`, so the importer reads both:
+the CSV for the structured fields, one targeted element out of the XML for the
+date bids actually close. Its timezone offset is kept rather than trimmed —
+08:00 in Berlin is not 08:00 in UTC, and dropping `+02:00` would tell somebody
+they had two hours longer than they do.
+
+**Facts live at two levels.** `placeOfPerformance` often carries one row with an
+empty lot identifier and nothing per lot, so the lookup falls back from lot to
+notice — never upwards, which would put one lot's deadline on four others. The
+SME declaration is the reverse case: it is made per lot, the CPV match is often
+on the notice-level row, and reading only that one reported "not stated" for
+every tender in Germany — wrong about fifty-six of them a month.
+
+**About 40% of notices state a deadline at all.** The rest are award and
+prior-information notices, which have none by nature. They are shown, not
+hidden: a notice with no stated deadline counts as open, because deciding a
+contract is closed on the strength of an empty field would be this product
+inventing a fact.
+
+**Volume, honestly:** roughly 15 Berlin printing tenders a month, and about 185
+across Germany. Berlin alone is thin, which is why the board is national with
+Berlin filterable rather than Berlin-only.
+
+---
+
 ## PostgreSQL
 
 `DATABASE_URL` selects it; absent, the application uses a local SQLite file.
@@ -775,6 +842,8 @@ backend/
       contact_extract.py     # de-obfuscates an address and picks the right one
       capability_extract.py  # reads that text into claims, deletes unsupported
       capability_match.py    # embeddings retrieve, a model verifies, code ranks
+      tender_import.py       # a zip of twenty CSVs into the 200 notices a month
+                             #   these companies could bid for
       quote_desk.py      # supplier replies: capture, compare, chase
       outreach.py        # the approved RFQ as an email - opens, never sends
     rag/
@@ -783,6 +852,7 @@ backend/
     repositories/        # data access; SQL lives here and nowhere else
       database.py        # one interface over SQLite and PostgreSQL
       partner_repo.py    # the Berlin directory, seeded once from the survey
+      tender_repo.py     # public contracts, open ones and soonest first
       capability_repo.py # what was read from each company's site, plus why a
                          #   reading is thin - so an outage is not mistaken for
                          #   a company with nothing to say
@@ -807,6 +877,8 @@ backend/
                               #   from its coordinates, politely
     enrich_contacts.py        # recovers the email a site obfuscates, and the
                               #   one-line summary it publishes. No model.
+    fetch_tenders.py          # German public contracts from the CC0 open-data
+                              #   API; CPV-filtered, deadlines out of eForms
     demo_run.py          # the only code that calls a real model
   tests/
   Dockerfile, docker-entrypoint.sh, railway.json   # the deployed backend
@@ -1035,7 +1107,7 @@ take on trust.
 | Human-in-the-loop | four gates, enforced by `interrupt()` | `test_workflow_stops_at_all_four_approval_gates` |
 | Structured logging | one config, closed event enum | `test_log_events_are_a_closed_set` |
 
-**655 backend tests, 28 frontend tests.** No test calls a live model, and none
+**693 backend tests, 28 frontend tests.** No test calls a live model, and none
 calls the real Overpass API either - `test_osm_search.py` swaps in
 `httpx.MockTransport`. The graph runs on a scripted provider and retrieval on a
 hashing embedder whose similarity is real term overlap, so the suite is free,

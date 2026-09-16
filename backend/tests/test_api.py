@@ -107,6 +107,14 @@ def test_openapi_exposes_exactly_the_intended_surface(api: TestClient) -> None:
         # swallows a slash has to be the last one in the path.
         "/api/partners/detail/{partner_id}",
         "/api/partners/verification/{partner_id}",
+        # German public contracts, from CC0 open data. Read-only and public:
+        # nothing here belongs to a project or an account.
+        "/api/tenders",
+        "/api/tenders/detail/{tender_id}",
+        # The one thing a tender aggregator cannot do - the other side of the
+        # market is in the same database. A POST because each candidate costs a
+        # model call, so it happens on a click rather than on a page load.
+        "/api/tenders/detail/{tender_id}/matches",
         "/api/projects",
         "/api/projects/{project_id}",
         "/api/projects/{project_id}/resume",
