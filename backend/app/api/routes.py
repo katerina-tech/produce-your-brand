@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import base64
 import logging
+from datetime import date
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
 from pydantic import ValidationError
@@ -32,6 +33,7 @@ from app.api.dto import (
     ConfirmQuoteRequest,
     CreateProjectRequest,
     CredentialsRequest,
+    DemandBoardResponse,
     FeedbackEntryResponse,
     FeedbackListResponse,
     FeedbackRequest,
@@ -50,6 +52,9 @@ from app.api.dto import (
     ProjectListResponse,
     ProjectStateResponse,
     ProjectSummaryResponse,
+    PublicationResponse,
+    PublicRequestResponse,
+    PublishRequestBody,
     QuoteDeskResponse,
     QuoteResponse,
     ReadinessChecks,
@@ -61,6 +66,7 @@ from app.api.dto import (
     VerificationRequest,
 )
 from app.config import Settings, get_settings
+from app.domain.demand import PublicRequest, draft_from
 from app.domain.enums import ProductionMethod
 from app.domain.outreach import SAMPLE_ADDRESS_SUFFIX
 from app.domain.partner import Partner
@@ -75,6 +81,7 @@ from app.llm.factory import (
 )
 from app.logging_config import Event
 from app.repositories.capability_repo import CapabilityRepository
+from app.repositories.demand_repo import DemandRepository
 from app.repositories.partner_repo import PartnerRepository
 from app.repositories.supplier_repo import SupplierRepository
 from app.repositories.tender_repo import TenderRepository
@@ -162,6 +169,14 @@ def get_suppliers(request: Request) -> SupplierRepository | None:
 def get_partners(request: Request) -> PartnerRepository:
     """The real-company directory built at startup."""
     repository: PartnerRepository | None = getattr(request.app.state, "partner_repository", None)
+    if repository is None:
+        raise HTTPException(status_code=503, detail="The service is not ready.")
+    return repository
+
+
+def get_demand(request: Request) -> DemandRepository:
+    """The public board of buyers' requests."""
+    repository: DemandRepository | None = getattr(request.app.state, "demand_repository", None)
     if repository is None:
         raise HTTPException(status_code=503, detail="The service is not ready.")
     return repository
@@ -865,6 +880,149 @@ def set_partner_verification(
     # cache. Dropping it is cheaper and more honest than patching it in place.
     request.app.state.capability_index = None
     return _partner_response(partner)
+
+
+def _request_response(listing: PublicRequest) -> PublicRequestResponse:
+    """One listing on the wire.
+
+    Note what this does not copy: ``project_id``. It is on the domain object so
+    the buyer's own screens can find their listing, and putting it on the wire
+    would hand out the address of a private page.
+    """
+    return PublicRequestResponse(
+        id=listing.id,
+        product=listing.product,
+        product_category=listing.product_category,
+        material=listing.material,
+        quantity=listing.quantity,
+        customer_owns_product=listing.customer_owns_product,
+        method=listing.method,
+        city=listing.city,
+        deadline=listing.deadline.isoformat() if listing.deadline else None,
+        budget_eur=listing.budget_eur,
+        note=listing.note,
+        published_at=listing.published_at.isoformat(),
+        expires_on=listing.expires_on.isoformat(),
+    )
+
+
+@router.get("/requests", response_model=DemandBoardResponse, tags=["requests"])
+def list_requests(
+    q: str | None = None,
+    method: ProductionMethod | None = None,
+    customer_owned: bool = False,
+    limit: int = 100,
+    demand: DemandRepository = Depends(get_demand),
+) -> DemandBoardResponse:
+    """What buyers are asking for, published by them on purpose.
+
+    Anonymous by design and open only: an expired listing is never returned,
+    because a company that answers a dead request once does not come back.
+    """
+    found = demand.search(query=q, method=method, customer_owned=customer_owned, limit=limit)
+    return DemandBoardResponse(
+        requests=[_request_response(listing) for listing in found],
+        total=demand.count_open(),
+        shown=len(found),
+    )
+
+
+@router.get(
+    "/requests/detail/{request_id}", response_model=PublicRequestResponse, tags=["requests"]
+)
+def get_request(
+    request_id: str, demand: DemandRepository = Depends(get_demand)
+) -> PublicRequestResponse:
+    """One listing. 404 once it has expired or been withdrawn, which is the
+    same answer a listing that never existed gets - a link that has been taken
+    down should not confirm that it used to be there."""
+    listing = demand.get(request_id)
+    if listing is None or not listing.is_open_on(date.today()):
+        raise HTTPException(status_code=404, detail="No such request.")
+    return _request_response(listing)
+
+
+@router.get(
+    "/projects/{project_id}/publication", response_model=PublicationResponse, tags=["requests"]
+)
+def get_publication(
+    project_id: str,
+    service: ProjectService = Depends(get_service),
+    demand: DemandRepository = Depends(get_demand),
+    user_id: str | None = Depends(current_user_id),
+) -> PublicationResponse:
+    """What is live for this project, and what publishing would put on the board.
+
+    The preview is built by the same function that would store it, so it cannot
+    drift from what strangers would actually see.
+    """
+    project = _visible_project(service, project_id, user_id)
+    live = demand.for_project(project_id)
+    draft = draft_from(project, show_budget=live.budget_eur is not None if live else False)
+
+    return PublicationResponse(
+        published=_request_response(live) if live else None,
+        preview=_request_response(draft) if draft else None,
+        can_publish=draft is not None,
+        reason=(
+            ""
+            if draft is not None
+            else "Confirm the brief first - a listing is a claim you make to strangers."
+        ),
+    )
+
+
+@router.post(
+    "/projects/{project_id}/publication", response_model=PublicationResponse, tags=["requests"]
+)
+def publish_request(
+    project_id: str,
+    payload: PublishRequestBody,
+    service: ProjectService = Depends(get_service),
+    demand: DemandRepository = Depends(get_demand),
+    user_id: str | None = Depends(current_user_id),
+) -> PublicationResponse:
+    """Put this project's request on the public board.
+
+    Always the buyer's explicit act. Nothing publishes itself: a brief written
+    for this product is not a brief written for the public, and the difference
+    is the buyer's to decide rather than a default to discover.
+    """
+    project = _visible_project(service, project_id, user_id)
+    draft = draft_from(project, show_budget=payload.show_budget, note=payload.note)
+    if draft is None:
+        raise HTTPException(
+            status_code=409,
+            detail="Confirm the brief first - a listing is a claim you make to strangers.",
+        )
+
+    live = demand.publish(draft)
+    return PublicationResponse(
+        published=_request_response(live),
+        preview=_request_response(draft),
+        can_publish=True,
+    )
+
+
+@router.delete(
+    "/projects/{project_id}/publication", response_model=PublicationResponse, tags=["requests"]
+)
+def withdraw_request(
+    project_id: str,
+    service: ProjectService = Depends(get_service),
+    demand: DemandRepository = Depends(get_demand),
+    user_id: str | None = Depends(current_user_id),
+) -> PublicationResponse:
+    """Take it down. Deleted rather than hidden, because everything in that
+    table is text somebody agreed to publish."""
+    project = _visible_project(service, project_id, user_id)
+    demand.withdraw(project_id)
+    draft = draft_from(project)
+    return PublicationResponse(
+        published=None,
+        preview=_request_response(draft) if draft else None,
+        can_publish=draft is not None,
+    )
 
 
 ATTRIBUTION = (

@@ -115,6 +115,12 @@ def test_openapi_exposes_exactly_the_intended_surface(api: TestClient) -> None:
         # market is in the same database. A POST because each candidate costs a
         # model call, so it happens on a click rather than on a page load.
         "/api/tenders/detail/{tender_id}/matches",
+        # Private demand: what buyers are asking for, published by them. The
+        # board is public and anonymous; the publish/withdraw endpoint is on
+        # the project, because only its owner may decide.
+        "/api/requests",
+        "/api/requests/detail/{request_id}",
+        "/api/projects/{project_id}/publication",
         "/api/projects",
         "/api/projects/{project_id}",
         "/api/projects/{project_id}/resume",

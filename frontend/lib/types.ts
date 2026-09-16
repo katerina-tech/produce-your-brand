@@ -528,3 +528,42 @@ export interface TenderBoard {
   attribution: string;
   imported_at: string;
 }
+
+/**
+ * One buyer's request, as strangers see it.
+ *
+ * Deliberately carries no name, no email and no project id: a public board with
+ * contact details on it is a board that gets harvested. The buyer chooses who
+ * to answer.
+ */
+export interface PublicRequest {
+  id: string;
+  product: string;
+  product_category: string | null;
+  material: string | null;
+  quantity: number | null;
+  /** Three-valued: many shops will not touch customer-owned stock. */
+  customer_owns_product: boolean | null;
+  method: string | null;
+  city: string;
+  deadline: string | null;
+  /** Only when the buyer chose to show it. */
+  budget_eur: number | null;
+  note: string;
+  published_at: string;
+  expires_on: string;
+}
+
+export interface DemandBoard {
+  requests: PublicRequest[];
+  total: number;
+  shown: number;
+}
+
+/** The buyer's own view: what is live, and what publishing would put up. */
+export interface Publication {
+  published: PublicRequest | null;
+  preview: PublicRequest | null;
+  can_publish: boolean;
+  reason: string;
+}

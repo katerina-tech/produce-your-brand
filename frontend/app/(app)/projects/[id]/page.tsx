@@ -7,6 +7,7 @@ import { ClarifyPrompt } from "@/components/workflow/ClarifyPrompt";
 import { ContactPartner } from "@/components/workflow/ContactPartner";
 import { FeedbackSurvey } from "@/components/workflow/FeedbackSurvey";
 import { NearbyStudios } from "@/components/workflow/NearbyStudios";
+import { PublishRequest } from "@/components/workflow/PublishRequest";
 import { QuoteDeskPanel } from "@/components/workflow/QuoteDesk";
 import { MatchList } from "@/components/workflow/MatchList";
 import { MethodReview } from "@/components/workflow/MethodReview";
@@ -210,6 +211,15 @@ export default async function ProjectPage({
       ) : null}
 
       <StageView state={state} outreach={outreach} desk={desk} />
+
+      {/* The other direction: instead of only writing to companies, let them
+          find you. Outside StageView because it belongs to no single stage -
+          it appears the moment the brief is confirmed, which is when it is
+          most useful, and stays available afterwards. The panel renders
+          nothing at all until then. Anonymous, reversible, and always the
+          buyer's explicit act: a brief written for this product is not a
+          brief written for strangers. */}
+      <PublishRequest projectId={state.project_id} />
     </div>
   );
 }

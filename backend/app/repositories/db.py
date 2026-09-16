@@ -131,6 +131,24 @@ CREATE TABLE IF NOT EXISTS tenders (
     imported_at      TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS public_requests (
+    id                   TEXT PRIMARY KEY,
+    project_id           TEXT NOT NULL UNIQUE REFERENCES projects(id) ON DELETE CASCADE,
+    product              TEXT NOT NULL,
+    product_category     TEXT,
+    material             TEXT,
+    quantity             INTEGER,
+    customer_owns_product INTEGER,
+    method               TEXT,
+    city                 TEXT NOT NULL DEFAULT '',
+    deadline             TEXT,
+    budget_eur           REAL,
+    note                 TEXT NOT NULL DEFAULT '',
+    published_at         TEXT NOT NULL,
+    expires_on           TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_requests_expires ON public_requests(expires_on);
 CREATE INDEX IF NOT EXISTS idx_tenders_published ON tenders(published_on DESC);
 CREATE INDEX IF NOT EXISTS idx_tenders_family ON tenders(family_prefix);
 CREATE INDEX IF NOT EXISTS idx_tenders_region ON tenders(place_region);

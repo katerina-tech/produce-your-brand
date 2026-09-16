@@ -22,15 +22,19 @@ import {
   deleteQuote,
   generateDesign,
   getNearbyStudios,
+  getPublication,
   matchPartners,
   matchTender,
+  publishRequest,
   resumeProject,
   setPartnerVerification,
+  withdrawRequest,
   submitFeedback,
   uploadDesign,
 } from "./api";
 import type {
   CapabilityMatches,
+  Publication,
   FeedbackRequest,
   GeneratedDesign,
   NearbyStudio,
@@ -372,5 +376,55 @@ export async function matchTenderAction(tenderId: string): Promise<MatchResult> 
       error:
         error instanceof ApiError ? error.message : "The search could not be run just now.",
     };
+  }
+}
+
+export interface PublicationResult extends ActionResult {
+  publication?: Publication;
+}
+
+/**
+ * Put a project's request on the public board, or take it down.
+ *
+ * Always the buyer's explicit act, and always reversible. Nothing publishes
+ * itself: a brief written for this product is not a brief written for
+ * strangers, and the difference is theirs to decide rather than a default to
+ * discover afterwards.
+ */
+export async function publishRequestAction(
+  projectId: string,
+  body: { show_budget: boolean; note: string },
+): Promise<PublicationResult> {
+  try {
+    const publication = await publishRequest(projectId, body);
+    revalidatePath("/requests");
+    revalidatePath(`/projects/${projectId}`);
+    return { publication };
+  } catch (error) {
+    return {
+      error: error instanceof ApiError ? error.message : "The listing could not be published.",
+    };
+  }
+}
+
+export async function withdrawRequestAction(projectId: string): Promise<PublicationResult> {
+  try {
+    const publication = await withdrawRequest(projectId);
+    revalidatePath("/requests");
+    revalidatePath(`/projects/${projectId}`);
+    return { publication };
+  } catch (error) {
+    return {
+      error: error instanceof ApiError ? error.message : "The listing could not be taken down.",
+    };
+  }
+}
+
+/** The buyer's current publication state, for the panel's first render. */
+export async function loadPublicationAction(projectId: string): Promise<PublicationResult> {
+  try {
+    return { publication: await getPublication(projectId) };
+  } catch {
+    return { error: "The publication panel could not be loaded." };
   }
 }

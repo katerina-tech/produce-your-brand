@@ -25,6 +25,8 @@ import type {
   ProjectState,
   QuoteDesk,
   ProjectSummary,
+  Publication,
+  DemandBoard,
   ResumeAction,
   Tender,
   TenderBoard,
@@ -250,6 +252,41 @@ export async function matchPartners(
     method: "POST",
     body: JSON.stringify({ requirement, limit }),
   });
+}
+
+/** What buyers are asking for, published by them on purpose. */
+export async function getRequests(options: {
+  q?: string;
+  method?: string;
+  customerOwned?: boolean;
+  limit?: number;
+} = {}): Promise<DemandBoard> {
+  const query = new URLSearchParams();
+  if (options.q) query.set("q", options.q);
+  if (options.method) query.set("method", options.method);
+  if (options.customerOwned) query.set("customer_owned", "true");
+  if (options.limit) query.set("limit", String(options.limit));
+  const suffix = query.toString();
+  return request<DemandBoard>(`/requests${suffix ? `?${suffix}` : ""}`);
+}
+
+/** What is live for one project, and what publishing would put on the board. */
+export async function getPublication(projectId: string): Promise<Publication> {
+  return request<Publication>(`/projects/${projectId}/publication`);
+}
+
+export async function publishRequest(
+  projectId: string,
+  body: { show_budget: boolean; note: string },
+): Promise<Publication> {
+  return request<Publication>(`/projects/${projectId}/publication`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function withdrawRequest(projectId: string): Promise<Publication> {
+  return request<Publication>(`/projects/${projectId}/publication`, { method: "DELETE" });
 }
 
 /** German public contracts for printing, textiles and engraving. */

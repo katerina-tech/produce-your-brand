@@ -11,7 +11,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.domain.enums import PriceBasis, ProductionMethod, Stage
+from app.domain.enums import PriceBasis, ProductCategory, ProductionMethod, Stage
 
 
 class ErrorDetail(BaseModel):
@@ -720,3 +720,83 @@ class TenderBoardResponse(BaseModel):
         description="Where the data came from and under what terms. Travels with the data.",
     )
     imported_at: str = ""
+
+
+class PublicRequestResponse(BaseModel):
+    """One buyer's request, as strangers see it.
+
+    Deliberately carries no name, no email and no project id. A public board
+    with contact details on it is a board that gets harvested, and the person
+    who wrote "I need 100 mats" would receive forty cold emails - which is both
+    § 7 UWG and a bad afternoon. The buyer chooses who to answer.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    product: str
+    product_category: ProductCategory | None = None
+    material: str | None = None
+    quantity: int | None = None
+    customer_owns_product: bool | None = Field(
+        default=None,
+        description=(
+            "Whether the goods already exist and need decorating. Three-valued, and "
+            "the most useful line here: many shops will not touch customer-owned "
+            "stock, and the ones that will want to know."
+        ),
+    )
+    method: ProductionMethod | None = None
+    city: str = ""
+    deadline: str | None = None
+    budget_eur: float | None = Field(
+        default=None, description="Only when the buyer chose to show it. Absent by default."
+    )
+    note: str = ""
+    published_at: str
+    expires_on: str
+
+
+class DemandBoardResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    requests: list[PublicRequestResponse] = []
+    total: int = Field(description="Open listings, before filtering.")
+    shown: int
+
+
+class PublishRequestBody(BaseModel):
+    """What the buyer decides at the moment of publishing."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    show_budget: bool = Field(
+        default=False,
+        description=(
+            "Off unless ticked. What somebody is willing to pay is the one fact that "
+            "weakens their position in every negotiation that follows."
+        ),
+    )
+    note: str = Field(
+        default="",
+        max_length=600,
+        description="The buyer's own words for strangers, not lifted from their brief.",
+    )
+
+
+class PublicationResponse(BaseModel):
+    """The buyer's own view of their listing: what is live, and what would be.
+
+    ``preview`` exists so nothing is published that the buyer has not read as
+    public text. It is the exact listing the board would show, built from the
+    same code that would store it.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    published: PublicRequestResponse | None = None
+    preview: PublicRequestResponse | None = None
+    can_publish: bool = Field(
+        description="False until the brief is confirmed - a listing is a claim the buyer makes."
+    )
+    reason: str = Field(default="", description="Why not, when it cannot. Empty otherwise.")

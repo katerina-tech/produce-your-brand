@@ -773,6 +773,53 @@ requires a cron service to exit, which this one does.
 
 ---
 
+## Open requests — the demand board
+
+`/requests` is the third side of the market. Tenders are public demand from
+government, the directory is supply, and this is **private demand**: somebody
+who wants a hundred mats printed and would rather be found than do the finding.
+
+A listing is the one place in this product where a private brief becomes public
+text, so the projection out of `ProductionRequirement` is deliberate and every
+omission has a reason.
+
+| not published | why |
+| --- | --- |
+| name, email, any contact | a board with contact details is a board that gets harvested — and somebody asking for 100 mats should not receive forty cold emails (§ 7 UWG, and a bad afternoon) |
+| the budget, unless ticked | the one figure that weakens their position in every negotiation that follows |
+| the street and postcode | `location` is "as stated" and is routinely a doorstep; the listing carries the city and nothing finer |
+| the project id | a project id in a public URL is the address of a private page; listings get their own random id |
+| the brief's own free text | it was written for this product, not for strangers — the note is the buyer's words for the public, and starts empty |
+
+A test asserts those contact fields are **absent from the response schema**
+rather than merely left blank, so a later careless copy cannot fill one in.
+
+**Nothing is published that the buyer has not read as public text.** The panel
+shows the exact listing — built server-side by the same function that stores it,
+not a mock-up — and they publish that or they do not. It appears the moment the
+brief is confirmed, which is also when it is most useful: while they are still
+looking, rather than once they are already talking to somebody.
+
+**Every listing ends.** The buyer's deadline, or sixty days. Unlike a tender —
+where an undated notice is still a real notice — a board of forgotten requests
+is worse than a small one, because a company that answers a dead request once
+does not come back. Expired listings are **deleted** at startup, not hidden:
+this is text somebody agreed to make public until a date, and keeping it past
+that date is not ours to do. Taking a listing down is a delete for the same
+reason; there is no `is_published` flag, because "present but hidden" is a state
+a future reader eventually gets wrong.
+
+A withdrawn link answers 404 — the same as one that never existed. A link that
+has been taken down should not confirm that it used to be there.
+
+**Not yet built:** a way for a company to reply to a listing. Today the board is
+read-only, and the buyer contacts whoever they choose. A reply path that lands
+in the buyer's Quote Desk is the obvious next step; it needs a token link rather
+than accounts for companies, and a public reply form needs its own thinking
+about abuse before it exists.
+
+---
+
 ## PostgreSQL
 
 `DATABASE_URL` selects it; absent, the application uses a local SQLite file.
@@ -886,6 +933,7 @@ backend/
       database.py        # one interface over SQLite and PostgreSQL
       partner_repo.py    # the Berlin directory, seeded once from the survey
       tender_repo.py     # public contracts, open ones and soonest first
+      demand_repo.py     # buyers' own listings; withdrawal is a delete
       capability_repo.py # what was read from each company's site, plus why a
                          #   reading is thin - so an outage is not mistaken for
                          #   a company with nothing to say
@@ -930,7 +978,8 @@ frontend/
     Logo.tsx             # the one place the brand mark is drawn
     workflow/            # one component per gate, plus NearbyStudios.tsx,
                          #   StudioMap.tsx (Leaflet, lazy + no SSR),
-                         #   QuoteDesk.tsx, ContactPartner.tsx
+                         #   QuoteDesk.tsx, ContactPartner.tsx,
+                         #   PublishRequest.tsx (the preview is the listing)
                          #   and FeedbackSurvey.tsx
     VoiceDictation.tsx   # dictate a brief; browser speech, no model, no key
   lib/
@@ -1140,7 +1189,7 @@ take on trust.
 | Human-in-the-loop | four gates, enforced by `interrupt()` | `test_workflow_stops_at_all_four_approval_gates` |
 | Structured logging | one config, closed event enum | `test_log_events_are_a_closed_set` |
 
-**695 backend tests, 28 frontend tests.** No test calls a live model, and none
+**725 backend tests, 28 frontend tests.** No test calls a live model, and none
 calls the real Overpass API either - `test_osm_search.py` swaps in
 `httpx.MockTransport`. The graph runs on a scripted provider and retrieval on a
 hashing embedder whose similarity is real term overlap, so the suite is free,

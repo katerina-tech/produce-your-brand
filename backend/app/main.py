@@ -29,6 +29,7 @@ from app.logging_config import Event, configure_logging, log_event
 from app.observability import flush_traces
 from app.repositories import db
 from app.repositories.capability_repo import CapabilityRepository
+from app.repositories.demand_repo import DemandRepository
 from app.repositories.partner_repo import PartnerRepository
 from app.repositories.project_repo import ProjectRepository
 from app.repositories.quote_repo import QuoteRepository
@@ -105,6 +106,12 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Public contracts. Filled by scripts/fetch_tenders.py rather than at
     # startup: a boot should not depend on a federal server being awake.
     app.state.tender_repository = TenderRepository(connection)
+    # Buyers' own requests, published by them. Expired listings are deleted at
+    # startup rather than merely hidden: this is text somebody agreed to make
+    # public until a date, and keeping it past that date is not ours to do.
+    demand = DemandRepository(connection)
+    demand.purge_expired()
+    app.state.demand_repository = demand
     try:
         app.state.supplier_count = suppliers.count()
     except (OSError, ValueError):
