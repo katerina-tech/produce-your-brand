@@ -2,6 +2,7 @@
 
     uv run python scripts/fetch_tenders.py [--day 2026-09-15] [--month 2026-08]
     uv run python scripts/fetch_tenders.py --days 7        # the last week
+    uv run python scripts/fetch_tenders.py --catch-up      # everything since last time
 
 **This is an API, not a scrape.** Germany's Datenservice Öffentlicher Einkauf
 publishes every federal, state and municipal notice as open data, dedicated to
@@ -17,12 +18,20 @@ Two formats are fetched for the same day, because neither alone is enough. The
 CSV states the structured fields cleanly; the submission deadline appears only
 in the eForms XML, and a tender board without deadlines is a list of things you
 cannot tell whether you have missed.
+
+``--catch-up`` is what a schedule should run. It starts from the newest day the
+database already holds rather than counting back a fixed number, so a run that
+was skipped, a month with 31 days, or a container that failed halfway cannot
+leave a hole nobody notices. Re-reading a day is free of consequence: notices
+are stored by their own identifier and a second pass overwrites rather than
+duplicates.
 """
 
 from __future__ import annotations
 
 import argparse
 import sys
+import time
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
@@ -49,6 +58,17 @@ EFORMS_TYPE = "application/vnd.bekanntmachungsservice.eforms.zip+zip"
 # what this is for - takes both and costs a few hundred kilobytes.
 EFORMS_DAY_ONLY = True
 
+# One request a second or so, even though this is open data with no stated
+# limit. It is a public service paid for by somebody, and a monthly job has no
+# reason to be in a hurry.
+PAUSE_SECONDS = 1.0
+
+# How far back a catch-up will reach when the database is empty or long
+# neglected. Beyond this it is a backfill somebody should ask for by name with
+# --month, not something a scheduled job decides to do on its own at four in
+# the morning.
+MAX_CATCH_UP_DAYS = 45
+
 
 def _download(client: httpx.Client, params: dict[str, str], media_type: str) -> bytes | None:
     try:
@@ -60,29 +80,58 @@ def _download(client: httpx.Client, params: dict[str, str], media_type: str) -> 
         return None
 
 
+def _catch_up_days(repository: TenderRepository, yesterday: date) -> list[str]:
+    """Every publication day from where the database got to, up to yesterday.
+
+    One day of overlap on purpose: a notice published late on the newest day
+    held may not have been in the export when that day was fetched, and
+    re-reading it costs one request and overwrites nothing that matters.
+    """
+    newest = repository.newest_published()
+    start = (
+        (newest - timedelta(days=1)) if newest else (yesterday - timedelta(days=MAX_CATCH_UP_DAYS))
+    )
+    start = max(start, yesterday - timedelta(days=MAX_CATCH_UP_DAYS))
+    if start > yesterday:
+        return []
+    span = (yesterday - start).days
+    return [(start + timedelta(days=n)).isoformat() for n in range(span + 1)]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--day", help="One publication day, YYYY-MM-DD.")
     parser.add_argument("--month", help="A whole month, YYYY-MM. No deadlines; see the module.")
     parser.add_argument("--days", type=int, default=0, help="The last N days, ending yesterday.")
+    parser.add_argument(
+        "--catch-up",
+        action="store_true",
+        help="Every day since the newest already held. What a schedule should run.",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Report, write nothing.")
     args = parser.parse_args()
-
-    days: list[str] = []
-    if args.day:
-        days = [args.day]
-    elif args.days:
-        today = date.today()
-        days = [(today - timedelta(days=n)).isoformat() for n in range(1, args.days + 1)]
-    elif not args.month:
-        # The default is yesterday: notices are published through the day, and
-        # a run at breakfast that asked for today would keep missing the rest.
-        days = [(date.today() - timedelta(days=1)).isoformat()]
 
     settings = get_settings()
     connection = db.connect(settings.app_db_path, url=settings.database_url or None)
     db.initialize_schema(connection)
     repository = TenderRepository(connection)
+
+    yesterday = date.today() - timedelta(days=1)
+    days: list[str] = []
+    if args.day:
+        days = [args.day]
+    elif args.days:
+        days = [(yesterday - timedelta(days=n)).isoformat() for n in range(args.days)]
+    elif args.catch_up:
+        days = _catch_up_days(repository, yesterday)
+        if not days:
+            print("Already up to date.")
+            return 0
+        print(f"Catching up {len(days)} day(s): {days[0]} to {days[-1]}.")
+    elif not args.month:
+        # The default is yesterday: notices are published through the day, and
+        # a run at breakfast that asked for today would keep missing the rest.
+        days = [yesterday.isoformat()]
 
     total_added = 0
     with httpx.Client(timeout=300.0, follow_redirects=True) as client:
@@ -113,6 +162,8 @@ def main() -> int:
 
             if not args.dry_run:
                 total_added += repository.save_all(tenders)
+            if len(batches) > 1:
+                time.sleep(PAUSE_SECONDS)
 
     if args.dry_run:
         print("\nDry run: nothing written.")

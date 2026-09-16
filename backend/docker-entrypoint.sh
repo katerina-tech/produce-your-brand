@@ -13,4 +13,13 @@ if [ ! -e "data/suppliers.json" ]; then
   cp data-seed/suppliers.json data/suppliers.json
 fi
 
+# With arguments, run them and exit. That is how a scheduled job shares this
+# image with the API: Railway passes a custom start command as CMD, which
+# arrives here as arguments, and a cron service needs the same interpreter,
+# the same dependencies and the same DATABASE_URL as the server - just a
+# different thing to do with them. Without arguments, serve.
+if [ "$#" -gt 0 ]; then
+  exec "$@"
+fi
+
 exec uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8000}"

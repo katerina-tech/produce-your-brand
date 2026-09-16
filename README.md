@@ -738,6 +738,39 @@ inventing a fact.
 across Germany. Berlin alone is thin, which is why the board is national with
 Berlin filterable rather than Berlin-only.
 
+### Keeping it current
+
+```bash
+uv run python scripts/fetch_tenders.py --catch-up
+```
+
+**`--catch-up` reads where to start from the database** — every publication day
+since the newest one already held, with one day of overlap — rather than
+counting back a fixed number. A run that was skipped, a month with 31 days, or
+a container that died halfway therefore cannot leave a hole nobody notices.
+Re-reading a day costs one request and overwrites nothing: notices are stored
+under their own identifier, and a second pass corrects rather than duplicates.
+It reaches back at most 45 days; a longer backfill is `--month`, which somebody
+should ask for by name rather than have a job decide on at four in the morning.
+
+**On Railway it is its own service, scheduled monthly.** A cron schedule on the
+API service would restart the API, and a background thread in the web process
+would run twice the moment anything scaled. So: a second service, same repo,
+same image, different thing to do with it.
+
+| Railway setting | Value |
+| --- | --- |
+| Source | this repo, root directory `backend` |
+| Custom Start Command | `uv run --no-sync python scripts/fetch_tenders.py --catch-up` |
+| Cron Schedule | `0 4 1 * *` — 04:00 on the first of each month |
+| Variables | `DATABASE_URL` = `${{Postgres.DATABASE_URL}}` |
+
+That start command works because `docker-entrypoint.sh` **dispatches on its
+arguments**: with none it serves uvicorn, with some it runs them and exits. A
+scheduled job needs the same interpreter, the same dependencies and the same
+database as the server — only a different thing to do with them — and Railway
+requires a cron service to exit, which this one does.
+
 ---
 
 ## PostgreSQL
@@ -1107,7 +1140,7 @@ take on trust.
 | Human-in-the-loop | four gates, enforced by `interrupt()` | `test_workflow_stops_at_all_four_approval_gates` |
 | Structured logging | one config, closed event enum | `test_log_events_are_a_closed_set` |
 
-**693 backend tests, 28 frontend tests.** No test calls a live model, and none
+**695 backend tests, 28 frontend tests.** No test calls a live model, and none
 calls the real Overpass API either - `test_osm_search.py` swaps in
 `httpx.MockTransport`. The graph runs on a scripted provider and retrieval on a
 hashing embedder whose similarity is real term overlap, so the suite is free,

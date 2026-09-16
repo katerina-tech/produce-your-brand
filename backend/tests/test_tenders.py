@@ -470,3 +470,22 @@ def test_the_families_are_counted_from_the_data(tenders: TenderRepository) -> No
     counts = {label: n for _, label, n in tenders.families()}
 
     assert counts["Druckdienstleistungen"] == 2
+
+
+# ------------------------------------------------------------ the schedule
+
+
+def test_an_empty_database_knows_it_has_nowhere_to_resume_from(
+    tenders: TenderRepository,
+) -> None:
+    assert tenders.newest_published() is None
+
+
+def test_the_newest_day_held_is_where_a_catch_up_starts(tenders: TenderRepository) -> None:
+    """Read from the data rather than counted back from today. A run that was
+    skipped, or a month with 31 days, cannot then leave a hole nobody sees."""
+    older = _tender("a").model_copy(update={"published_on": date(2026, 9, 1)})
+    newer = _tender("b").model_copy(update={"published_on": date(2026, 9, 14)})
+    tenders.save_all((older, newer))
+
+    assert tenders.newest_published() == date(2026, 9, 14)

@@ -223,6 +223,18 @@ class TenderRepository:
         ).fetchone()
         return int(dict(row)["n"])
 
+    def newest_published(self) -> date | None:
+        """The most recent publication day already held, or None when empty.
+
+        What a scheduled catch-up starts from. Reading the data rather than
+        counting back a fixed number of days means a run that was skipped, or a
+        month that is 31 days rather than 30, cannot leave a hole nobody
+        notices.
+        """
+        row = self._connection.execute("SELECT MAX(published_on) AS newest FROM tenders").fetchone()
+        newest = dict(row)["newest"]
+        return date.fromisoformat(str(newest)) if newest else None
+
     def latest_import(self) -> str:
         """When the newest row arrived, for a page that should say how fresh it is."""
         row = self._connection.execute("SELECT MAX(imported_at) AS latest FROM tenders").fetchone()
