@@ -35,9 +35,27 @@ READ_ON = date(2026, 9, 15)
 def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
     """The real application over a throwaway database."""
     monkeypatch.setenv("PYS_APP_DB_PATH", str(tmp_path / "api.db"))
-    settings = Settings(app_db_path=tmp_path / "api.db", upload_dir=tmp_path / "uploads")
+    settings = Settings(
+        app_db_path=tmp_path / "api.db",
+        upload_dir=tmp_path / "uploads",
+        session_secret="x" * 32,
+        operator_emails="boss@example.de",
+    )
     with TestClient(create_app(settings)) as test_client:
         yield test_client
+
+
+def _as_operator(client: TestClient) -> None:
+    """Confirming a company is no longer something anybody may do.
+
+    It asks two questions now - who is asking, and whether they speak for this
+    business - so a test that confirms one has to answer them. See
+    tests/test_company_claim.py for the rule itself.
+    """
+    response = client.post(
+        "/api/auth/register", json={"email": "boss@example.de", "password": "a-long-password"}
+    )
+    assert response.status_code in {200, 201}, response.text
 
 
 def _seeded_partner(client: TestClient) -> dict[str, object]:
@@ -153,6 +171,7 @@ def test_an_unknown_company_is_a_404(client: TestClient) -> None:
 
 def test_confirming_sticks(client: TestClient) -> None:
     partner = _seeded_partner(client)
+    _as_operator(client)
 
     posted = client.post(f"/api/partners/verification/{partner['id']}", json={"verified": True})
 
@@ -165,6 +184,7 @@ def test_a_confirmation_can_be_withdrawn(client: TestClient) -> None:
     """Reversible on purpose. A confirmation made in error that cannot be taken
     back is a confirmation people stop making."""
     partner = _seeded_partner(client)
+    _as_operator(client)
     client.post(f"/api/partners/verification/{partner['id']}", json={"verified": True})
 
     withdrawn = client.post(f"/api/partners/verification/{partner['id']}", json={"verified": False})
@@ -176,6 +196,7 @@ def test_confirming_shows_up_on_the_reading(client: TestClient) -> None:
     """``confirmed_by_human`` lives on the company, not on the reading, so a
     re-read cannot silently drop it."""
     partner = _seeded_partner(client)
+    _as_operator(client)
     _store(client, str(partner["id"]), "Siebdruck")
     client.post(f"/api/partners/verification/{partner['id']}", json={"verified": True})
 
@@ -183,6 +204,7 @@ def test_confirming_shows_up_on_the_reading(client: TestClient) -> None:
 
 
 def test_confirming_a_company_that_does_not_exist(client: TestClient) -> None:
+    _as_operator(client)
     response = client.post(
         "/api/partners/verification/node/does-not-exist", json={"verified": True}
     )
@@ -194,6 +216,7 @@ def test_a_confirmation_drops_the_search_index(client: TestClient) -> None:
     """The index is a cache over what has been read. Dropping it after a change
     is cheaper and more honest than patching it in place."""
     partner = _seeded_partner(client)
+    _as_operator(client)
     client.app.state.capability_index = CapabilityIndex(HashingEmbedder())
 
     client.post(f"/api/partners/verification/{partner['id']}", json={"verified": True})

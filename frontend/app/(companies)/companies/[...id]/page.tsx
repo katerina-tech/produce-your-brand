@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { ClaimCompany } from "@/components/partners/ClaimCompany";
 import { ConfirmReading } from "@/components/partners/ConfirmReading";
 import { Badge, BackLink, Card, CardHeader, Notice } from "@/components/ui";
 import { getPartnerDetail } from "@/lib/api";
@@ -42,8 +43,14 @@ export default async function PartnerPage({
       <div>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h1 className="text-2xl font-semibold tracking-tight">{partner.name}</h1>
+          {/* Two different claims, and the badge says which. "The company
+              itself confirmed this" is the strongest thing this directory can
+              say; flattening it into the same tick as "we read their site and
+              believed it" would throw that away. */}
           {partner.verified ? (
-            <Badge tone="match">confirmed</Badge>
+            <Badge tone="match">
+              {partner.verified_by === "company" ? "confirmed by the company" : "confirmed"}
+            </Badge>
           ) : (
             <Badge tone="neutral">unconfirmed</Badge>
           )}
@@ -165,6 +172,10 @@ export default async function PartnerPage({
           ) : null}
         </div>
       </Card>
+
+      {/* Only ever rendered for a signed-in visitor, and only says anything
+          when this listing can be claimed. */}
+      <ClaimCompany partnerId={partner.id} />
 
       <Card>
         <CardHeader

@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS partners (
     category_label TEXT,
     summary        TEXT,
     email_source   TEXT,
+    verified_by    TEXT,
     lat            REAL,
     lon            REAL,
     website        TEXT,
@@ -130,6 +131,21 @@ CREATE TABLE IF NOT EXISTS tenders (
     source_url       TEXT NOT NULL DEFAULT '',
     imported_at      TEXT NOT NULL
 );
+
+-- Who speaks for a company. Named for the account side rather than the
+-- partner side, because "partner_claims" already means something else in this
+-- schema: what a company says it can do. Two tables called claims, one about
+-- capability and one about ownership, would be a collision waiting to be
+-- read wrong - it very nearly was.
+CREATE TABLE IF NOT EXISTS company_claims (
+    partner_id  TEXT PRIMARY KEY REFERENCES partners(id) ON DELETE CASCADE,
+    user_id     TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token       TEXT NOT NULL,
+    created_at  TEXT NOT NULL,
+    verified_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_company_claims_user ON company_claims(user_id);
 
 CREATE TABLE IF NOT EXISTS public_requests (
     id                   TEXT PRIMARY KEY,
@@ -245,6 +261,15 @@ _MIGRATIONS: tuple[tuple[str, str, str], ...] = (
         "partners",
         "email_source",
         "ALTER TABLE partners ADD COLUMN email_source TEXT",
+    ),
+    # Who stands behind the confirmation. "The company itself said so" and "we
+    # read their site and believed it" are different claims, and the first is
+    # the strongest signal this directory can carry - so the badge has to be
+    # able to tell them apart rather than flattening both into a tick.
+    (
+        "partners",
+        "verified_by",
+        "ALTER TABLE partners ADD COLUMN verified_by TEXT",
     ),
 )
 

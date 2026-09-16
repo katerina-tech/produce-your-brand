@@ -14,6 +14,7 @@
 import { sessionHeader } from "./auth";
 import type {
   CapabilityMatches,
+  ClaimStatus,
   FeedbackRequest,
   GeneratedDesign,
   Health,
@@ -230,6 +231,21 @@ export async function getPartnerDetail(id: string): Promise<PartnerDetail | null
     if (error instanceof ApiError && error.status === 404) return null;
     throw error;
   }
+}
+
+/** Where this account stands with a company listing. */
+export async function getClaim(id: string): Promise<ClaimStatus> {
+  return request<ClaimStatus>(`/partners/claim/${id}`);
+}
+
+/** Begin proving that this account speaks for a company. */
+export async function startClaim(id: string): Promise<ClaimStatus> {
+  return request<ClaimStatus>(`/partners/claim/${id}`, { method: "POST" });
+}
+
+/** Fetch the proof from the company's own website. */
+export async function verifyClaim(id: string): Promise<ClaimStatus> {
+  return request<ClaimStatus>(`/partners/proof/${id}`, { method: "POST" });
 }
 
 /** Record that a person checked a reading and stands behind it. */

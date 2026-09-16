@@ -268,6 +268,22 @@ export interface Partner {
   lat: number | null;
   lon: number | null;
   verified: boolean;
+  /** "company" when the business itself confirmed it, "operator" when we did. */
+  verified_by: string | null;
+}
+
+/** Where an account stands with a company listing. */
+export interface ClaimStatus {
+  partner_id: string;
+  partner_name: string;
+  /** "none", "pending" or "verified". */
+  state: string;
+  /** Only ever sent to the account holding the claim. */
+  proof_url: string | null;
+  token: string | null;
+  expires_at: string | null;
+  claimable: boolean;
+  reason: string;
 }
 
 export interface BoroughCount {

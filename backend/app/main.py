@@ -29,6 +29,7 @@ from app.logging_config import Event, configure_logging, log_event
 from app.observability import flush_traces
 from app.repositories import db
 from app.repositories.capability_repo import CapabilityRepository
+from app.repositories.claim_repo import ClaimRepository
 from app.repositories.demand_repo import DemandRepository
 from app.repositories.partner_repo import PartnerRepository
 from app.repositories.project_repo import ProjectRepository
@@ -71,6 +72,9 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     app.state.project_service = ProjectService(workflow, ProjectRepository(connection))
     app.state.user_repository = UserRepository(connection)
+    # Who speaks for which company. The answer every write about a named
+    # business has to have before it is allowed to happen.
+    app.state.claim_repository = ClaimRepository(connection)
     # Off the graph on purpose: replies arrive on the supplier's timetable,
     # days later and sometimes never, so they are not a workflow step.
     # One provider, used for both the guard's classifier and the extraction, so

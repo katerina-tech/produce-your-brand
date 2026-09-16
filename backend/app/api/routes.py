@@ -29,6 +29,7 @@ from app.api.dto import (
     CapabilityMatchResponse,
     CaptureQuoteRequest,
     CategoryCount,
+    ClaimStatusResponse,
     ComparisonRowResponse,
     ConfirmQuoteRequest,
     CreateProjectRequest,
@@ -66,6 +67,7 @@ from app.api.dto import (
     VerificationRequest,
 )
 from app.config import Settings, get_settings
+from app.domain.company import CompanyClaim, proof_url
 from app.domain.demand import PublicRequest, draft_from
 from app.domain.enums import ProductionMethod
 from app.domain.outreach import SAMPLE_ADDRESS_SUFFIX
@@ -81,12 +83,14 @@ from app.llm.factory import (
 )
 from app.logging_config import Event
 from app.repositories.capability_repo import CapabilityRepository
+from app.repositories.claim_repo import ClaimRepository
 from app.repositories.demand_repo import DemandRepository
 from app.repositories.partner_repo import PartnerRepository
 from app.repositories.supplier_repo import SupplierRepository
 from app.repositories.tender_repo import TenderRepository
 from app.repositories.user_repo import EmailAlreadyRegisteredError, UserRepository
 from app.security.uploads import UploadRejectedError, store_upload
+from app.services import company_claim
 from app.services.auth import (
     SESSION_COOKIE,
     AuthError,
@@ -99,6 +103,7 @@ from app.services.auth import (
     verify_password,
 )
 from app.services.capability_match import DEFAULT_CANDIDATES, CapabilityIndex, find_matches
+from app.services.company_claim import ClaimError
 from app.services.design_service import DesignGenerationError, generate_design
 from app.services.osm_search import OSMSearchError, OverpassStudioSearch
 from app.services.outreach import RFQNotApprovedError, render_email
@@ -180,6 +185,26 @@ def get_demand(request: Request) -> DemandRepository:
     if repository is None:
         raise HTTPException(status_code=503, detail="The service is not ready.")
     return repository
+
+
+def get_claims(request: Request) -> ClaimRepository:
+    """Who speaks for which company."""
+    repository: ClaimRepository | None = getattr(request.app.state, "claim_repository", None)
+    if repository is None:
+        raise HTTPException(status_code=503, detail="The service is not ready.")
+    return repository
+
+
+def require_user(user_id: str | None = Depends(current_user_id)) -> str:
+    """The signed-in account, or 401.
+
+    Its own dependency because "who is asking" is the whole of the difference
+    between a directory anybody can edit and one worth believing, and that
+    question should be asked the same way everywhere.
+    """
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="Sign in first.")
+    return user_id
 
 
 def get_tenders(request: Request) -> TenderRepository:
@@ -661,6 +686,7 @@ def _partner_response(partner: Partner) -> PartnerResponse:
         lat=partner.lat,
         lon=partner.lon,
         verified=partner.verified,
+        verified_by=partner.verified_by,
     )
 
 
@@ -816,6 +842,155 @@ def _matches_for(
     )
 
 
+def user_is_operator(user_id: str, request: Request) -> bool:
+    """Whether this account may act for the directory rather than for a company.
+
+    A configured list of addresses rather than a role column: there is one
+    operator, the list changes when a person changes rather than when data
+    does, and a table would invite a self-service path to becoming one.
+
+    The list is read off ``app.state``, not from ``get_settings()``. The second
+    is the process-wide cached settings and ignores whatever this application
+    was actually built with - which made every operator a stranger in any
+    deployment or test that injected its own.
+    """
+    users: UserRepository | None = getattr(request.app.state, "user_repository", None)
+    settings: Settings | None = getattr(request.app.state, "settings", None)
+    if users is None or settings is None or not settings.operator_emails:
+        return False
+    account = users.get(user_id)
+    if account is None:
+        return False
+    allowed = {address.strip().casefold() for address in settings.operator_emails.split(",")}
+    return account.email.casefold() in allowed
+
+
+def _claim_status(
+    partner: Partner, claim: CompanyClaim | None, user_id: str
+) -> ClaimStatusResponse:
+    """What this account may see about this listing's ownership.
+
+    The token is returned only to the account holding the claim. Anywhere else
+    it would be a proof anybody could satisfy.
+    """
+    url = proof_url(partner.website or "")
+    status = ClaimStatusResponse(
+        partner_id=partner.id,
+        partner_name=partner.name,
+        state="none",
+        claimable=url is not None,
+        reason=(
+            ""
+            if url is not None
+            else "This company publishes no website, so it cannot be claimed this way."
+        ),
+    )
+    if claim is None or not claim.is_live_at():
+        return status
+
+    mine = claim.user_id == user_id
+    status.state = "verified" if claim.is_verified else "pending"
+    if mine and not claim.is_verified:
+        status.proof_url = url
+        status.token = claim.token
+        status.expires_at = claim.expires_at().isoformat()
+    elif not mine:
+        status.claimable = False
+        status.reason = "Another account is already claiming this listing."
+    return status
+
+
+@router.get(
+    "/partners/claim/{partner_id:path}", response_model=ClaimStatusResponse, tags=["partners"]
+)
+def claim_status(
+    partner_id: str,
+    partners: PartnerRepository = Depends(get_partners),
+    claims: ClaimRepository = Depends(get_claims),
+    user_id: str = Depends(require_user),
+) -> ClaimStatusResponse:
+    """Where this account stands with this listing."""
+    partner = partners.get(partner_id)
+    if partner is None:
+        raise HTTPException(status_code=404, detail="No such company.")
+    return _claim_status(partner, claims.for_partner(partner_id), user_id)
+
+
+@router.post(
+    "/partners/claim/{partner_id:path}", response_model=ClaimStatusResponse, tags=["partners"]
+)
+def start_claim(
+    partner_id: str,
+    partners: PartnerRepository = Depends(get_partners),
+    claims: ClaimRepository = Depends(get_claims),
+    user_id: str = Depends(require_user),
+) -> ClaimStatusResponse:
+    """Begin proving that this account speaks for this company.
+
+    A listing already held by somebody else is refused rather than taken: an
+    unverified claim expires by itself, so waiting is the remedy, and letting a
+    second account overwrite the first would make the queue a race.
+    """
+    partner = partners.get(partner_id)
+    if partner is None:
+        raise HTTPException(status_code=404, detail="No such company.")
+
+    existing = claims.for_partner(partner_id)
+    if existing is not None and existing.is_live_at() and existing.user_id != user_id:
+        raise HTTPException(
+            status_code=409, detail="Another account is already claiming this listing."
+        )
+    if existing is not None and existing.is_verified and existing.user_id == user_id:
+        return _claim_status(partner, existing, user_id)
+
+    try:
+        claim = company_claim.start(partner, user_id)
+    except ClaimError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+    claims.start(claim)
+    return _claim_status(partner, claim, user_id)
+
+
+# "/partners/proof/..." rather than "/partners/claim/.../verify". The id ends
+# in a greedy segment, and a greedy segment swallows whatever follows it - so
+# the second URL matched the *start* route with an id of "node/123/verify" and
+# answered 404 to every attempt to prove anything. The same trap is documented
+# twenty lines below for the detail route; writing it down did not stop me
+# walking into it, so here is the rule again where it was broken.
+@router.post(
+    "/partners/proof/{partner_id:path}",
+    response_model=ClaimStatusResponse,
+    tags=["partners"],
+)
+def verify_claim(
+    partner_id: str,
+    partners: PartnerRepository = Depends(get_partners),
+    claims: ClaimRepository = Depends(get_claims),
+    user_id: str = Depends(require_user),
+) -> ClaimStatusResponse:
+    """Fetch the proof from the company's own website and accept it, or say why not."""
+    partner = partners.get(partner_id)
+    if partner is None:
+        raise HTTPException(status_code=404, detail="No such company.")
+
+    claim = claims.for_partner(partner_id)
+    if claim is None or claim.user_id != user_id:
+        raise HTTPException(status_code=404, detail="No claim of yours on this listing.")
+    if claim.is_verified:
+        return _claim_status(partner, claim, user_id)
+
+    try:
+        company_claim.check(partner, claim)
+    except ClaimError as error:
+        # 422 rather than 403: nothing was refused, the proof simply is not
+        # there yet, and the message says what to do about it.
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+    claims.mark_verified(partner_id)
+    return _claim_status(partner, claims.for_partner(partner_id), user_id)
+
+
 # The id is an OpenStreetMap reference - "node/6532305050" - and the slash in
 # it is why these two read as they do. A plain path parameter stops at a slash,
 # so the id needs the greedy converter, and a greedy converter has to be the
@@ -862,14 +1037,35 @@ def set_partner_verification(
     payload: VerificationRequest,
     request: Request,
     partners: PartnerRepository = Depends(get_partners),
+    claims: ClaimRepository = Depends(get_claims),
+    user_id: str = Depends(require_user),
 ) -> PartnerResponse:
-    """Record that a person checked this reading and stands behind it.
+    """Record that this company confirms what was read from its website.
 
-    The one fact in the directory that no amount of scraping can produce. A
-    model read the page and a verifier checked the quotes; neither of those is
-    somebody saying "yes, this is what they do".
+    The one fact in the directory that no amount of scraping can produce - and
+    for a while, one that anybody on the internet could set about any of 136
+    named Berlin businesses, because this endpoint asked for no account at all.
+    It now takes two answers: who is asking, and whether they proved they speak
+    for this company.
+
+    An operator may still confirm by hand, which is the only route for the
+    forty-six companies publishing neither a website nor an email. The badge
+    records which of the two it was, because "the company said so" and "we read
+    their site and believed it" are different claims.
     """
-    if not partners.mark_verified(partner_id, payload.verified):
+    operator = user_is_operator(user_id, request)
+    if not operator and not claims.speaks_for(user_id, partner_id):
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Only this company's own account may confirm its capabilities. "
+                "Claim the listing by proving control of its website."
+            ),
+        )
+
+    if not partners.mark_verified(
+        partner_id, payload.verified, by="operator" if operator else "company"
+    ):
         raise HTTPException(status_code=404, detail="No such company.")
 
     partner = partners.get(partner_id)

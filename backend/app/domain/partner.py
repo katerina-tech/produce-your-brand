@@ -35,7 +35,16 @@ class Partner(BaseModel):
         default=False,
         description=(
             "Whether a human confirmed this business can do what the record suggests. "
-            "False for everything collected automatically, which is everything so far."
+            "False for everything collected automatically."
+        ),
+    )
+    verified_by: str | None = Field(
+        default=None,
+        description=(
+            "'company' when the business confirmed it after proving control of its own "
+            "website, 'operator' when we did. Different claims: the first is the "
+            "strongest signal this directory can carry, and a badge that flattened "
+            "both into one tick would throw that away."
         ),
     )
 

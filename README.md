@@ -644,6 +644,49 @@ could not point at where they said it.
 answer far more often than either of the others, and the companies it applies to
 are the list worth a phone call.
 
+### Company accounts, and the hole they closed
+
+`POST /api/partners/verification` shipped asking for **no account at all**.
+Anybody on the internet could mark any of 136 named Berlin businesses as
+confirmed. A badge saying a business stands behind something is worth exactly
+as much as the check behind it, and there was none.
+
+It now asks two questions: who is asking, and whether they speak for this
+company.
+
+**Proof is control of the website the directory already holds.** Not an address
+the claimer types — the website came from the business's own OpenStreetMap
+entry, recorded before anybody asked to claim anything. Whoever can publish
+`/.well-known/produce-your-brand.txt` on that site controls that business's web
+presence, which is as close to "is the company" as a directory can honestly get.
+Eighty-nine of the 136 can prove themselves this way.
+
+Why not email, which would be far easier for a copyshop owner: this product
+sends no mail, and adding an outbound path so that *claiming* a company mails
+that company would turn claiming into a way to message 136 businesses. The
+record, the token and the expiry are all shaped so an emailed code can be added
+later as a second proof; the one that needs no new infrastructure and cannot be
+turned into a spam cannon comes first.
+
+**An unverified claim expires after 48 hours.** Without that, starting a claim
+and never finishing it would hold a real business's listing for ever — denial of
+service dressed as a feature. A verified claim does not expire.
+
+**The badge records who confirmed.** "The company itself said so" and "we read
+their site and believed it" are different claims, and the first is the strongest
+thing this directory can carry. An operator — a configured list of addresses,
+not a role column, because a table would invite a self-service path to becoming
+one — may still confirm by hand, which is the only route for the forty-six
+companies publishing neither a website nor an email.
+
+Two bugs the tests found while this was written, both worth naming. `proof_url`
+accepted `javascript:alert(1)` as a website, because `urlsplit` reads it as the
+host "javascript" on port "alert(1)" — a valid parse of a string that is plainly
+not a site. And the proof endpoint was first spelled
+`claim/{id}/verify`, where the greedy id segment swallowed `/verify` and matched
+the *start* route instead — the exact trap documented twenty lines above it in
+the same file.
+
 ### The step that is not automatable
 
 `/companies/<id>` shows what was read from one company beside the sentences it
@@ -972,6 +1015,8 @@ backend/
       partner_repo.py    # the Berlin directory, seeded once from the survey
       tender_repo.py     # public contracts, open ones and soonest first
       demand_repo.py     # buyers' own listings; withdrawal is a delete
+      claim_repo.py      # who speaks for which company - the question every
+                         #   write about a named business has to answer
       capability_repo.py # what was read from each company's site, plus why a
                          #   reading is thin - so an outage is not mistaken for
                          #   a company with nothing to say
@@ -1227,7 +1272,7 @@ take on trust.
 | Human-in-the-loop | four gates, enforced by `interrupt()` | `test_workflow_stops_at_all_four_approval_gates` |
 | Structured logging | one config, closed event enum | `test_log_events_are_a_closed_set` |
 
-**731 backend tests, 28 frontend tests.** No test calls a live model, and none
+**757 backend tests, 28 frontend tests.** No test calls a live model, and none
 calls the real Overpass API either - `test_osm_search.py` swaps in
 `httpx.MockTransport`. The graph runs on a scripted provider and retrieval on a
 hashing embedder whose similarity is real term overlap, so the suite is free,

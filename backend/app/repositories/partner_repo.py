@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 _COLUMNS = (
     "id, name, source, verified, address, city, district, borough, "
-    "category, category_label, summary, email_source, "
+    "category, category_label, summary, email_source, verified_by, "
     "lat, lon, website, email, implied_method, phone"
 )
 
@@ -55,6 +55,7 @@ def _to_partner(row: Any) -> Partner:
         category_label=(record["category_label"] and str(record["category_label"])) or None,
         summary=(record["summary"] and str(record["summary"])) or None,
         email_source=(record["email_source"] and str(record["email_source"])) or None,
+        verified_by=(record["verified_by"] and str(record["verified_by"])) or None,
         lat=float(record["lat"]) if record["lat"] is not None else None,
         lon=float(record["lon"]) if record["lon"] is not None else None,
         website=(record["website"] and str(record["website"])) or None,
@@ -100,7 +101,7 @@ class PartnerRepository:
             for item in raw.get("partners", []):
                 cursor = self._connection.execute(
                     f"INSERT INTO partners ({_COLUMNS}, created_at) "
-                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
                     "ON CONFLICT(id) DO NOTHING",
                     (
                         item["osm_id"],
@@ -116,6 +117,9 @@ class PartnerRepository:
                         item.get("summary"),
                         item.get("email_source")
                         or ("openstreetmap" if item.get("email") else None),
+                        # verified_by: nothing collected automatically is confirmed
+                        # by anybody, and the survey has no standing to say it is.
+                        None,
                         item.get("lat"),
                         item.get("lon"),
                         item.get("website"),
@@ -321,7 +325,9 @@ class PartnerRepository:
 
     # ------------------------------------------------------------- writing
 
-    def mark_verified(self, partner_id: str, verified: bool = True) -> bool:
+    def mark_verified(
+        self, partner_id: str, verified: bool = True, *, by: str | None = None
+    ) -> bool:
         """Record that a person confirmed this company. Returns whether it existed.
 
         The reason the file stopped being storage. A confirmation is somebody's
@@ -329,7 +335,7 @@ class PartnerRepository:
         """
         with self._connection:
             cursor = self._connection.execute(
-                "UPDATE partners SET verified = ? WHERE id = ?",
-                (1 if verified else 0, partner_id),
+                "UPDATE partners SET verified = ?, verified_by = ? WHERE id = ?",
+                (1 if verified else 0, by if verified else None, partner_id),
             )
         return cursor.rowcount == 1

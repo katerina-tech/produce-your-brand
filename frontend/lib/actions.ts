@@ -21,6 +21,7 @@ import {
   createProject,
   deleteQuote,
   generateDesign,
+  getClaim,
   getNearbyStudios,
   getPublication,
   matchPartners,
@@ -28,12 +29,15 @@ import {
   publishRequest,
   resumeProject,
   setPartnerVerification,
+  startClaim,
+  verifyClaim,
   withdrawRequest,
   submitFeedback,
   uploadDesign,
 } from "./api";
 import type {
   CapabilityMatches,
+  ClaimStatus,
   Publication,
   FeedbackRequest,
   GeneratedDesign,
@@ -426,5 +430,49 @@ export async function loadPublicationAction(projectId: string): Promise<Publicat
     return { publication: await getPublication(projectId) };
   } catch {
     return { error: "The publication panel could not be loaded." };
+  }
+}
+
+export interface ClaimResult extends ActionResult {
+  claim?: ClaimStatus;
+}
+
+/**
+ * Claiming a company listing, in three server actions.
+ *
+ * The token never passes through a URL or a client-side store: it comes back
+ * from the server only to the account holding the claim, is shown once on the
+ * page, and is checked by the server fetching the company's own website.
+ */
+export async function loadClaimAction(partnerId: string): Promise<ClaimResult> {
+  try {
+    return { claim: await getClaim(partnerId) };
+  } catch (error) {
+    // 401 is the ordinary case for a signed-out visitor, not a failure: the
+    // panel simply does not appear for them.
+    if (error instanceof ApiError && error.status === 401) return {};
+    return { error: "The claim panel could not be loaded." };
+  }
+}
+
+export async function startClaimAction(partnerId: string): Promise<ClaimResult> {
+  try {
+    return { claim: await startClaim(partnerId) };
+  } catch (error) {
+    return {
+      error: error instanceof ApiError ? error.message : "The claim could not be started.",
+    };
+  }
+}
+
+export async function verifyClaimAction(partnerId: string): Promise<ClaimResult> {
+  try {
+    const claim = await verifyClaim(partnerId);
+    revalidatePath(`/companies/${partnerId}`);
+    return { claim };
+  } catch (error) {
+    return {
+      error: error instanceof ApiError ? error.message : "The proof could not be checked.",
+    };
   }
 }

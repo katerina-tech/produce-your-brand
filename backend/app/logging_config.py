@@ -51,6 +51,8 @@ class Event(StrEnum):
     RFQ_GENERATED = "rfq_generated"
     SUPPLIER_QUOTE_CAPTURED = "supplier_quote_captured"
     REQUEST_PUBLISHED = "request_published"
+    COMPANY_CLAIM_STARTED = "company_claim_started"
+    COMPANY_CLAIM_VERIFIED = "company_claim_verified"
     REQUEST_WITHDRAWN = "request_withdrawn"
     REQUESTS_EXPIRED = "requests_expired"
     COMPANY_PAGE_FETCHED = "company_page_fetched"

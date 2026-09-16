@@ -107,6 +107,14 @@ def test_openapi_exposes_exactly_the_intended_surface(api: TestClient) -> None:
         # swallows a slash has to be the last one in the path.
         "/api/partners/detail/{partner_id}",
         "/api/partners/verification/{partner_id}",
+        # Who speaks for a company. Confirming a named business is no longer
+        # something anybody may do: an account proves control of the website
+        # the directory already holds, and only then may it confirm.
+        "/api/partners/claim/{partner_id}",
+        # "proof" rather than "claim/{id}/verify": the id ends in a greedy
+        # segment, which swallows anything after it. The nested spelling
+        # matched the start route with an id of "node/123/verify".
+        "/api/partners/proof/{partner_id}",
         # German public contracts, from CC0 open data. Read-only and public:
         # nothing here belongs to a project or an account.
         "/api/tenders",

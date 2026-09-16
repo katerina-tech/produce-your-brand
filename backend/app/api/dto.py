@@ -440,6 +440,14 @@ class PartnerResponse(BaseModel):
     category_label: str | None = Field(
         default=None, description="What that tag is called - Druckerei, Copyshop, Stickerei."
     )
+    verified_by: str | None = Field(
+        default=None,
+        description=(
+            "'company' when the business confirmed it after proving control of its own "
+            "website, 'operator' when we did. Two different claims, and the first is the "
+            "strongest this directory can carry."
+        ),
+    )
     summary: str | None = Field(
         default=None,
         description=(
@@ -800,3 +808,26 @@ class PublicationResponse(BaseModel):
         description="False until the brief is confirmed - a listing is a claim the buyer makes."
     )
     reason: str = Field(default="", description="Why not, when it cannot. Empty otherwise.")
+
+
+class ClaimStatusResponse(BaseModel):
+    """Where an account stands with a company listing.
+
+    ``token`` and ``proof_url`` are present only while a claim is outstanding
+    and only for the account that started it. A token visible to anybody would
+    be a token anybody could satisfy.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    partner_id: str
+    partner_name: str = ""
+    state: str = Field(description="'none', 'pending' or 'verified'.")
+    proof_url: str | None = None
+    token: str | None = None
+    expires_at: str | None = None
+    claimable: bool = Field(
+        default=False,
+        description="False when the company publishes no website to prove control of.",
+    )
+    reason: str = Field(default="", description="Why not, when it cannot be claimed.")

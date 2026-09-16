@@ -147,6 +147,13 @@ class Settings(BaseSettings):
     # unless asked. Anything that dials out from a boot should be opt-in: a
     # default that only bites in one environment is a default nobody remembers.
     seed_tenders_on_boot: bool = False
+    # Accounts that may confirm a company without proving they run it. One
+    # comma-separated list rather than a role column: there is one operator,
+    # the list changes when a person changes rather than when data does, and a
+    # table would invite a self-service path to becoming one. Empty means
+    # nobody, so a misconfigured deployment grants no power rather than all of
+    # it.
+    operator_emails: str = ""
     checkpoint_db_path: Path = BACKEND_ROOT / "data" / "checkpoints.db"
 
     # --- workflow behaviour ------------------------------------------------
