@@ -19,6 +19,37 @@ const USE_CASES = [
   "Promotional products",
 ];
 
+/**
+ * The three boards anybody can read without signing in.
+ *
+ * Listed on the marketing page because they are the only part of this product
+ * a visitor can judge before trusting it with a brief - and because they were
+ * live for a while with nothing on the front page pointing at them.
+ */
+const PUBLIC_BOARDS = [
+  {
+    href: "/companies",
+    eyebrow: "Supply",
+    title: "Berlin production companies",
+    body: "Every printing, textile and engraving business in Berlin that publishes its own contact details, on a map and searchable by what they say they do.",
+    cta: "Browse the directory",
+  },
+  {
+    href: "/tenders",
+    eyebrow: "Public demand",
+    title: "German public tenders",
+    body: "Printing and textile contracts from federal, state and municipal buyers — including the below-threshold ones a small shop can actually win.",
+    cta: "See open tenders",
+  },
+  {
+    href: "/requests",
+    eyebrow: "Private demand",
+    title: "Open requests",
+    body: "Jobs buyers are looking to place, published by them and anonymous by design. If you make things, this is demand you would not otherwise hear about.",
+    cta: "See what people need",
+  },
+] as const;
+
 const PRICING = [
   {
     label: "Buyers",
@@ -74,6 +105,12 @@ export default function MarketingPage() {
             <a href="#use-cases" className="text-sm font-medium hover:text-accent">
               What we solve
             </a>
+            {/* A real page rather than an anchor: the directory is public,
+                needs no account, and is the one part of this a visitor can use
+                before deciding anything. */}
+            <Link href="/companies" className="text-sm font-medium hover:text-accent">
+              Companies
+            </Link>
             <a href="#pricing" className="text-sm font-medium hover:text-accent">
               Pricing
             </a>
@@ -290,6 +327,32 @@ export default function MarketingPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* PUBLIC BOARDS - open without an account, and the only part of this
+          product a visitor can judge before trusting it with anything. */}
+      <section id="browse" className="mx-auto max-w-6xl px-5 py-16 sm:px-10 sm:py-20">
+        <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Open to everyone, no account
+          </h2>
+          <p className="eyebrow">Three boards</p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-px overflow-hidden border border-line bg-line lg:grid-cols-3">
+          {PUBLIC_BOARDS.map((board) => (
+            <Link
+              key={board.href}
+              href={board.href}
+              className="group bg-surface p-8 transition-colors hover:bg-canvas"
+            >
+              <p className="mb-3.5 text-sm font-semibold text-accent">{board.eyebrow}</p>
+              <p className="text-[17px] font-bold group-hover:text-accent">{board.title}</p>
+              <p className="mt-2.5 text-sm leading-relaxed text-ink-soft">{board.body}</p>
+              <p className="mt-4 text-sm font-medium text-accent">{board.cta} →</p>
+            </Link>
+          ))}
         </div>
       </section>
 

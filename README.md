@@ -773,6 +773,18 @@ requires a cron service to exit, which this one does.
 
 ---
 
+## Three public boards, reachable from the front page
+
+`/companies`, `/tenders` and `/requests` need no account and are the only part
+of this product a visitor can judge before trusting it with a brief. They were
+live for a while with nothing on the marketing page pointing at them, which is
+its own kind of bug: a section nobody can find is a section that does not exist.
+The landing page now carries all three, and the working app's header says
+"Companies" rather than "Directory" — the word for the thing that holds a list
+is not the word for what is in it.
+
+---
+
 ## Open requests — the demand board
 
 `/requests` is the third side of the market. Tenders are public demand from

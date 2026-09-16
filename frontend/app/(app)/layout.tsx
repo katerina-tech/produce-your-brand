@@ -30,11 +30,14 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             >
               My projects
             </Link>
+            {/* "Companies", not "Directory" - the word for the thing that
+                holds the list is not the word for what is in it, and somebody
+                looking for a print shop clicks the second. */}
             <Link
               href="/companies"
               className="hidden text-sm font-medium text-ink-soft transition-colors hover:text-ink sm:inline"
             >
-              Directory
+              Companies
             </Link>
             <Link
               href="/account"

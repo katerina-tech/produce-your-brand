@@ -25,7 +25,7 @@ export default function DirectoryLayout({ children }: { children: ReactNode }) {
           <Link href="/companies" className="flex items-center gap-3">
             <Logo size={22} />
             <span className="hidden border-l border-line pl-3 text-sm font-medium text-ink-soft sm:inline">
-              Berlin Production Directory
+              Berlin production, open data
             </span>
           </Link>
           <div className="flex items-center gap-5">
