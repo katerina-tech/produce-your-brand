@@ -674,6 +674,10 @@ class TenderResponse(BaseModel):
     cpv: str
     family_prefix: str
     family_label: str
+    family_english: str = Field(
+        default="",
+        description="The family's own English name, e.g. 'Printing services'.",
+    )
     implied_method: ProductionMethod | None = Field(
         default=None, description="What the CPV family implies, never what the tender confirmed."
     )
@@ -712,6 +716,7 @@ class TenderFamilyCount(BaseModel):
 
     prefix: str
     label: str
+    english: str = ""
     count: int
 
 

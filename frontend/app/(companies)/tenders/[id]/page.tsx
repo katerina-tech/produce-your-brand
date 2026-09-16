@@ -36,7 +36,9 @@ export default async function TenderPage({
           <div className="flex flex-wrap items-center gap-2">
             {tender.in_berlin ? <Badge tone="match">Berlin</Badge> : null}
             {tender.suitable_for_smes ? <Badge tone="partial">for small firms</Badge> : null}
-            <Badge tone="neutral">{tender.family_label}</Badge>
+            <span title={tender.family_english ? tender.family_label : undefined}>
+              <Badge tone="neutral">{tender.family_english || tender.family_label}</Badge>
+            </span>
           </div>
         </div>
 
@@ -48,8 +50,12 @@ export default async function TenderPage({
         <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1">
           <Deadline deadline={tender.deadline} />
           <Money value={tender.estimated_value} currency={tender.currency} />
-          <span className="text-xs text-ink-muted">
+          <span
+            className="text-xs text-ink-muted"
+            title="Common Procurement Vocabulary code, the EU's own classification for what is being bought"
+          >
             published {tender.published_on} · CPV {tender.cpv}
+            {tender.family_english ? ` (${tender.family_english})` : ""}
           </span>
         </div>
       </div>

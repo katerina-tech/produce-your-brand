@@ -51,7 +51,10 @@ export default async function TendersPage({
   return (
     <div className="space-y-8">
       <header className="max-w-3xl">
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Public tenders</h1>
+        <p className="eyebrow text-accent">Real government contracts, not a mock-up</p>
+        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+          Public tenders looking for a printer, textile shop or engraver
+        </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-ink-soft">
           Printing, textile and engraving contracts put out by German public
           buyers — federal, state and municipal, including the smaller{" "}
@@ -69,7 +72,40 @@ export default async function TendersPage({
             <dt className="text-xs uppercase tracking-wide text-ink-muted">Work in Berlin</dt>
             <dd className="tabular text-2xl font-semibold">{board.berlin}</dd>
           </div>
+          {board.imported_at ? (
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-ink-muted">Last updated</dt>
+              <dd className="text-2xl font-semibold">{board.imported_at.slice(0, 10)}</dd>
+            </div>
+          ) : null}
         </dl>
+
+        {/* Scannable rather than another paragraph: three facts stand between a
+            visitor and knowing what this actually is - where it comes from,
+            what it has been filtered to, and what happens when they click one. */}
+        <ol className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <li className="rounded-lg border border-line bg-surface px-4 py-3">
+            <p className="text-xs font-semibold text-accent">1. Official source</p>
+            <p className="mt-1 text-sm text-ink-soft">
+              Pulled from Germany&rsquo;s own open procurement data — nothing scraped, nothing
+              summarised by a model.
+            </p>
+          </li>
+          <li className="rounded-lg border border-line bg-surface px-4 py-3">
+            <p className="text-xs font-semibold text-accent">2. Pre-filtered for you</p>
+            <p className="mt-1 text-sm text-ink-soft">
+              Out of ~23,000 monthly notices, only the ones about printing, textiles or
+              engraving are shown here.
+            </p>
+          </li>
+          <li className="rounded-lg border border-line bg-surface px-4 py-3">
+            <p className="text-xs font-semibold text-accent">3. Matched to companies</p>
+            <p className="mt-1 text-sm text-ink-soft">
+              Open a notice to see which Berlin companies say, in their own words, that
+              they can do that work.
+            </p>
+          </li>
+        </ol>
       </header>
 
       <Card>
@@ -116,9 +152,9 @@ export default async function TendersPage({
                 {board.families.map((item) => (
                   <FamilyChip
                     key={item.prefix}
-                    label={item.label}
+                    label={item.english || item.label}
                     count={item.count}
-                    title={`CPV ${item.prefix}…`}
+                    title={`${item.label} · CPV ${item.prefix}…`}
                     query={queryFor({ query, berlinOnly, smesOnly, family: item.prefix })}
                     active={family === item.prefix}
                   />
@@ -184,7 +220,9 @@ function TenderRow({ tender }: { tender: Tender }) {
           {/* Three-valued on screen too: "the buyer did not say" is not "no",
               and a badge that collapsed them would turn silence into a refusal. */}
           {tender.suitable_for_smes ? <Badge tone="partial">for small firms</Badge> : null}
-          <Badge tone="neutral">{tender.family_label}</Badge>
+          <span title={tender.family_english ? tender.family_label : undefined}>
+            <Badge tone="neutral">{tender.family_english || tender.family_label}</Badge>
+          </span>
         </div>
       </div>
 

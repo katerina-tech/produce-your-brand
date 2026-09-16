@@ -39,6 +39,23 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             >
               Companies
             </Link>
+            {/* Tenders and Requests live in the (companies) layout too, but a
+                working user never lands there on their own - this is the
+                only door into either board from inside a project. Without
+                it, real German government contracts and open buyer requests
+                were live and reachable only by typing the URL. */}
+            <Link
+              href="/tenders"
+              className="hidden text-sm font-medium text-ink-soft transition-colors hover:text-ink sm:inline"
+            >
+              Tenders
+            </Link>
+            <Link
+              href="/requests"
+              className="hidden text-sm font-medium text-ink-soft transition-colors hover:text-ink lg:inline"
+            >
+              Requests
+            </Link>
             <Link
               href="/account"
               className="hidden text-sm font-medium text-ink-soft transition-colors hover:text-ink sm:inline"

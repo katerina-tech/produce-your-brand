@@ -510,6 +510,8 @@ export interface Tender {
   cpv: string;
   family_prefix: string;
   family_label: string;
+  /** The family's own English name - "Printing services" for Druckdienstleistungen. */
+  family_english: string;
   implied_method: string | null;
   buyer: string;
   buyer_city: string;
@@ -531,6 +533,7 @@ export interface Tender {
 export interface TenderFamilyCount {
   prefix: string;
   label: string;
+  english: string;
   count: number;
 }
 

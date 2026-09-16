@@ -74,7 +74,7 @@ from app.domain.outreach import SAMPLE_ADDRESS_SUFFIX
 from app.domain.partner import Partner
 from app.domain.project import Project
 from app.domain.quote import SupplierQuote
-from app.domain.tender import Tender
+from app.domain.tender import CPV_FAMILIES, Tender
 from app.llm.factory import (
     ImageProvider,
     LLMProvider,
@@ -1226,6 +1226,12 @@ ATTRIBUTION = (
     "released as open data under CC0 1.0. Reproduced, not endorsed."
 )
 
+# The German label is what CPV_FAMILIES calls itself; the English one exists in
+# the same table and simply never reached the wire. Keyed by prefix, which is
+# exactly what a stored tender's family_prefix already is - no re-matching of
+# the raw CPV code needed.
+_ENGLISH_BY_PREFIX = {family.prefix: family.english for family in CPV_FAMILIES}
+
 
 def _tender_response(tender: Tender) -> TenderResponse:
     """One notice on the wire. Written once, so the board and the detail view
@@ -1237,6 +1243,7 @@ def _tender_response(tender: Tender) -> TenderResponse:
         cpv=tender.cpv,
         family_prefix=tender.family_prefix,
         family_label=tender.family_label,
+        family_english=_ENGLISH_BY_PREFIX.get(tender.family_prefix, ""),
         implied_method=tender.implied_method,
         buyer=tender.buyer,
         buyer_city=tender.buyer_city,
@@ -1285,7 +1292,12 @@ def list_tenders(
         # current filter: a filter that removes its own options is one you
         # cannot get back out of.
         families=[
-            TenderFamilyCount(prefix=prefix, label=label, count=count)
+            TenderFamilyCount(
+                prefix=prefix,
+                label=label,
+                english=_ENGLISH_BY_PREFIX.get(prefix, ""),
+                count=count,
+            )
             for prefix, label, count in tenders.families()
         ],
         total=tenders.count(),

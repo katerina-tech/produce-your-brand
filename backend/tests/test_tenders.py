@@ -15,9 +15,12 @@ from datetime import date, datetime
 from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
 
+from app.config import Settings
 from app.domain.enums import ProductionMethod
 from app.domain.tender import CPV_FAMILIES, Tender, family_for
+from app.main import create_app
 from app.repositories import db
 from app.repositories.tender_repo import TenderRepository
 from app.services.tender_import import deadlines_from_eforms, read_export, summarise
@@ -489,3 +492,23 @@ def test_the_newest_day_held_is_where_a_catch_up_starts(tenders: TenderRepositor
     tenders.save_all((older, newer))
 
     assert tenders.newest_published() == date(2026, 9, 14)
+
+
+# ---------------------------------------------------------------- the wire
+
+
+def test_the_english_family_name_reaches_the_wire(tmp_path: Path) -> None:
+    """CPV_FAMILIES has always carried an English name alongside the German
+    label - Druckdienstleistungen / "Printing services" - and it never reached
+    a response. An English-language product showing only the German jargon is
+    not a translation problem to fix later; it is the one thing standing
+    between a visitor and knowing what they are looking at."""
+    settings = Settings(app_db_path=tmp_path / "wire.db", upload_dir=tmp_path / "uploads")
+    with TestClient(create_app(settings)) as client:
+        connection = db.connect(settings.app_db_path)
+        TenderRepository(connection).save_all((_tender("t1"),))
+
+        body = client.get("/api/tenders").json()
+
+        assert body["tenders"][0]["family_english"] == "Printing services"
+        assert body["families"][0]["english"] == "Printing services"
