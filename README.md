@@ -738,6 +738,29 @@ inventing a fact.
 across Germany. Berlin alone is thin, which is why the board is national with
 Berlin filterable rather than Berlin-only.
 
+### A fresh deployment fills its own board
+
+A deployment that has never run the job would show a tender page with nothing on
+it, and an empty board teaches a visitor there is nothing there. So the
+application seeds itself once — the same discipline the Berlin directory already
+follows, which fills an empty table from its survey file at startup.
+
+Three properties make that safe to do from a web process, and each is a test:
+
+* **Only when the board is empty**, never "when it is stale". Keeping it fresh
+  is the job's work, and a web process that re-fetched would be a second
+  schedule nobody configured.
+* **After startup, never during it.** A daemon thread, so the API is already
+  answering. The boot does not wait for a federal server and does not fail if
+  one is down — the board simply stays empty and the page says so.
+* **Bounded to fourteen days**, not the forty-five a catch-up reaches. Enough to
+  be worth reading a minute after a deploy; not a backfill.
+
+It is **off by default and switched on in the Dockerfile**, so the deployed
+image seeds itself while a test run and a developer's machine reach no network
+unless asked. Anything that dials out from a boot should be opt-in: a default
+that only bites in one environment is a default nobody remembers.
+
 ### Keeping it current
 
 ```bash
@@ -936,6 +959,9 @@ backend/
       capability_match.py    # embeddings retrieve, a model verifies, code ranks
       tender_import.py       # a zip of twenty CSVs into the 200 notices a month
                              #   these companies could bid for
+      tender_fetch.py        # the one place that downloads from the open-data
+                             #   API; shared by the job and the first-boot seed
+      tender_seed.py         # fills an empty board once, in the background
       quote_desk.py      # supplier replies: capture, compare, chase
       outreach.py        # the approved RFQ as an email - opens, never sends
     rag/
@@ -1201,7 +1227,7 @@ take on trust.
 | Human-in-the-loop | four gates, enforced by `interrupt()` | `test_workflow_stops_at_all_four_approval_gates` |
 | Structured logging | one config, closed event enum | `test_log_events_are_a_closed_set` |
 
-**725 backend tests, 28 frontend tests.** No test calls a live model, and none
+**731 backend tests, 28 frontend tests.** No test calls a live model, and none
 calls the real Overpass API either - `test_osm_search.py` swaps in
 `httpx.MockTransport`. The graph runs on a scripted provider and retrieval on a
 hashing embedder whose similarity is real term overlap, so the suite is free,

@@ -40,6 +40,7 @@ from app.security.guard import build_guard
 from app.services.osm_search import get_osm_search
 from app.services.project_service import ProjectService
 from app.services.quote_desk import QuoteDesk
+from app.services.tender_seed import seed_in_background
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +107,11 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Public contracts. Filled by scripts/fetch_tenders.py rather than at
     # startup: a boot should not depend on a federal server being awake.
     app.state.tender_repository = TenderRepository(connection)
+    # Fills the board once if it is empty, on its own thread and its own
+    # connection, after this function has returned. The boot does not wait for
+    # a federal server and does not fail if one is down; keeping the board
+    # fresh afterwards is the scheduled job's work, not this.
+    seed_in_background(settings)
     # Buyers' own requests, published by them. Expired listings are deleted at
     # startup rather than merely hidden: this is text somebody agreed to make
     # public until a date, and keeping it past that date is not ours to do.

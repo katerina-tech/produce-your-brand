@@ -140,6 +140,13 @@ class Settings(BaseSettings):
         ),
     )
     app_db_path: Path = BACKEND_ROOT / "data" / "app.db"
+    # Fill an empty tender board once, in the background, after startup.
+    #
+    # Off by default and switched on in the Dockerfile, so the deployed image
+    # seeds itself while a test run and a developer's machine reach no network
+    # unless asked. Anything that dials out from a boot should be opt-in: a
+    # default that only bites in one environment is a default nobody remembers.
+    seed_tenders_on_boot: bool = False
     checkpoint_db_path: Path = BACKEND_ROOT / "data" / "checkpoints.db"
 
     # --- workflow behaviour ------------------------------------------------

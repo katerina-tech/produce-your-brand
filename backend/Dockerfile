@@ -23,6 +23,13 @@ COPY . .
 # scripts/build_index.py's docstring); it does not need seeding here.
 RUN cp -r data /app/data-seed
 
+# The deployed image fills an empty tender board once, in the background, after
+# startup - a deployment that has never run the scheduled job would otherwise
+# show a tender page with nothing on it. Set here rather than defaulted in the
+# settings so a test run and a developer's machine reach no network unless
+# asked. See app/services/tender_seed.py.
+ENV PYS_SEED_TENDERS_ON_BOOT=true
+
 RUN chmod +x docker-entrypoint.sh
 
 EXPOSE 8000

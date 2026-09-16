@@ -35,49 +35,25 @@ import time
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
-import httpx
-
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BACKEND_ROOT))
 
 from app.config import get_settings  # noqa: E402
 from app.repositories import db  # noqa: E402
 from app.repositories.tender_repo import TenderRepository  # noqa: E402
-from app.services.tender_import import (  # noqa: E402
-    deadlines_from_eforms,
-    read_export,
-    summarise,
+from app.services.tender_fetch import (  # noqa: E402
+    PAUSE_SECONDS,
+    fetch_day,
+    fetch_month,
+    new_client,
 )
-
-ENDPOINT = "https://oeffentlichevergabe.de/api/notice-exports"
-CSV_TYPE = "application/vnd.bekanntmachungsservice.csv.zip+zip"
-EFORMS_TYPE = "application/vnd.bekanntmachungsservice.eforms.zip+zip"
-
-# A month of eForms is about 90 MB against 17 MB of CSV, so a month-sized run
-# skips the deadlines rather than pulling that twice. A daily run - which is
-# what this is for - takes both and costs a few hundred kilobytes.
-EFORMS_DAY_ONLY = True
-
-# One request a second or so, even though this is open data with no stated
-# limit. It is a public service paid for by somebody, and a monthly job has no
-# reason to be in a hurry.
-PAUSE_SECONDS = 1.0
+from app.services.tender_import import summarise  # noqa: E402
 
 # How far back a catch-up will reach when the database is empty or long
 # neglected. Beyond this it is a backfill somebody should ask for by name with
 # --month, not something a scheduled job decides to do on its own at four in
 # the morning.
 MAX_CATCH_UP_DAYS = 45
-
-
-def _download(client: httpx.Client, params: dict[str, str], media_type: str) -> bytes | None:
-    try:
-        response = client.get(ENDPOINT, params=params, headers={"Accept": media_type})
-        response.raise_for_status()
-        return response.content
-    except httpx.HTTPError as error:
-        print(f"  could not fetch {params} as {media_type.split('.')[-2]}: {error}")
-        return None
 
 
 def _catch_up_days(repository: TenderRepository, yesterday: date) -> list[str]:
@@ -134,25 +110,14 @@ def main() -> int:
         days = [yesterday.isoformat()]
 
     total_added = 0
-    with httpx.Client(timeout=300.0, follow_redirects=True) as client:
-        batches: list[tuple[dict[str, str], bool]] = [({"pubDay": day}, True) for day in days]
-        if args.month:
-            batches.append(({"pubMonth": args.month}, not EFORMS_DAY_ONLY))
+    labels = [*days, *([args.month] if args.month else [])]
+    with new_client() as client:
+        for label in labels:
+            if args.month and label == args.month:
+                tenders = fetch_month(client, args.month)
+            else:
+                tenders = fetch_day(client, date.fromisoformat(label))
 
-        for params, want_deadlines in batches:
-            label = params.get("pubDay") or params.get("pubMonth", "")
-            payload = _download(client, params, CSV_TYPE)
-            if payload is None:
-                continue
-
-            deadlines = {}
-            if want_deadlines:
-                eforms = _download(client, params, EFORMS_TYPE)
-                if eforms:
-                    deadlines = deadlines_from_eforms(eforms)
-
-            fallback = date.fromisoformat(params["pubDay"]) if "pubDay" in params else None
-            tenders = read_export(payload, fallback_day=fallback, deadlines=deadlines)
             counts = summarise(tenders)
             print(
                 f"{label}: {counts['kept']:4} relevant "
@@ -162,7 +127,7 @@ def main() -> int:
 
             if not args.dry_run:
                 total_added += repository.save_all(tenders)
-            if len(batches) > 1:
+            if len(labels) > 1:
                 time.sleep(PAUSE_SECONDS)
 
     if args.dry_run:
