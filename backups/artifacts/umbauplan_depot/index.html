@@ -1,0 +1,284 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style></head><body>
+<title>Umbauplan Depot</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=Albert+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#F8F5EE;
+    --card:#FFFFFF;
+    --ink:#1D4241;
+    --muted:#5E7472;
+    --bronze:#8A6410;
+    --blue:#2C6E9E;
+    --warn:#A33F2C;
+    --pos:#2E7D5B;
+    --line:rgba(29,66,65,.18);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Albert Sans', ui-sans-serif, system-ui, sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:840px;margin:0 auto;padding:56px 24px 96px;}
+
+  h1,h2,h3{font-family:'Fraunces', Georgia, serif;font-weight:500;text-wrap:balance;margin:0;color:var(--ink);}
+  .eyebrow{
+    font-family:'IBM Plex Mono', ui-monospace, monospace;
+    font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+    margin:0 0 10px;
+  }
+  .mono{font-family:'IBM Plex Mono', ui-monospace, monospace;font-variant-numeric:tabular-nums;}
+
+  header{margin-bottom:44px;}
+  header h1{font-size:33px;margin-bottom:14px;}
+  header p{color:var(--muted);font-size:15.5px;max-width:56ch;margin:0;}
+  .disclaimer{
+    margin-top:20px;padding:12px 16px;border:1px solid var(--line);border-radius:10px;
+    font-size:12.5px;color:var(--muted);
+  }
+  .correction-note{
+    margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(138,100,16,.08);
+    font-size:12.5px;color:var(--ink);
+  }
+
+  section{margin-bottom:40px;}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px 30px;
+  }
+  .block-eyebrow{display:flex;align-items:baseline;gap:10px;margin-bottom:20px;}
+  .block-num{font-family:'IBM Plex Mono';font-size:11.5px;color:var(--bronze);letter-spacing:.1em;}
+  h2.block-title{font-size:21px;}
+
+  /* Block 1: Ist/Soll */
+  .topf-row{display:grid;grid-template-columns:96px 1fr 96px;align-items:center;gap:18px;padding:14px 0;border-bottom:1px solid var(--line);}
+  .topf-row:last-of-type{border-bottom:none;}
+  .topf-name{font-weight:600;font-size:14.5px;}
+  .topf-name small{display:block;font-family:'IBM Plex Mono';font-weight:400;font-size:11px;color:var(--muted);letter-spacing:.04em;margin-top:2px;}
+  .bars{display:flex;flex-direction:column;gap:6px;}
+  .bar-line{display:flex;align-items:center;gap:10px;}
+  .bar-label{font-family:'IBM Plex Mono';font-size:10.5px;color:var(--muted);width:34px;flex:none;}
+  .bar-track{flex:1;height:20px;border-radius:4px;background:rgba(29,66,65,.06);position:relative;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:4px;}
+  .bar-ghost{position:absolute;top:0;bottom:0;border-right:2px dashed var(--muted);opacity:.55;}
+  .bar-pct{font-family:'IBM Plex Mono';font-size:12px;width:44px;text-align:right;flex:none;}
+  .topf-delta{text-align:right;font-family:'IBM Plex Mono';font-size:13.5px;}
+  .topf-delta small{display:block;font-size:10px;color:var(--muted);font-weight:400;letter-spacing:.04em;margin-top:2px;}
+  .delta-warn{color:var(--warn);}
+  .delta-pos{color:var(--pos);}
+  .biggest{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted);}
+  .biggest b{color:var(--warn);font-weight:600;}
+
+  /* Block 2: solar system */
+  .system-caption{text-align:center;color:var(--muted);font-size:12.5px;margin-top:4px;}
+  svg text{font-family:'IBM Plex Mono';}
+
+  /* Block 3: findings */
+  .findings{list-style:none;margin:0;padding:0;counter-reset:f;}
+  .findings li{counter-increment:f;display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--line);}
+  .findings li:last-child{border-bottom:none;}
+  .findings li::before{
+    content:counter(f);font-family:'IBM Plex Mono';font-size:12px;color:var(--bronze);
+    width:22px;height:22px;flex:none;border:1px solid var(--line);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;margin-top:1px;
+  }
+  .finding-body{font-size:14.5px;}
+  .finding-body b{font-weight:600;}
+  .finding-cost{font-family:'IBM Plex Mono';font-size:12.5px;color:var(--muted);margin-top:4px;}
+  .extra-note{margin-top:6px;padding:14px 16px;background:rgba(138,100,16,.08);border-radius:10px;font-size:13.5px;color:var(--ink);}
+  .extra-note b{color:var(--bronze);}
+
+  /* Block 4: legend */
+  .legend-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 28px;}
+  .legend-item{display:flex;gap:12px;}
+  .dot{width:11px;height:11px;border-radius:50%;flex:none;margin-top:5px;}
+  .legend-item h3{font-size:14.5px;font-family:'Albert Sans';font-weight:600;margin-bottom:3px;}
+  .legend-item p{margin:0;font-size:13px;color:var(--muted);}
+
+  /* Kernsatz */
+  .kernsatz{
+    background:var(--ink);color:var(--bg);border-radius:14px;padding:32px 34px;
+  }
+  .kernsatz .eyebrow{color:rgba(248,245,238,.55);}
+  .kernsatz p{font-family:'Fraunces';font-weight:500;font-size:23px;line-height:1.35;margin:0;text-wrap:balance;}
+
+  footer{margin-top:48px;text-align:center;color:var(--muted);font-size:12.5px;}
+
+  @media (max-width:600px){
+    .topf-row{grid-template-columns:1fr;gap:8px;}
+    .topf-delta{text-align:left;}
+    .legend-grid{grid-template-columns:1fr;}
+  }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Depot-Check · 01.09.2026</p>
+    <h1>Dein Umbauplan</h1>
+    <p>Ein Blick auf dein Vermögen: 15 Depot-Positionen plus 7.000&nbsp;€ Reserve außerhalb des Depots, zusammen 10.502,66&nbsp;€, sortiert in 4&nbsp;Töpfe. Nicht als Urteil — als Befund, auf dem du deine nächste Entscheidung aufbauen kannst.</p>
+    <p class="correction-note">Aktualisiert: jetzt inklusive deiner 7.000&nbsp;€ Cash-Reserve — das verschiebt das Bild deutlich gegenüber der ersten Version.</p>
+    <p class="disclaimer">Keine Steuer-, Rechts- oder Anlageberatung. Struktur und Rechenwege — entscheiden tust du.</p>
+  </header>
+
+  <section>
+    <div class="card">
+      <div class="block-eyebrow"><span class="block-num">01</span><h2 class="block-title">Ist gegen Soll</h2></div>
+
+      <div class="topf-row">
+        <div class="topf-name">Core<small>Fundament</small></div>
+        <div class="bars">
+          <div class="bar-line">
+            <span class="bar-label">IST</span>
+            <div class="bar-track"><div class="bar-fill" style="width:6.5%;background:var(--bronze);"></div><div class="bar-ghost" style="left:65%;"></div></div>
+            <span class="bar-pct mono">6,48%</span>
+          </div>
+        </div>
+        <div class="topf-delta delta-warn">−6.146,33&nbsp;€<small>zu Ziel 65%</small></div>
+      </div>
+
+      <div class="topf-row">
+        <div class="topf-name">Satellit<small>Themen&nbsp;/&nbsp;Regionen</small></div>
+        <div class="bars">
+          <div class="bar-line">
+            <span class="bar-label">IST</span>
+            <div class="bar-track"><div class="bar-fill" style="width:10.3%;background:var(--blue);"></div><div class="bar-ghost" style="left:15%;"></div></div>
+            <span class="bar-pct mono">10,33%</span>
+          </div>
+        </div>
+        <div class="topf-delta delta-warn">−490,79&nbsp;€<small>zu Ziel 15%</small></div>
+      </div>
+
+      <div class="topf-row">
+        <div class="topf-name">Play<small>Einzelwerte&nbsp;/&nbsp;Krypto</small></div>
+        <div class="bars">
+          <div class="bar-line">
+            <span class="bar-label">IST</span>
+            <div class="bar-track"><div class="bar-fill" style="width:16.5%;background:var(--warn);"></div><div class="bar-ghost" style="left:10%;"></div></div>
+            <span class="bar-pct mono">16,54%</span>
+          </div>
+        </div>
+        <div class="topf-delta delta-warn">+687,38&nbsp;€<small>zu Ziel 10%</small></div>
+      </div>
+
+      <div class="topf-row">
+        <div class="topf-name">Reserve<small>Cash-Puffer</small></div>
+        <div class="bars">
+          <div class="bar-line">
+            <span class="bar-label">IST</span>
+            <div class="bar-track"><div class="bar-fill" style="width:66.65%;background:var(--pos);"></div><div class="bar-ghost" style="left:10%;"></div></div>
+            <span class="bar-pct mono">66,65%</span>
+          </div>
+        </div>
+        <div class="topf-delta delta-warn">+5.949,73&nbsp;€<small>zu Ziel 10%</small></div>
+      </div>
+
+      <p class="biggest">Größte Abweichung: <b>Core fehlt 6.146,33&nbsp;€ zum Ziel</b> — mehr als zwei Drittel deines Vermögens liegen als Cash, während dein Fundament kaum existiert. Die gestrichelte Linie in jedem Balken zeigt, wo dein Ziel-Anteil liegt.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <div class="block-eyebrow"><span class="block-num">02</span><h2 class="block-title">Dein Vermögen als Sonnensystem</h2></div>
+
+      <svg viewBox="0 0 620 560" width="100%" role="img" aria-label="Core in der Mitte als Sonne, Satellit, Play und Reserve als Planeten auf Umlaufbahnen, Größe nach Ist-Gewicht — Reserve ist der mit Abstand größte Planet">
+        <circle cx="300" cy="300" r="220" fill="none" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 6"/>
+        <circle cx="300" cy="300" r="150" fill="none" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 6"/>
+        <circle cx="300" cy="300" r="100" fill="none" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 6"/>
+
+        <!-- Reserve: größter Planet -->
+        <circle cx="300" cy="200" r="74" fill="var(--pos)" fill-opacity="0.14" stroke="var(--pos)" stroke-width="2"/>
+        <text x="300" y="196" text-anchor="middle" font-size="23" font-weight="600" fill="var(--pos)">66,65%</text>
+        <text x="300" y="216" text-anchor="middle" font-size="11.5" fill="var(--pos)">RESERVE</text>
+        <text x="300" y="112" text-anchor="middle" font-size="11" fill="var(--muted)">Ziel: 10%</text>
+
+        <!-- Play -->
+        <circle cx="93" cy="225" r="29" fill="var(--warn)" fill-opacity="0.16" stroke="var(--warn)" stroke-width="2"/>
+        <text x="93" y="174" text-anchor="middle" font-size="11" fill="var(--warn)">PLAY</text>
+        <text x="93" y="188" text-anchor="middle" font-size="13" font-weight="600" fill="var(--warn)">16,54%</text>
+        <text x="93" y="270" text-anchor="middle" font-size="11" fill="var(--muted)">Ziel: 10%</text>
+
+        <!-- Satellit -->
+        <circle cx="430" cy="375" r="23" fill="var(--blue)" fill-opacity="0.16" stroke="var(--blue)" stroke-width="2"/>
+        <text x="430" y="330" text-anchor="middle" font-size="11" fill="var(--blue)">SATELLIT</text>
+        <text x="430" y="344" text-anchor="middle" font-size="13" font-weight="600" fill="var(--blue)">10,33%</text>
+        <text x="430" y="414" text-anchor="middle" font-size="11" fill="var(--muted)">Ziel: 15%</text>
+
+        <!-- Core / Sonne -->
+        <circle cx="300" cy="300" r="20" fill="var(--bronze)"/>
+        <text x="300" y="340" text-anchor="middle" font-size="13" font-weight="600" fill="var(--bronze)">6,48%</text>
+        <text x="300" y="354" text-anchor="middle" font-size="10.5" fill="var(--bronze)">CORE</text>
+        <text x="300" y="372" text-anchor="middle" font-size="11" fill="var(--muted)">Ziel: 65%</text>
+      </svg>
+      <p class="system-caption">Kreisgröße = dein Ist-Gewicht. Reserve ist fast so groß wie alle anderen 3 Töpfe zusammen — die Sonne (Core) ist der kleinste Punkt im System.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <div class="block-eyebrow"><span class="block-num">03</span><h2 class="block-title">4 Befunde</h2></div>
+      <ol class="findings">
+        <li>
+          <div class="finding-body">
+            <b>Doppelungen:</b> keine zwei Produkte auf exakt demselben Index. Aber NASDAQ100- und Semiconductor-ETF überschneiden sich inhaltlich stark — beide setzen auf dieselben großen US-Tech-/Chip-Namen.
+          </div>
+        </li>
+        <li>
+          <div class="finding-body">
+            <b>Überschneidungen:</b> Core S&amp;P 500, NASDAQ100 und Semiconductor-ETF zusammen sind 1.426,39&nbsp;€ — nur 13,6% deines Gesamtvermögens, aber 40,7% von dem, was du überhaupt investiert hast. Drei Etiketten, eine Wette auf dieselbe Handvoll US-Mega-Cap-Namen.
+          </div>
+        </li>
+        <li>
+          <div class="finding-body">
+            <b>Klumpenrisiko:</b> Play macht nur 16,5% deines Gesamtvermögens aus — aber fast die Hälfte (49,6%) von dem, was du investiert hast, hängt an zwei Themen: Rohstoffe/Bergbau (Rio Tinto, MP Materials, Petrobras, Edelmetall, Seltene Erden) und spekulative Einzelwerte/Krypto (Palantir, D-Wave, Netflix, Bitcoin).
+          </div>
+        </li>
+        <li>
+          <div class="finding-body">
+            <b>Kostendrift:</b> auf den ETF-Anteil (1.765,01&nbsp;€) geschätzt rund 0,19% TER im Schnitt — etwa 3,36&nbsp;€/Jahr aktuell. Die genauen TER stehen nicht im Screenshot; das ist eine Schätzung nach typischen Werten für diese Produktklassen, keine exakte Angabe.
+          </div>
+          <div class="finding-cost">≈ 3,36 €/Jahr geschätzt auf den investierten Anteil</div>
+        </li>
+      </ol>
+      <p class="extra-note"><b>Zusatz-Check:</b> Reserve macht 66,65% deines Gesamtvermögens aus — 7.000&nbsp;€ liegen bar, nicht investiert. Für dein nächstes Ziel (Wohnungs-Anzahlung 2029, in 2,5 Jahren) ist ein Cash-Polster sinnvoll — aber in dieser Höhe arbeitet der Großteil deines Vermögens gar nicht mit, auch nicht für Rente 2060 oder das Studium deiner Tochter 2037/38.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <div class="block-eyebrow"><span class="block-num">04</span><h2 class="block-title">Die 4 Töpfe</h2></div>
+      <div class="legend-grid">
+        <div class="legend-item">
+          <span class="dot" style="background:var(--bronze);"></span>
+          <div><h3>Core</h3><p>Das Fundament: baut dein Vermögen langfristig gut und stetig auf, breit gestreut, läuft ohne dass du eingreifen musst.</p></div>
+        </div>
+        <div class="legend-item">
+          <span class="dot" style="background:var(--blue);"></span>
+          <div><h3>Satellit</h3><p>Liegt drumherum und unterstützt das Investment mit Strategie: gezielte Wetten auf Themen und Regionen.</p></div>
+        </div>
+        <div class="legend-item">
+          <span class="dot" style="background:var(--warn);"></span>
+          <div><h3>Play</h3><p>Die aktive Scheibe: Einzelaktien und Hebel, alles was Entscheidungen verlangt — mit festem Budget.</p></div>
+        </div>
+        <div class="legend-item">
+          <span class="dot" style="background:var(--pos);"></span>
+          <div><h3>Reserve</h3><p>Cash im Depot für Ruhe und Rücksetzer — nicht dein Notgroschen.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="margin-bottom:0;">
+    <div class="kernsatz">
+      <p class="eyebrow">Kernsatz</p>
+      <p>Du zahlst genug ein. Du lässt nur zu viel liegen.</p>
+    </div>
+  </section>
+
+  <footer>Stand: 01.09.2026 · Basis: Positionen, Sparpläne &amp; Reserve-Angabe von dir, keine Konto- oder Kundendaten</footer>
+</div>
+
+</body></html>

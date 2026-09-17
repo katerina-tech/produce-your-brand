@@ -1,0 +1,949 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<title>Produce Your Brand Pitch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+  /* Palette inherited from the product's own brand tokens (frontend/app/globals.css):
+     charcoal ink, cobalt accent used at roughly 5% of surface, warm off-white ground. */
+  :root {
+    --ground:    #faf9f7;
+    --surface:   #ffffff;
+    --ink:       #191c23;
+    --ink-soft:  #464a54;
+    --muted:     #6b6f7a;
+    --line:      #e5e5e7;
+    --line-soft: #efeeec;
+    --accent:    #3240eb;
+    --accent-dim:#e8e9fd;
+    --accent-deep:#1f2ac4;
+    --warn:      #8a5200;
+    --warn-dim:  #f7efe2;
+    --on-dark:   #f7f6f4;
+    --on-dark-mute: #9ba0ac;
+    --panel:     #191c23;
+    --panel-line:#33373f;
+    --panel-accent: #8b95ff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:    #131519;
+      --surface:   #1b1e24;
+      --ink:       #f2f1ef;
+      --ink-soft:  #c6c8cd;
+      --muted:     #949aa6;
+      --line:      #2c3037;
+      --line-soft: #24272d;
+      --accent:    #8b95ff;
+      --accent-dim:#22263c;
+      --accent-deep:#a8b0ff;
+      --warn:      #e0a45c;
+      --warn-dim:  #2e2618;
+      --on-dark:   #f7f6f4;
+      --on-dark-mute: #9ba0ac;
+      --panel:     #0d0f13;
+      --panel-line:#2c3037;
+      --panel-accent: #8b95ff;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:    #131519;
+    --surface:   #1b1e24;
+    --ink:       #f2f1ef;
+    --ink-soft:  #c6c8cd;
+    --muted:     #949aa6;
+    --line:      #2c3037;
+    --line-soft: #24272d;
+    --accent:    #8b95ff;
+    --accent-dim:#22263c;
+    --accent-deep:#a8b0ff;
+    --warn:      #e0a45c;
+    --warn-dim:  #2e2618;
+    --on-dark:   #f7f6f4;
+    --on-dark-mute: #9ba0ac;
+    --panel:     #0d0f13;
+    --panel-line:#2c3037;
+    --panel-accent: #8b95ff;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- slide jump rail ---------- */
+
+  .rail {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: color-mix(in srgb, var(--ground) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  .rail-inner {
+    max-width: 60rem;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.6rem 1.25rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .rail-inner::-webkit-scrollbar { display: none; }
+  .rail-mark { flex: none; display: flex; align-items: center; gap: 0.5rem; }
+  .rail-mark svg { display: block; }
+  .rail-mark b {
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .rail-links { display: flex; gap: 0.3rem; flex: none; }
+  .rail-links a {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 0.28rem 0.42rem;
+    border-radius: 3px;
+    transition: color 120ms, background 120ms;
+  }
+  .rail-links a:hover, .rail-links a:focus-visible {
+    color: var(--ink);
+    background: var(--line-soft);
+  }
+  .rail-links a.cut {
+    color: #ffffff;
+    background: var(--accent);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 0.28rem 0.55rem;
+    margin-left: 0.35rem;
+  }
+  .rail-links a.cut:hover, .rail-links a.cut:focus-visible {
+    color: #ffffff;
+    background: var(--accent-deep, #1f2ac4);
+  }
+
+  /* ---------- shell ---------- */
+
+  .wrap { max-width: 44rem; margin: 0 auto; padding: 0 1.25rem; }
+  .bleed { max-width: 60rem; margin: 0 auto; padding: 0 1.25rem; }
+
+  h1, h2, h3, .num, .eyebrow, th, .stat-v, .chip, .rail-mark b, .flow-t, .btn {
+    font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
+  }
+
+  /* ---------- masthead ---------- */
+
+  header.top { padding: 4.5rem 0 3rem; }
+  .eyebrow {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 1.4rem;
+  }
+  h1 {
+    font-size: clamp(2.1rem, 6.4vw, 3.1rem);
+    font-weight: 700;
+    line-height: 1.04;
+    letter-spacing: -0.022em;
+    text-wrap: balance;
+    margin: 0 0 1.3rem;
+  }
+  .lede {
+    font-size: 1.16rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    margin: 0 0 2rem;
+    max-width: 34ch;
+  }
+  .lede em { font-style: normal; color: var(--accent); }
+
+  .live {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.55rem;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.83rem;
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 0.15rem;
+  }
+  .live span { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; }
+  .live:hover { color: var(--accent); }
+
+  /* ---------- provenance legend ---------- */
+
+  .legend {
+    display: grid;
+    gap: 0.5rem;
+    margin: 2.6rem 0 0;
+    padding: 1.1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+  }
+  .legend p { margin: 0; font-size: 0.88rem; color: var(--ink-soft); line-height: 1.5; }
+  .legend p:first-child { color: var(--ink); }
+
+  .chip {
+    display: inline-block;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 0.1rem 0.32rem;
+    border-radius: 2px;
+    vertical-align: 0.06em;
+    white-space: nowrap;
+  }
+  .chip.m { background: var(--line-soft); color: var(--ink-soft); border: 1px solid var(--line); }
+  .chip.d { background: var(--accent-dim); color: var(--accent); }
+  .chip.e { background: var(--warn-dim); color: var(--warn); }
+
+  /* ---------- slides ---------- */
+
+  section.slide { padding: 3.4rem 0 0; }
+  .slide-head { display: flex; align-items: baseline; gap: 0.85rem; margin-bottom: 0.5rem; }
+  .num {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--accent);
+    flex: none;
+    padding-top: 0.32rem;
+  }
+  .slide-rule { height: 1px; background: var(--line); flex: 1; }
+  .kicker {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex: none;
+    font-family: "Space Grotesk", system-ui, sans-serif;
+  }
+  h2 {
+    font-size: clamp(1.42rem, 3.5vw, 1.86rem);
+    font-weight: 700;
+    line-height: 1.16;
+    letter-spacing: -0.016em;
+    text-wrap: balance;
+    margin: 0.9rem 0 1.1rem;
+  }
+  h3 {
+    font-size: 0.94rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    margin: 2rem 0 0.7rem;
+  }
+  p { margin: 0 0 1.05rem; }
+  .slide p strong { font-weight: 600; }
+  a { color: var(--accent); }
+
+  ul { margin: 0 0 1.05rem; padding-left: 1.15rem; }
+  li { margin-bottom: 0.42rem; }
+  li::marker { color: var(--muted); }
+
+  /* ---------- tables ---------- */
+
+  .tscroll { overflow-x: auto; margin: 0 0 1.15rem; border: 1px solid var(--line); background: var(--surface); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
+  th, td { text-align: left; padding: 0.68rem 0.9rem; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  th {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--ground);
+    white-space: nowrap;
+  }
+  tr:last-child td { border-bottom: 0; }
+  td:first-child { font-weight: 600; color: var(--ink); }
+  td.n, th.n { text-align: right; font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr.total td { border-top: 2px solid var(--ink); background: var(--ground); }
+
+  /* ---------- speaker notes ---------- */
+
+  .say {
+    border-left: 2px solid var(--accent);
+    padding: 0.1rem 0 0.1rem 1.05rem;
+    margin: 1.5rem 0 0.5rem;
+  }
+  .say b {
+    display: block;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    margin-bottom: 0.34rem;
+  }
+  .say p { font-style: italic; color: var(--ink-soft); font-size: 0.97rem; margin: 0; }
+
+  /* ---------- pull quote ---------- */
+
+  blockquote {
+    margin: 1.5rem 0;
+    padding: 0 0 0 1.15rem;
+    border-left: 2px solid var(--line);
+  }
+  blockquote p { margin: 0 0 0.3rem; }
+  blockquote .de { font-size: 1.14rem; font-weight: 600; letter-spacing: -0.01em; }
+  blockquote .en { font-size: 0.92rem; color: var(--muted); font-style: italic; }
+
+  /* ---------- caveat box ---------- */
+
+  .caveat {
+    background: var(--warn-dim);
+    border-left: 2px solid var(--warn);
+    padding: 0.95rem 1.15rem;
+    margin: 1.3rem 0;
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+  }
+  .caveat p { margin: 0; }
+  .caveat strong { color: var(--warn); font-weight: 600; }
+
+  /* ---------- the flow (slide 4) ---------- */
+
+  .flow { margin: 0 0 1.3rem; border: 1px solid var(--line); background: var(--surface); }
+  .flow-in {
+    padding: 0.9rem 1.1rem;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--line);
+    background: var(--ground);
+  }
+  .flow-step { display: grid; grid-template-columns: 2.1rem 1fr; border-bottom: 1px solid var(--line-soft); }
+  .flow-step:last-child { border-bottom: 0; }
+  .flow-n {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--accent);
+    padding: 0.85rem 0 0 0.9rem;
+  }
+  .flow-b { padding: 0.8rem 1.1rem 0.85rem 0; }
+  .flow-t { font-size: 0.76rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.22rem; }
+  .flow-d { font-size: 0.9rem; color: var(--ink-soft); line-height: 1.5; }
+  .flow-d .warnline { color: var(--warn); }
+
+  /* ---------- the money panel (slide 7) — the one loud moment ---------- */
+
+  .money {
+    background: var(--panel);
+    color: var(--on-dark);
+    margin: 2rem 0 1.4rem;
+    padding: 2rem 1.5rem 2.1rem;
+  }
+  .money .lbl {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--panel-accent);
+    margin: 0 0 1.1rem;
+  }
+  .money .fig {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: clamp(3.4rem, 15vw, 5.6rem);
+    font-weight: 700;
+    line-height: 0.86;
+    letter-spacing: -0.045em;
+    margin: 0;
+  }
+  .money .fig-u {
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    font-size: 1.02rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--on-dark);
+    margin: 0.9rem 0 0;
+    max-width: 26ch;
+  }
+  .money .fig-s {
+    font-size: 0.9rem;
+    color: var(--on-dark-mute);
+    margin: 1.5rem 0 0;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--panel-line);
+    font-family: "Source Serif 4", Georgia, serif;
+    line-height: 1.55;
+  }
+  .money .fig-s code {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.85em;
+    color: var(--on-dark);
+  }
+
+  /* ---------- today's run of show ---------- */
+
+  .today { padding: 3rem 0 0; }
+  .oneline {
+    border: 2px solid var(--ink);
+    background: var(--surface);
+    padding: 1.5rem 1.4rem;
+    margin: 0 0 1.6rem;
+  }
+  .oneline .lbl {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.62rem; font-weight: 700; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 0.8rem;
+  }
+  .oneline p.big {
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    font-size: clamp(1.12rem, 3.6vw, 1.42rem);
+    font-weight: 600; line-height: 1.3; letter-spacing: -0.014em;
+    margin: 0 0 0.7rem; text-wrap: balance;
+  }
+  .oneline p.sub { margin: 0; font-size: 0.98rem; color: var(--ink-soft); }
+
+  .turn { border-left: 2px solid var(--line); padding: 0 0 0 1.05rem; margin: 0 0 1.5rem; }
+  .turn.mine { border-left-color: var(--accent); }
+  .turn-head {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.6rem; margin-bottom: 0.6rem;
+  }
+  .turn-who {
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    font-size: 0.95rem; font-weight: 700; letter-spacing: -0.005em;
+  }
+  .turn-t {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.7rem; font-weight: 700; color: var(--accent);
+    background: var(--accent-dim); padding: 0.12rem 0.4rem; border-radius: 2px;
+  }
+  .turn-job {
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.11em;
+    text-transform: uppercase; color: var(--muted);
+    font-family: "Space Grotesk", system-ui, sans-serif;
+  }
+  .turn ul { margin: 0 0 0.7rem; padding-left: 1.1rem; }
+  .turn ol { margin: 0 0 0.7rem; padding-left: 1.3rem; }
+  .turn li { font-size: 0.96rem; }
+  .verb { font-style: italic; color: var(--ink); }
+  .handoff {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.78rem; color: var(--muted); margin: 0.5rem 0 0;
+  }
+  .handoff b { color: var(--accent); font-weight: 700; letter-spacing: 0.08em; }
+
+  /* ---------- Q&A prep ---------- */
+
+  .qa { margin: 1.8rem 0 0; border-top: 1px solid var(--line); }
+  .qa-item { border-bottom: 1px solid var(--line-soft); padding: 1.1rem 0; }
+  .qa-q {
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    font-size: 0.98rem; font-weight: 700; letter-spacing: -0.008em;
+    margin: 0 0 0.45rem;
+  }
+  .qa-q::before {
+    content: "Q";
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.7rem; font-weight: 700; color: var(--accent);
+    margin-right: 0.5rem; vertical-align: 0.1em;
+  }
+  .qa-a { margin: 0; font-size: 0.96rem; color: var(--ink-soft); }
+  .qa-a strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------- hackathon cut ---------- */
+
+  .cut { background: var(--panel); color: var(--on-dark); margin-top: 4.5rem; padding: 3.6rem 0 4rem; }
+  .cut .eyebrow { color: var(--panel-accent); }
+  .cut h2 { color: var(--on-dark); margin-top: 0.4rem; }
+  .cut p { color: var(--on-dark-mute); }
+  .cut strong { color: var(--on-dark); font-weight: 600; }
+  .cut .num { color: var(--panel-accent); }
+  .cut .slide-rule { background: var(--panel-line); }
+  .cut .kicker { color: var(--on-dark-mute); }
+  .cut h3 { color: var(--on-dark); }
+  .cut ol { padding-left: 1.3rem; margin: 0 0 1rem; color: var(--on-dark-mute); }
+  .cut ol li { margin-bottom: 0.5rem; }
+  .cut ol li::marker { color: var(--panel-accent); font-family: "JetBrains Mono", monospace; font-size: 0.85em; }
+  .cut .say { border-left-color: var(--panel-accent); }
+  .cut .say b { color: var(--panel-accent); }
+  .cut .say p { color: var(--on-dark-mute); }
+  .cut .beat {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: baseline;
+    border-bottom: 1px solid var(--panel-line);
+    padding: 1.5rem 0 0.55rem;
+  }
+  .cut .beat h3 { margin: 0; font-size: 1.02rem; }
+  .cut .beat .t {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--panel-accent);
+    white-space: nowrap;
+  }
+  .cut .fallback {
+    margin-top: 2.4rem;
+    padding: 1.1rem 1.25rem;
+    border: 1px solid var(--panel-line);
+  }
+  .cut .fallback p { margin: 0; font-size: 0.93rem; }
+  .cut .fallback strong { display: block; margin-bottom: 0.3rem; font-family: "Space Grotesk", sans-serif; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--panel-accent); }
+
+  /* ---------- preflight checklist ---------- */
+
+  .pre { padding: 3.6rem 0 5rem; }
+  .checks { list-style: none; margin: 1.4rem 0 0; padding: 0; display: grid; gap: 0; border: 1px solid var(--line); background: var(--surface); }
+  .checks li { margin: 0; border-bottom: 1px solid var(--line-soft); }
+  .checks li:last-child { border-bottom: 0; }
+  .checks label { display: grid; grid-template-columns: auto 1fr; gap: 0.8rem; align-items: start; padding: 0.95rem 1.1rem; cursor: pointer; }
+  .checks input { margin: 0.36rem 0 0; width: 1rem; height: 1rem; accent-color: var(--accent); cursor: pointer; }
+  .checks .ct { font-size: 0.95rem; line-height: 1.5; }
+  .checks .ct b { font-weight: 600; }
+  .checks .ct small { display: block; color: var(--muted); font-size: 0.87rem; margin-top: 0.15rem; }
+  .checks input:checked + .ct { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
+  .checks label:focus-within { background: var(--line-soft); }
+  .risk .ct b { color: var(--warn); }
+
+  footer.end {
+    border-top: 1px solid var(--line);
+    margin-top: 2.6rem;
+    padding-top: 1.3rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    line-height: 1.6;
+  }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  @media (max-width: 30rem) {
+    body { font-size: 16px; }
+    .money { padding: 1.6rem 1.15rem 1.7rem; }
+    .cut .beat { grid-template-columns: 1fr; gap: 0.2rem; }
+  }
+</style>
+
+<nav class="rail" aria-label="Slide navigation">
+  <div class="rail-inner">
+    <span class="rail-mark">
+      <svg width="15" height="15" viewBox="0 0 100 100" aria-hidden="true">
+        <path d="M0 0 L40 0 L40 35 L65 35 L65 65 L100 65 L100 100 L0 100 Z" fill="currentColor"/>
+        <path d="M40 0 L100 0 L100 65 L65 65 L65 35 L40 35 Z" fill="#3240eb"/>
+      </svg>
+      <b>Pitch</b>
+    </span>
+    <span class="rail-links">
+      <a href="#today" class="cut">TODAY</a><a href="#s1">01</a><a href="#s2">02</a><a href="#s3">03</a><a href="#s4">04</a><a href="#s5">05</a>
+      <a href="#s6">06</a><a href="#s7">07</a><a href="#s8">08</a><a href="#s9">09</a><a href="#s10">10</a>
+      <a href="#cut" class="cut">SOLO</a><a href="#preflight" class="cut">CHECK</a>
+    </span>
+  </div>
+</nav>
+
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">Accelerator &amp; hackathon pitch · Berlin</p>
+    <h1>Produce Your Brand</h1>
+    <p class="lede">Custom production fails on unknowns nobody checks upfront. <em>We check them in 30 seconds.</em></p>
+    <a class="live" href="https://produceyourstuff.up.railway.app/" target="_blank" rel="noopener">
+      <span>Live</span> produceyourstuff.up.railway.app
+    </a>
+
+    <div class="legend">
+      <p><strong>Number discipline.</strong> Every figure below is marked for where it came from.</p>
+      <p><span class="chip m">M</span> &nbsp;measured &nbsp;·&nbsp; <span class="chip d">D</span> &nbsp;derived, assumptions shown &nbsp;·&nbsp; <span class="chip e">E</span> &nbsp;estimate, not yet verified</p>
+      <p>Never present an <span class="chip e">E</span> as fact. If pressed, say &ldquo;that&rsquo;s our estimate, unverified&rdquo; &mdash; an investor forgives an honest gap and punishes a bluff.</p>
+    </div>
+  </div>
+</header>
+
+<section class="today" id="today">
+  <div class="wrap">
+    <div class="slide-head"><span class="num">&#9654;</span><span class="slide-rule"></span><span class="kicker">Thursday 16:30 &middot; selection round</span></div>
+    <h2>The run of show lives in its own brief</h2>
+    <p>Timing, who says what, the exact lines and the prep checklist are in the <a href="https://claude.ai/code/artifact/caeab546-031b-4453-8c83-198a3032edb8"><strong>Pitch Run of Show</strong></a> &mdash; the one to send to Sebastian and Stefan. Kept separate on purpose: two copies of a timeline drift apart, and the team does not need the business deck to rehearse.</p>
+    <div class="oneline">
+      <p class="lbl">The sentence both documents hang on</p>
+      <p class="big">You describe what you want made. We tell you if it&rsquo;s possible, how to make it, and who can make it.</p>
+      <p class="sub">Today that&rsquo;s a week of emails. We do it in 30 seconds.</p>
+    </div>
+    <p>Everything below is the longer business case &mdash; for accelerator applications and for any judge who digs past the five minutes.</p>
+
+  </div>
+</section>
+
+<section class="slide" id="s1">
+  <div class="wrap">
+    <div class="slide-head"><span class="num">01</span><span class="slide-rule"></span><span class="kicker">The hook</span></div>
+    <h2>Your customer wants 100 of their own yoga mats printed in gold. Which shop can even do that &mdash; and who says yes to goods they didn&rsquo;t sell you?</h2>
+    <p>We answer that in 30 seconds. Today it takes days.</p>
+    <div class="say"><b>SAY</b><p>Open with the yoga mat. It is concrete, everyone pictures it, and it contains the whole problem.</p></div>
+  </div>
+</section>
+
+<section class="slide" id="s2">
+  <div class="wrap">
+    <div class="slide-head"><span class="num">02</span><span class="slide-rule"></span><span class="kicker">Problem</span></div>
+    <h2>Custom production fails on four unknowns, and the buyer discovers them one at a time</h2>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Unknown</th><th>The trap</th></tr></thead>
+        <tbody>
+          <tr><td>Is it physically possible?</td><td>PVC under a laser releases hydrogen chloride. No serious shop will touch it &mdash; but you find out after a week of emails.</td></tr>
+          <tr><td>Who accepts goods you already own?</td><td>Many producers only decorate stock they sold you. <strong>Almost nobody thinks to ask upfront.</strong></td></tr>
+          <tr><td>Does the minimum order fit?</td><td>100 units is below many minimums. Silent disqualification.</td></tr>
+          <tr><td>Is the deadline real?</td><td>Lead time plus buffer. Discovered last, when it is most expensive.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Each is individually knowable. The cost is that they surface <strong>serially, by email, over days</strong> &mdash; and you re-explain the same job to every supplier.</p>
+    <p>And this is not the &euro;50 flyer market. Ordinary print goes to Google or Flyeralarm and always will. This is the request where ordinary search stops working &mdash; which is exactly what our customer interview confirmed.</p>
+    <div class="say"><b>SAY</b><p>Land the &ldquo;goods you already own&rdquo; line. It gets a reaction from anyone who has ordered merch.</p></div>
+  </div>
+</section>
+
+<section class="slide" id="s3">
+  <div class="wrap">
+    <div class="slide-head"><span class="num">03</span><span class="slide-rule"></span><span class="kicker">Why now</span></div>
+    <h2>The catalogues cover standard products. Nobody has structured the hard requests.</h2>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Who</th><th>What they cover</th></tr></thead>
+        <tbody>
+          <tr><td>Flyeralarm, Saxoprint, Vistaprint</td><td>Standard print at scale. Consolidated, price-driven.</td></tr>
+          <tr><td>Promidata, PSI</td><td>Standard promotional products. <strong>Non-standard work: not covered.</strong></td></tr>
+          <tr><td>Google</td><td>Finds companies. Does not know minimum orders, lead times, or who accepts customer-owned goods.</td></tr>
+          <tr><td>ChatGPT</td><td>Explains techniques well. <strong>Cannot rate suppliers, cannot quote, answers differently each time.</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Two things changed and made this buildable now</h3>
+    <ul>
+      <li><strong>Language models can finally turn messy free text into a reliable typed brief</strong> &mdash; the step that used to require a human account manager.</li>
+      <li><strong>Structured feasibility reasoning is now cheap.</strong> Our full pipeline costs <strong>$0.0096 per request on gpt-4o</strong> &mdash; the model the live demo runs &mdash; or <strong>$0.0011 on gpt-4o-mini</strong> <span class="chip m">M</span><span class="chip d">D</span>. Two years ago that arithmetic did not work.</li>
+    </ul>
+    <blockquote>
+      <p class="de">&ldquo;ChatGPT macht keine Bewertungen.&rdquo;</p>
+      <p class="en">ChatGPT can&rsquo;t evaluate suppliers. No ratings, no proven offers, no discounts, no accountability. &mdash; from our supplier interview</p>
+    </blockquote>
+    <div class="say"><b>SAY</b><p>This slide kills the &ldquo;isn&rsquo;t this just ChatGPT&rdquo; objection before it is asked. Do not skip it.</p></div>
+  </div>
+</section>
+
+<section class="slide" id="s4">
+  <div class="wrap">
+    <div class="slide-head"><span class="num">04</span><span class="slide-rule"></span><span class="kicker">Product</span></div>
+    <h2>Describe the job in plain language. Get a feasibility-checked brief, the right method, and matched partners.</h2>
+    <div class="flow">
+      <div class="flow-in">&ldquo;100 black yoga mats, PVC, I own them, gold logo, Berlin&rdquo;</div>
+      <div class="flow-step"><div class="flow-n">01</div><div class="flow-b">
+        <div class="flow-t">Production brief</div>
+        <div class="flow-d">Typed. Gaps shown honestly as &ldquo;Not specified&rdquo; rather than guessed.</div>
+      </div></div>
+      <div class="flow-step"><div class="flow-n">02</div><div class="flow-b">
+        <div class="flow-t">Method &amp; feasibility</div>
+        <div class="flow-d">Heat transfer, high confidence. <span class="warnline">Cited: &ldquo;PVC must not be laser cut.&rdquo;</span></div>
+      </div></div>
+      <div class="flow-step"><div class="flow-n">03</div><div class="flow-b">
+        <div class="flow-t">Matched partners</div>
+        <div class="flow-d">3 of 7 eligible, each scored on six factors. Best match &middot; best price &middot; fastest.</div>
+      </div></div>
+      <div class="flow-step"><div class="flow-n">04</div><div class="flow-b">
+        <div class="flow-t">Request for quotation</div>
+        <div class="flow-d">Nine questions the supplier must answer.</div>
+      </div></div>
+    </div>
+    <p><strong>A human approves every one of the four steps.</strong> Nothing is ordered, sent, or committed automatically.</p>
+    <p><strong>The one thing to demo live:</strong> open a supplier&rsquo;s score breakdown. Six factors, each with a computed reason. That is the screen ChatGPT cannot produce.</p>
+    <div class="say"><b>SAY</b><p>45 seconds of live product here beats any slide. Have a completed project pre-loaded as a fallback.</p></div>
+  </div>
+</section>
+
+<section class="slide" id="s5">
+  <div class="wrap">
+    <div class="slide-head"><span class="num">05</span><span class="slide-rule"></span><span class="kicker">Moat</span></div>
+    <h2>The moat is proprietary structured capability data &mdash; not the model. Anyone can call the same model.</h2>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Layer</th><th>What it is</th><th>To copy</th></tr></thead>
+        <tbody>
+          <tr><td>Feasibility knowledge base</td><td>13 curated documents on what each technique can and cannot do &mdash; material limits, safety refusals, minimum line thickness.</td><td><strong>Hard.</strong> Domain expertise, not scrapeable. Grows with every job.</td></tr>
+          <tr><td>Structured capability data</td><td>Minimum order, lead time, materials, customer-owned-goods policy per supplier.</td><td><strong>Hard.</strong> Our interview established this cannot be reliably scraped &mdash; pricing sits in non-public business logic. Whoever collects it manually owns it.</td></tr>
+          <tr><td>Deterministic scoring</td><td>Six weighted factors, reproducible byte-for-byte.</td><td>Medium &mdash; but it is what makes us auditable and ChatGPT not.</td></tr>
+          <tr><td>The AI layer</td><td>Extraction, method reasoning.</td><td><strong>Easy. Not our moat, and we don&rsquo;t claim it is.</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>The design decision behind the trust story:</strong> the model handles language, <strong>code owns every fact and number</strong>. A supplier capability can never be invented, and a score cannot be argued up by rewording the request. This is enforced architecturally &mdash; the scorer has zero AI imports, checked automatically on every build.</p>
+    <p><strong>Why that matters commercially:</strong> a supplier will only pay for leads from a system that cannot misrepresent their capabilities.</p>
+  </div>
+</section>
+
+<section class="slide" id="s6">
+  <div class="wrap">
+    <div class="slide-head"><span class="num">06</span><span class="slide-rule"></span><span class="kicker">Market</span></div>
+    <h2>A fragmented, low-digitisation segment where the hard requests are unserved</h2>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th></th><th>Definition</th><th class="n">Size</th></tr></thead>
+        <tbody>
+          <tr><td>TAM</td><td>German promotional products &amp; custom print</td><td class="n">&euro;3&ndash;4bn <span class="chip e">E</span></td></tr>
+          <tr><td>SAM</td><td>Non-standard requests &mdash; unusual material, customer-owned goods, odd quantity, tight deadline</td><td class="n">15&ndash;25% <span class="chip e">E</span></td></tr>
+          <tr><td>SOM</td><td>Berlin + intermediaries who source repeatedly</td><td class="n">3,000&ndash;5,000 firms <span class="chip e">E</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="caveat"><p><strong>All three are estimates.</strong> Order of magnitude, from industry-association reporting, unverified. Say that if asked. Sourcing them properly is on the 30-day plan.</p></div>
+    <h3>The structural fact that is not an estimate &mdash; and it decides the go-to-market</h3>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Who</th><th class="n">Custom-production requests</th></tr></thead>
+        <tbody>
+          <tr><td>End business</td><td class="n">2&ndash;4 &times; per year</td></tr>
+          <tr><td>Sourcing intermediary<br><span style="font-weight:400;color:var(--muted);font-size:0.88em">merch &amp; event agency, promo distributor</span></td><td class="n">5&ndash;30 &times; per week</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>We sell to the second.</strong> Same product, radically better economics &mdash; and they bring their own client demand with them.</p>
+  </div>
+</section>
+
+<section class="slide" id="s7">
+  <div class="wrap">
+    <div class="slide-head"><span class="num">07</span><span class="slide-rule"></span><span class="kicker">Business model</span></div>
+    <h2>Two revenue streams, ~99.9% gross margin, and the commission does the heavy lifting</h2>
+    <p>Priced as our interview partner proposed it:</p>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Stream</th><th>Price</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Qualified lead</td><td><strong>&euro;3</strong> fixed, per lead delivered</td><td>Proposed by the interviewed supplier</td></tr>
+          <tr><td>Success fee</td><td><strong>1.5&ndash;5%</strong> of completed order value</td><td>Same source &mdash; <strong>range not yet settled</strong></td></tr>
+          <tr><td>Agency subscription</td><td>&euro;99&ndash;499 / month</td><td>Our hypothesis, untested</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Unit economics <span class="chip d">D</span> &mdash; assumptions stated, arithmetic checkable</h3>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Assumption</th><th class="n">Value</th></tr></thead>
+        <tbody>
+          <tr><td>Leads per converted order</td><td class="n">5 &nbsp;(20% conversion)</td></tr>
+          <tr><td>Average order value</td><td class="n">&euro;1,000</td></tr>
+          <tr><td>Commission taken</td><td class="n">3% &nbsp;(midpoint)</td></tr>
+          <tr><td>Model priced</td><td class="n">gpt-4o &nbsp;(as deployed)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Per 5 leads delivered</th><th class="n"></th></tr></thead>
+        <tbody>
+          <tr><td>Lead fees &mdash; 5 &times; &euro;3</td><td class="n">&euro;15</td></tr>
+          <tr><td>Success fee &mdash; 1 &times; &euro;1,000 &times; 3%</td><td class="n">&euro;30</td></tr>
+          <tr class="total"><td>Revenue</td><td class="n">&euro;45</td></tr>
+          <tr><td>Our compute cost &mdash; 5 &times; $0.0096</td><td class="n">&asymp; &euro;0.044</td></tr>
+          <tr class="total"><td>Gross margin</td><td class="n">99.90%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="money">
+      <p class="lbl">Path to &euro;5,000 MRR</p>
+      <p class="fig">25</p>
+      <p class="fig-u">qualified leads a working day. That&rsquo;s it.</p>
+      <p class="fig-s"><code>&euro;5,000 &divide; &euro;45 &asymp; 111 orders</code> &rarr; <code>~555 leads / month</code> &rarr; <code>~25 per working day</code> across 22 working days. Not thousands of leads &mdash; because the success fee carries roughly two thirds of the revenue.</p>
+    </div>
+
+    <p><strong>Compute never becomes the constraint.</strong> At the deployed gpt-4o price, &euro;5,000 of monthly revenue consumes about <strong>&euro;4.90 of inference</strong> &mdash; and about <strong>&euro;0.56</strong> on gpt-4o-mini, which the code already supports. The constraint is supplier data and distribution &mdash; which is what we would use an accelerator for.</p>
+    <div class="caveat"><p><strong>We quote the expensive model on purpose.</strong> The margin survives it, so nobody has to take the cheap number on trust.</p></div>
+    <div class="say"><b>SAY</b><p>Slide 7 is the deck. If you only get one slide, make it this one. Lead with &ldquo;25 leads a working day&rdquo;.</p></div>
+  </div>
+</section>
+
+<section class="slide" id="s8">
+  <div class="wrap">
+    <div class="slide-head"><span class="num">08</span><span class="slide-rule"></span><span class="kicker">Where we are</span></div>
+    <h2>Working product, validated problem, instrumented to measure the next answer</h2>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Built and live <span class="chip m">M</span></th><th class="n"></th></tr></thead>
+        <tbody>
+          <tr><td>Deployed product, full flow end to end</td><td class="n">yes</td></tr>
+          <tr><td>Automated tests, none calling a live model</td><td class="n">308</td></tr>
+          <tr><td>Behavioural evaluation &mdash; table refuses to publish while failing</td><td class="n">19 / 19</td></tr>
+          <tr><td>Total build spend</td><td class="n">$0.199</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Validated by customer discovery &mdash; and it changed the product</h3>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>What we learned</th><th>What we changed</th></tr></thead>
+        <tbody>
+          <tr><td>Standard print is not defensible</td><td>Repositioned entirely to non-standard requests</td></tr>
+          <tr><td>Pricing cannot be scraped</td><td>Built a provenance model instead of pretending &mdash; every offer flagged as demo or verified, and code <strong>refuses</strong> an offer claiming to be both</td></tr>
+          <tr><td>ChatGPT can&rsquo;t evaluate suppliers</td><td>Ratings and proven offers are now the top of the roadmap</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>Instrumented to test the core hypothesis, not assume it.</strong> After each project the product asks: did this find you an option you couldn&rsquo;t easily find yourself? Would you contact this supplier? How would you normally solve this?</p>
+    <h3>What we do not have, stated plainly</h3>
+    <ul>
+      <li><strong>No paying customers yet.</strong> The product is ready; distribution has not started.</li>
+      <li><strong>Supplier records are synthetic</strong>, labelled as such in every row. The algorithm is real; the partners are not.</li>
+      <li><strong>Monetisation is a hypothesis</strong> &mdash; our own interview quoted 5% and 1.5%, a 3&times; spread, which tells us the number is not settled.</li>
+    </ul>
+    <div class="say"><b>SAY</b><p>Say these out loud before you are asked. Volunteering them converts your weakest slide into your most credible one.</p></div>
+  </div>
+</section>
+
+<section class="slide" id="s9">
+  <div class="wrap">
+    <div class="slide-head"><span class="num">09</span><span class="slide-rule"></span><span class="kicker">30-day plan</span></div>
+    <h2>We are not blocked on engineering. We are blocked on supply and distribution.</h2>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th class="n">Weeks</th><th>Action</th><th>Success measure</th></tr></thead>
+        <tbody>
+          <tr><td class="n">1&ndash;2</td><td>15 conversations with Berlin merch agencies &amp; promo distributors, live demo in each</td><td>3 say they would pay</td></tr>
+          <tr><td class="n">1&ndash;3</td><td>Onboard 10&ndash;15 real Berlin suppliers by phone &mdash; capabilities, minimum order, lead time, customer-owned-goods policy</td><td>Synthetic dataset replaced. <strong>This is the moat</strong></td></tr>
+          <tr><td class="n">3</td><td>Turn on RFQ sending + lead attribution</td><td>The revenue loop closes end to end</td></tr>
+          <tr><td class="n">4</td><td>3 paid pilots</td><td><strong>First euro of revenue</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>Then, from the interview, in this order:</strong> supplier ratings &rarr; proven successful offers &rarr; time-based tariffs (rush vs standard) &rarr; partner-posted discounts.</p>
+    <p><strong>Deliberately not building:</strong> copy shops (commodity &mdash; contradicts our own positioning), carpentry (no knowledge-base overlap), payments, a supplier portal. Breadth without depth turns an honest narrow product into a dishonest wide one.</p>
+  </div>
+</section>
+
+<section class="slide" id="s10">
+  <div class="wrap">
+    <div class="slide-head"><span class="num">10</span><span class="slide-rule"></span><span class="kicker">The ask</span></div>
+    <h2>We have built the hard part. We need supply and distribution.</h2>
+    <p><strong>What is already de-risked:</strong> the product works, the problem is validated by a real supplier interview, marginal cost is effectively zero, and the trust architecture means a supplier can rely on how they are represented.</p>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>What we need</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>Supplier network access</td><td>10&ndash;15 real Berlin producers is a warm-intro problem, not a code problem</td></tr>
+          <tr><td>B2B distribution</td><td>German SMEs buy on referral and reference, not on ads</td></tr>
+          <tr><td>Pricing validation</td><td>Our interview gave a 3&times; range on commission. We need real transactions to settle it</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>What we bring:</strong> a deployed product, 308 tests, one validated customer interview that already redirected the strategy, and near-zero marginal cost.</p>
+    <blockquote>
+      <p class="de">Custom production is a market where the reasoning is the bottleneck, not the search. We built the reasoning. Now we need the supply.</p>
+    </blockquote>
+  </div>
+</section>
+
+<section class="cut" id="cut">
+  <div class="wrap">
+    <p class="eyebrow">Fallback &middot; if you get 3 minutes, or present alone</p>
+    <h2>The same argument, one speaker, no handoffs</h2>
+
+    <div class="beat"><h3>Hook</h3><span class="t">0:20</span></div>
+    <div class="say"><b>SAY</b><p>&ldquo;Your customer wants 100 of their own yoga mats printed in gold. Which shop can even do it &mdash; and who accepts goods they didn&rsquo;t sell you? Today: days of emails. With us: 30 seconds.&rdquo;</p></div>
+
+    <div class="beat"><h3>The problem, one line</h3><span class="t">0:20</span></div>
+    <p><strong>Four unknowns kill custom production orders</strong> &mdash; feasibility, customer-owned goods, minimum order, deadline &mdash; and buyers hit them one at a time. Ordinary print goes to Google. This is everything else.</p>
+
+    <div class="beat"><h3>Live demo &mdash; most of your time</h3><span class="t">1:30</span></div>
+    <ol>
+      <li>Paste: <strong>&ldquo;100 black yoga mats, PVC, I own them, gold logo, Berlin&rdquo;</strong></li>
+      <li>Brief appears &mdash; <strong>point at &ldquo;Not specified&rdquo;</strong>: &ldquo;it tells you what it doesn&rsquo;t know instead of guessing.&rdquo;</li>
+      <li>Method: heat transfer, <strong>and the citation</strong> &mdash; &ldquo;it refuses laser on PVC, because that releases hydrogen chloride. It cites the document.&rdquo;</li>
+      <li>Open a score breakdown &mdash; <strong>six factors, each with a reason</strong> &mdash; &ldquo;this is the screen ChatGPT cannot produce.&rdquo;</li>
+    </ol>
+
+    <div class="beat"><h3>Why not ChatGPT</h3><span class="t">0:30</span></div>
+    <div class="say"><b>SAY</b><p>&ldquo;ChatGPT explains techniques. It cannot rate a supplier, cannot tell you a minimum order, and answers differently every time you rephrase. Our scoring is arithmetic &mdash; same input, same answer, every factor auditable. That quote is from a real print shop we interviewed.&rdquo;</p></div>
+
+    <div class="beat"><h3>The money</h3><span class="t">0:20</span></div>
+    <p><strong>&euro;3 per lead plus a 3% success fee. Compute costs $0.0096 per request on the model you just watched &mdash; 99.9% gross margin. &euro;5,000 a month is roughly 25 qualified leads a working day.</strong></p>
+
+    <div class="fallback"><p><strong>If the demo stalls</strong>Have a completed project open in a second tab. Switch to it and keep talking. Never debug in front of judges.</p></div>
+  </div>
+</section>
+
+<section class="pre" id="preflight">
+  <div class="wrap">
+    <p class="eyebrow">Before you present &middot; 15 minutes</p>
+    <h2>Four things to do first</h2>
+    <ul class="checks">
+      <li><label>
+        <input type="checkbox" data-k="c1">
+        <span class="ct"><b>Run the demo once from the venue, ~15 minutes before.</b><small>Budget is confirmed healthy &mdash; $34.50 of $35 left, paid model verified serving. The real risks are venue wifi and a cold container; one warm-up run removes both.</small></span>
+      </label></li>
+      <li><label>
+        <input type="checkbox" data-k="c2">
+        <span class="ct"><b>Pre-load a completed project</b> in a second browser tab as a fallback.<small>Never debug in front of an audience.</small></span>
+      </label></li>
+      <li><label>
+        <input type="checkbox" data-k="c3">
+        <span class="ct"><b>Rehearse slide 07 out loud.</b><small>&ldquo;25 leads a working day&rdquo; is the line that has to land.</small></span>
+      </label></li>
+      <li><label>
+        <input type="checkbox" data-k="c4">
+        <span class="ct"><b>Practise saying &ldquo;we have no paying customers yet&rdquo;</b> without flinching.<small>It is followed by &ldquo;and here is the 30-day plan to change that&rdquo;.</small></span>
+      </label></li>
+    </ul>
+    <footer class="end">
+      Produce Your Brand &middot; Berlin<br>
+      Engineering deck: docs/presentation.md &nbsp;·&nbsp; this pitch: docs/pitch.md
+    </footer>
+  </div>
+</section>
+
+<script>
+  // Ticking the pre-flight list off should survive a reload while presenting.
+  // Storage can throw outright in some contexts, so every access is guarded.
+  (function () {
+    var KEY = "pyb-pitch-preflight";
+    var boxes = document.querySelectorAll(".checks input[type=checkbox]");
+    var state = {};
+    try {
+      state = JSON.parse(localStorage.getItem(KEY) || "{}") || {};
+    } catch (e) {
+      state = {};
+    }
+    boxes.forEach(function (box) {
+      if (state[box.dataset.k]) box.checked = true;
+      box.addEventListener("change", function () {
+        state[box.dataset.k] = box.checked;
+        try {
+          localStorage.setItem(KEY, JSON.stringify(state));
+        } catch (e) {
+          /* presenting from a private window is fine; the list just won't persist */
+        }
+      });
+    });
+  })();
+</script>
+
+</body></html>

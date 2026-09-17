@@ -1,0 +1,638 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<title>Pitch Run of Show</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap">
+
+<style>
+  /* Palette from the product's brand tokens: charcoal ink, cobalt accent,
+     warm off-white ground. Cobalt is reserved for the time gutter and
+     Katerina's blocks, so speaker changes read at a glance without turning
+     the page blue. */
+  :root {
+    --ground:      #faf9f7;
+    --surface:     #ffffff;
+    --sunk:        #f3f2ef;
+    --ink:         #191c23;
+    --ink-soft:    #464a54;
+    --muted:       #6b6f7a;
+    --line:        #e2e2e4;
+    --line-soft:   #edecea;
+    --accent:      #3240eb;
+    --accent-dim:  #eaebfd;
+    --accent-deep: #1f2ac4;
+    --warn:        #8a5200;
+    --warn-dim:    #f8f0e3;
+    --ok:          #17692f;
+    --ok-dim:      #e8f2ea;
+    --on-dark:     #f7f6f4;
+    --on-dark-mute:#a0a5b0;
+    --panel:       #191c23;
+    --panel-line:  #32363e;
+    --panel-accent:#8b95ff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #121418;
+      --surface:     #1a1d23;
+      --sunk:        #15181d;
+      --ink:         #f3f2f0;
+      --ink-soft:    #c8cad0;
+      --muted:       #949aa6;
+      --line:        #2b2f36;
+      --line-soft:   #23262c;
+      --accent:      #8b95ff;
+      --accent-dim:  #21253a;
+      --accent-deep: #a8b0ff;
+      --warn:        #e0a45c;
+      --warn-dim:    #2c2519;
+      --ok:          #6cc189;
+      --ok-dim:      #17251b;
+      --on-dark:     #f7f6f4;
+      --on-dark-mute:#a0a5b0;
+      --panel:       #0c0e12;
+      --panel-line:  #2b2f36;
+      --panel-accent:#8b95ff;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #121418;
+    --surface:     #1a1d23;
+    --sunk:        #15181d;
+    --ink:         #f3f2f0;
+    --ink-soft:    #c8cad0;
+    --muted:       #949aa6;
+    --line:        #2b2f36;
+    --line-soft:   #23262c;
+    --accent:      #8b95ff;
+    --accent-dim:  #21253a;
+    --accent-deep: #a8b0ff;
+    --warn:        #e0a45c;
+    --warn-dim:    #2c2519;
+    --ok:          #6cc189;
+    --ok-dim:      #17251b;
+    --on-dark:     #f7f6f4;
+    --on-dark-mute:#a0a5b0;
+    --panel:       #0c0e12;
+    --panel-line:  #2b2f36;
+    --panel-accent:#8b95ff;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    font-size: 16.5px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 47rem; margin: 0 auto; padding: 0 1.4rem; }
+
+  h1, h2, h3, .badge, .tnum, .stat-n, .eyebrow {
+    font-family: "Space Grotesk", system-ui, sans-serif;
+  }
+
+  /* ---------------- masthead ---------------- */
+
+  header.top {
+    background: var(--panel);
+    color: var(--on-dark);
+    padding: 3rem 0 2.6rem;
+  }
+  header.top .eyebrow {
+    font-size: 0.68rem; font-weight: 600; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--panel-accent); margin: 0 0 1.1rem;
+  }
+  header.top h1 {
+    font-size: clamp(1.85rem, 5.6vw, 2.7rem);
+    font-weight: 700; line-height: 1.06; letter-spacing: -0.022em;
+    margin: 0 0 0.9rem; text-wrap: balance; color: var(--on-dark);
+  }
+  header.top .sub {
+    font-size: 1.02rem; color: var(--on-dark-mute); margin: 0 0 2rem; max-width: 46ch;
+  }
+  .facts {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+    gap: 1px; background: var(--panel-line);
+    border-top: 1px solid var(--panel-line); border-bottom: 1px solid var(--panel-line);
+  }
+  .fact { background: var(--panel); padding: 0.9rem 0.1rem; }
+  .fact dt {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.62rem; font-weight: 600; letter-spacing: 0.13em;
+    text-transform: uppercase; color: var(--on-dark-mute); margin: 0 0 0.35rem;
+  }
+  .fact dd {
+    margin: 0; font-family: "Space Grotesk", sans-serif;
+    font-size: 1.02rem; font-weight: 600; color: var(--on-dark);
+  }
+
+  /* ---------------- sections ---------------- */
+
+  section { padding: 3rem 0 0; }
+  .eyebrow {
+    font-size: 0.68rem; font-weight: 600; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem;
+  }
+  h2 {
+    font-size: clamp(1.3rem, 3.4vw, 1.66rem); font-weight: 700;
+    line-height: 1.18; letter-spacing: -0.016em; margin: 0 0 1rem;
+    text-wrap: balance;
+  }
+  h3 {
+    font-size: 1rem; font-weight: 600; letter-spacing: -0.004em;
+    margin: 1.9rem 0 0.6rem;
+  }
+  p { margin: 0 0 1rem; }
+  strong { font-weight: 600; }
+  a { color: var(--accent); }
+  ul, ol { margin: 0 0 1rem; padding-left: 1.2rem; }
+  li { margin-bottom: 0.4rem; }
+  li::marker { color: var(--muted); }
+
+  /* ---------------- the one line ---------------- */
+
+  .oneline {
+    background: var(--surface); border: 2px solid var(--ink);
+    padding: 1.6rem 1.5rem; margin: 0 0 1.2rem;
+  }
+  .oneline .tag {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 0.85rem;
+  }
+  .oneline .big {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(1.14rem, 3.7vw, 1.44rem); font-weight: 600;
+    line-height: 1.28; letter-spacing: -0.015em; margin: 0 0 0.65rem;
+    text-wrap: balance;
+  }
+  .oneline .small { margin: 0; color: var(--ink-soft); font-size: 0.98rem; }
+
+  /* ---------------- timeline ---------------- */
+
+  .tl { margin: 0 0 0.6rem; border-top: 1px solid var(--line); }
+  .tl-row {
+    display: grid;
+    grid-template-columns: 4.4rem 3px 1fr;
+    gap: 0 1rem;
+    border-bottom: 1px solid var(--line-soft);
+    padding: 1rem 0;
+    align-items: start;
+  }
+  .tnum {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.78rem; font-weight: 600; color: var(--muted);
+    font-variant-numeric: tabular-nums; white-space: nowrap; padding-top: 0.12rem;
+  }
+  .tl-bar { background: var(--ink); border-radius: 2px; align-self: stretch; }
+  .tl-row.k .tl-bar { background: var(--accent); }
+  .tl-row.k .tnum { color: var(--accent); }
+  .tl-who {
+    display: flex; align-items: center; gap: 0.5rem;
+    margin-bottom: 0.3rem; flex-wrap: wrap;
+  }
+  .badge {
+    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--surface); background: var(--ink);
+    padding: 0.16rem 0.4rem; border-radius: 2px;
+  }
+  .tl-row.k .badge { background: var(--accent); }
+  .tl-title { font-family: "Space Grotesk", sans-serif; font-weight: 600; font-size: 1rem; }
+  .tl-dur {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.68rem; color: var(--muted);
+  }
+  .tl-body { font-size: 0.95rem; color: var(--ink-soft); margin: 0; }
+
+  /* ---------------- speaker detail ---------------- */
+
+  .turn {
+    background: var(--surface); border: 1px solid var(--line);
+    border-left: 3px solid var(--ink);
+    padding: 1.3rem 1.35rem; margin: 0 0 1.1rem;
+  }
+  .turn.k { border-left-color: var(--accent); }
+  .turn-head {
+    display: flex; align-items: baseline; gap: 0.6rem;
+    flex-wrap: wrap; margin-bottom: 0.85rem;
+  }
+  .turn-head .who {
+    font-family: "Space Grotesk", sans-serif; font-weight: 700;
+    font-size: 1.06rem; letter-spacing: -0.01em;
+  }
+  .turn-head .when {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.72rem; font-weight: 600; color: var(--accent);
+    background: var(--accent-dim); padding: 0.14rem 0.42rem; border-radius: 2px;
+  }
+  .turn-head .job {
+    font-size: 0.66rem; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted);
+    font-family: "Space Grotesk", sans-serif;
+  }
+  .turn ul, .turn ol { margin-bottom: 0.7rem; }
+  .turn li { font-size: 0.95rem; }
+  .say { font-style: italic; color: var(--ink); }
+  .cue {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.75rem; color: var(--muted);
+    margin: 0.8rem 0 0; padding-top: 0.7rem; border-top: 1px dashed var(--line);
+  }
+  .cue b { color: var(--accent); font-weight: 700; letter-spacing: 0.07em; }
+
+  /* ---------------- intro template ---------------- */
+
+  .tmpl { border: 1px solid var(--line); background: var(--surface); margin: 0 0 1.1rem; }
+  .tmpl-row {
+    display: grid; grid-template-columns: 2rem 1fr; gap: 0.9rem;
+    padding: 1rem 1.2rem; border-bottom: 1px solid var(--line-soft);
+  }
+  .tmpl-row:last-child { border-bottom: 0; }
+  .tmpl-n {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.75rem; font-weight: 700; color: var(--accent); padding-top: 0.15rem;
+  }
+  .tmpl-t { font-family: "Space Grotesk", sans-serif; font-weight: 600; font-size: 0.96rem; margin-bottom: 0.2rem; }
+  .tmpl-d { font-size: 0.93rem; color: var(--ink-soft); }
+  .example {
+    background: var(--sunk); border-left: 3px solid var(--accent);
+    padding: 1.1rem 1.2rem; margin: 0 0 1rem; font-size: 0.95rem;
+  }
+  .example .lbl {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem;
+  }
+  .example p { margin: 0; font-style: italic; }
+
+  /* ---------------- Q&A ---------------- */
+
+  .qa { border-top: 1px solid var(--line); }
+  .qa-item { border-bottom: 1px solid var(--line-soft); padding: 1.05rem 0; }
+  .qa-q { font-family: "Space Grotesk", sans-serif; font-weight: 700; font-size: 0.99rem; margin: 0 0 0.4rem; }
+  .qa-q::before {
+    content: "Q"; font-family: "IBM Plex Mono", monospace;
+    font-size: 0.68rem; font-weight: 700; color: var(--accent);
+    margin-right: 0.5rem; vertical-align: 0.1em;
+  }
+  .qa-a { margin: 0; font-size: 0.95rem; color: var(--ink-soft); }
+  .qa-a strong { color: var(--ink); }
+
+  /* ---------------- notes ---------------- */
+
+  .note { padding: 1rem 1.2rem; margin: 1.2rem 0; font-size: 0.95rem; }
+  .note p { margin: 0; }
+  .note.warn { background: var(--warn-dim); border-left: 3px solid var(--warn); color: var(--ink-soft); }
+  .note.warn strong { color: var(--warn); }
+  .note.ok { background: var(--ok-dim); border-left: 3px solid var(--ok); color: var(--ink-soft); }
+  .note.ok strong { color: var(--ok); }
+
+  .checks { list-style: none; margin: 1rem 0 0; padding: 0; border: 1px solid var(--line); background: var(--surface); }
+  .checks li { margin: 0; border-bottom: 1px solid var(--line-soft); }
+  .checks li:last-child { border-bottom: 0; }
+  .checks label { display: grid; grid-template-columns: auto 1fr; gap: 0.75rem; align-items: start; padding: 0.85rem 1.1rem; cursor: pointer; }
+  .checks input { margin: 0.32rem 0 0; width: 1rem; height: 1rem; accent-color: var(--accent); cursor: pointer; }
+  .checks .ct { font-size: 0.94rem; line-height: 1.5; }
+  .checks .ct b { font-weight: 600; }
+  .checks .ct small { display: block; color: var(--muted); font-size: 0.86rem; margin-top: 0.12rem; }
+  .checks input:checked + .ct { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
+  .checks label:focus-within { background: var(--sunk); }
+
+  footer.end {
+    margin-top: 3rem; background: var(--panel); color: var(--on-dark-mute);
+    padding: 2rem 0 2.4rem; font-size: 0.9rem;
+  }
+  footer.end .live {
+    display: inline-block; font-family: "IBM Plex Mono", monospace;
+    font-size: 0.82rem; color: var(--on-dark); text-decoration: none;
+    border-bottom: 2px solid var(--panel-accent); padding-bottom: 0.12rem;
+  }
+
+  /* ---------------- print / PDF ---------------- */
+  @page { size: A4; margin: 14mm 12mm; }
+
+  @media print {
+    body { background: #ffffff; font-size: 10.5pt; }
+    header.top, .money, .note, .oneline, .example, .turn, .fact {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    header.top { padding: 1.4rem 0 1.2rem; }
+    /* A speaker's block split across a page break is the one thing that
+       makes a run of show unusable on paper. */
+    .turn, .tl-row, .qa-item, .tmpl-row, .example, .note, .checks li {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    h2, h3 { break-after: avoid; page-break-after: avoid; }
+    section { padding-top: 1.6rem; }
+    .checks input { -webkit-appearance: none; appearance: none; border: 1px solid #999; }
+  }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  @media (max-width: 30rem) {
+    .tl-row { grid-template-columns: 3.7rem 3px 1fr; gap: 0 0.7rem; }
+    body { font-size: 16px; }
+  }
+</style>
+<style>
+  /* ---------------- verbatim script ---------------- */
+
+  .vb-turn {
+    background: var(--surface);
+    border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    padding: 1.2rem 1.3rem; margin: 0 0 1rem;
+  }
+  .beat-t {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.68rem; font-weight: 700; color: var(--accent);
+    letter-spacing: 0.1em; margin: 1.5rem 0 0.4rem;
+  }
+  .beat-t:first-child { margin-top: 0; }
+  .line { font-size: 1.04rem; line-height: 1.55; margin: 0 0 0.55rem; }
+  .stage-dir {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.8rem; color: var(--muted); margin: 0 0 0.6rem;
+  }
+  .fill {
+    background: var(--warn-dim); color: var(--warn);
+    font-weight: 600; padding: 0.05rem 0.3rem; font-size: 0.94em;
+  }
+  .cut {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.66rem; font-weight: 700; color: var(--muted);
+    letter-spacing: 0.06em; white-space: nowrap;
+  }
+  .de-quote { font-style: italic; }
+  .wc {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.7rem; color: var(--muted);
+  }
+
+  @media print {
+    .vb-turn, .beat-t { break-inside: avoid; page-break-inside: avoid; }
+    .beat-t { break-after: avoid; page-break-after: avoid; }
+  }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">Produce Your Brand &middot; pitch script</p>
+    <h1>Five minutes, one voice</h1>
+    <p class="sub">Katerina presents the whole thing. Sebastian and Stefan are credited on the team slide and named out loud &mdash; nobody has to hand over, which removes the one thing that reliably breaks a group pitch.</p>
+    <dl class="facts">
+      <div class="fact"><dt>When</dt><dd>Thu 16:30</dd></div>
+      <div class="fact"><dt>Length</dt><dd>5 minutes</dd></div>
+      <div class="fact"><dt>Speaking</dt><dd>4:25</dd></div>
+      <div class="fact"><dt>Handoffs</dt><dd>0</dd></div>
+      <div class="fact"><dt>Hackathon</dt><dd>28&ndash;30 Sep</dd></div>
+    </dl>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">What this round decides</p>
+    <h2>The judges are picking a team to send, not grading a business plan</h2>
+    <p>They are asking two things: <strong>do I understand this in the first twenty seconds</strong>, and <strong>will this team deliver at the event</strong>. Market size and financial detail are not being decided here.</p>
+    <p>So the pitch leads with the one advantage almost nobody else in the room has: <strong>this is a deployed product, not an idea.</strong> Then, because the room is Turing College and everyone in it knows what a state graph and a vector index are, it shows the architecture rather than hiding it.</p>
+    <div class="note warn"><p><strong>The one fact that shapes this pitch.</strong> Battle of the Tech Schools runs 28&ndash;30 September, and <strong>the challenge brief is not released until 10:00 on day one</strong> &mdash; an AI build on real Berlin data, working prototype in 48 hours, five-member teams mixing data, engineering and web. So <strong>Produce Your Brand is not the hackathon project.</strong> It is the evidence that this team ships. Never promise what you will build there; you cannot know, and the judges know you cannot.</p></div>
+    <div class="note ok"><p><strong>Presenting alone is an advantage here, not a compromise.</strong> One voice, one laptop, no seam where a three-person pitch stalls, and 35 seconds of real buffer at the end. Speaking solo also means you can absorb a slow demo by trimming later &mdash; the cut points are marked in the script.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">Timeline</p>
+    <h2>Nine beats, and the last 35 seconds are deliberately empty</h2>
+    <div class="tl">
+      <div class="tl-row k"><span class="tnum">0:00</span><span class="tl-bar"></span><div>
+        <div class="tl-who"><span class="badge">1</span><span class="tl-title">The one sentence</span><span class="tl-dur">20 s</span></div>
+        <p class="tl-body">Plus the pause. This is the only part to know cold.</p></div></div>
+      <div class="tl-row k"><span class="tnum">0:20</span><span class="tl-bar"></span><div>
+        <div class="tl-who"><span class="badge">2</span><span class="tl-title">The boundary</span><span class="tl-dur">20 s</span></div>
+        <p class="tl-body">What we are not: ordinary print. Pre-empts half the questions.</p></div></div>
+      <div class="tl-row k"><span class="tnum">0:40</span><span class="tl-bar"></span><div>
+        <div class="tl-who"><span class="badge">3</span><span class="tl-title">Four unknowns</span><span class="tl-dur">15 s</span></div>
+        <p class="tl-body">Delivered fast, as a list. Do not elaborate on any of them.</p></div></div>
+      <div class="tl-row k"><span class="tnum">0:55</span><span class="tl-bar"></span><div>
+        <div class="tl-who"><span class="badge">4</span><span class="tl-title">The interview quote</span><span class="tl-dur">10 s</span></div>
+        <p class="tl-body">Doubles as the way into the demo, so there is no awkward transition.</p></div></div>
+      <div class="tl-row k"><span class="tnum">1:05</span><span class="tl-bar"></span><div>
+        <div class="tl-who"><span class="badge">5</span><span class="tl-title">Live demo</span><span class="tl-dur">75 s &middot; the centrepiece</span></div>
+        <p class="tl-body">Four beats on the real deployed product.</p></div></div>
+      <div class="tl-row k"><span class="tnum">2:20</span><span class="tl-bar"></span><div>
+        <div class="tl-who"><span class="badge">6</span><span class="tl-title">The architecture</span><span class="tl-dur">45 s</span></div>
+        <p class="tl-body">Slide 07. Walk the rows, not the boxes. The technical audience is the reason this slide exists.</p></div></div>
+      <div class="tl-row k"><span class="tnum">3:05</span><span class="tl-bar"></span><div>
+        <div class="tl-who"><span class="badge">7</span><span class="tl-title">The line to land, then the team</span><span class="tl-dur">30 s</span></div>
+        <p class="tl-body">Which row has no AI in it &mdash; then name Sebastian and Stefan and the skills each brings.</p></div></div>
+      <div class="tl-row k"><span class="tnum">3:35</span><span class="tl-bar"></span><div>
+        <div class="tl-who"><span class="badge">8</span><span class="tl-title">Why us for an unseen brief</span><span class="tl-dur">35 s</span></div>
+        <p class="tl-body">The brief is secret until day one, so this is about track record, not roadmap. The strongest thing you say in a round about execution.</p></div></div>
+      <div class="tl-row k"><span class="tnum">4:10</span><span class="tl-bar"></span><div>
+        <div class="tl-who"><span class="badge">9</span><span class="tl-title">The close</span><span class="tl-dur">15 s</span></div>
+        <p class="tl-body">The one sentence again, then stop.</p></div></div>
+      <div class="tl-row"><span class="tnum">4:25</span><span class="tl-bar"></span><div>
+        <div class="tl-who"><span class="badge">&mdash;</span><span class="tl-title">Buffer</span><span class="tl-dur">35 s</span></div>
+        <p class="tl-body">Empty on purpose. Finishing early reads as control; overrunning reads as the opposite.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="script">
+  <div class="wrap">
+    <p class="eyebrow">The script, word for word</p>
+    <h2>Everything you say, in order</h2>
+    <p><strong>Memorise only the first twenty seconds.</strong> That is where nerves land, and once the opening is automatic the rest follows. A fully memorised script sounds dead and collapses the moment you lose your place &mdash; everything after beat 1 should be yours in your own words.</p>
+    <p><span class="cut">[CUT IF BEHIND]</span> marks sentences you can drop mid-flight without breaking the logic. Losing them costs detail, not argument.</p>
+
+    <div class="vb-turn">
+      <p class="beat-t">1 &middot; 0:00 &middot; THE OPENING &mdash; KNOW THIS COLD <span class="wc">42 words</span></p>
+      <p class="line">&ldquo;You describe what you want made. We tell you if it&rsquo;s possible, how to make it, and who can make it.&rdquo;</p>
+      <p class="stage-dir">Pause. Two full counts. Say nothing. You will want to shorten this &mdash; don&rsquo;t.</p>
+      <p class="line">&ldquo;Today that takes a week of emails. We do it in thirty seconds.&rdquo;</p>
+
+      <p class="beat-t">2 &middot; 0:20 &middot; THE BOUNDARY <span class="wc">48 words</span></p>
+      <p class="line">&ldquo;Here&rsquo;s the line we draw. Five hundred hoodies with your logo? Google solves that, and always will &mdash; that is not our market. But a hundred yoga mats that you already own, printed in gold? Nobody can tell you if that is even possible.&rdquo;</p>
+
+      <p class="beat-t">3 &middot; 0:40 &middot; FOUR UNKNOWNS &mdash; FAST, AS A LIST <span class="wc">45 words</span></p>
+      <p class="line">&ldquo;Four things decide it. Can it physically be made. Who accepts goods you already own. Does the minimum order fit. Is the deadline real. Every one of them is knowable &mdash; you just find them out one at a time, by email, over a week.&rdquo;</p>
+
+      <p class="beat-t">4 &middot; 0:55 &middot; THE QUOTE, WHICH IS ALSO YOUR WAY INTO THE DEMO <span class="wc">40 words</span></p>
+      <p class="line">&ldquo;We interviewed a Berlin print shop and asked what would actually make this worth using. They said: <span class="de-quote">ChatGPT macht keine Bewertungen</span> &mdash; it cannot evaluate suppliers. So let me show you what we built instead.&rdquo;</p>
+      <p class="stage-dir">Never say &ldquo;so now let me show you my demo&rdquo;. The quote opens the door for you.</p>
+
+      <p class="beat-t">5 &middot; 1:05 &middot; DEMO &mdash; FOUR BEATS, 75 SECONDS <span class="wc">95 words</span></p>
+      <p class="stage-dir">The input text is already in your clipboard. Paste, submit.</p>
+      <p class="line">&ldquo;A hundred black yoga mats, PVC, I own them, gold logo, Berlin.&rdquo;</p>
+      <p class="stage-dir">Point at &ldquo;Not specified&rdquo;. Point first, speak half a second later.</p>
+      <p class="line">&ldquo;First thing &mdash; it tells you what it doesn&rsquo;t know instead of guessing. &lsquo;Not specified&rsquo; is a design decision: unknown is not the same as no.&rdquo;</p>
+      <p class="stage-dir">Method and citation on screen.</p>
+      <p class="line">&ldquo;It picks heat transfer. And it refuses laser on PVC, because that releases hydrogen chloride &mdash; and it cites the document it got that from. It doesn&rsquo;t remember. It retrieves.&rdquo;</p>
+      <p class="stage-dir">Open one supplier&rsquo;s score breakdown.</p>
+      <p class="line">&ldquo;Three of seven suppliers are eligible. Six factors, each with a reason. This is the screen ChatGPT cannot produce.&rdquo;</p>
+
+      <p class="beat-t">6 &middot; 2:20 &middot; THE ARCHITECTURE &mdash; SLIDE 07, 45 SECONDS <span class="wc">115 words</span></p>
+      <p class="stage-dir">Say the first line before anything else, or the room reads a swimlane as a flowchart. Then walk the ROWS, not the boxes.</p>
+      <p class="line">&ldquo;This is how it works. Columns are the four stages. Rows are the layers.&rdquo;</p>
+      <p class="line">&ldquo;Top row is the LangGraph state graph &mdash; those are the real node names, fourteen of them, and the blue ones are interrupt points: five places the graph stops and waits for a person.&rdquo;</p>
+      <p class="line">&ldquo;Second row is where a model is allowed to speak. Stage one is structured output into a closed schema, so it cannot invent a field. Stage two runs two model tiers &mdash; a small one routes, a large one recommends.&rdquo;</p>
+      <p class="stage-dir">Point at the wide blue box.</p>
+      <p class="line">&ldquo;And from stage three onward there is no model call at all.&rdquo;</p>
+      <p class="line">&ldquo;Third row is retrieval, and it belongs to stage two only. A three-layer ladder decides whether to retrieve, and only the last layer is a model. On any error it retrieves anyway &mdash; the model never gets to skip the knowledge base by accident. <span class="cut">[CUT IF BEHIND]</span> Underneath it, a FAISS index: thirteen curated documents, fifty-one chunks.&rdquo;</p>
+      <p class="line">&ldquo;Bottom row is code only. Six weighted factors &mdash; and that scorer imports nothing from the AI layer. <span class="cut">[CUT IF BEHIND]</span> There is a build check that fails if anyone ever adds such an import.&rdquo;</p>
+
+      <p class="beat-t">7 &middot; 3:05 &middot; THE LINE TO LAND, THEN THE TEAM <span class="wc">75 words</span></p>
+      <p class="line">&ldquo;Notice which row has no AI in it. That is the row that decides who gets your money. A supplier will only pay for leads from a system that cannot misrepresent what they can do.&rdquo;</p>
+      <p class="stage-dir">Team slide. Name them &mdash; a named split reads as a team that has already planned the weekend.</p>
+      <p class="line">&ldquo;We are three: I&rsquo;m an AI engineer, Stefan is an AI engineer, Sebastian is a data scientist. Between us: the model layer, the data layer, and the web layer that everything you just saw runs on.&rdquo;</p>
+
+      <p class="beat-t">8 &middot; 3:35 &middot; WHY US FOR AN UNSEEN BRIEF <span class="wc">90 words</span></p>
+      <p class="stage-dir">Do not promise a build. The brief is released at 10:00 on day one and the judges know it &mdash; claiming to know what you will make would say you had not read the format.</p>
+      <p class="line">&ldquo;The brief drops at ten on the first morning, and nobody sees it before that. So I am not going to tell you what we will build. I will tell you what we do with a brief we have never seen.&rdquo;</p>
+      <p class="line">&ldquo;This was a messy real-world domain with no clean dataset anywhere. We shipped it &mdash; deployed, three hundred and nine tests, and a customer interview that made us throw away our first positioning and rebuild.&rdquo;</p>
+      <p class="line">&ldquo;An AI build on real Berlin data in forty-eight hours is the shape of problem we have already finished once. <span class="cut">[CUT IF BEHIND]</span> Two AI engineers and a data scientist maps onto the data, engineering and web mix the challenge asks for &mdash; and we are three, ready to take two more from any school.&rdquo;</p>
+
+      <p class="beat-t">9 &middot; 4:10 &middot; THE CLOSE <span class="wc">38 words</span></p>
+      <p class="stage-dir">Beat. Then slower than everything before it.</p>
+      <p class="line">&ldquo;You describe what you want made. We tell you if it&rsquo;s possible, how to make it, and who can make it. Send us to Berlin and we&rsquo;ll make it a transaction.&rdquo;</p>
+      <p class="stage-dir">Then stop. Add nothing. The last sentence should be the last sentence.</p>
+    </div>
+
+    <p class="wc" style="margin-top:1.2rem">~580 words of speech across 4:25 &mdash; about 130 words a minute, which is a presenting pace, not a reading pace.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">How to rehearse</p>
+    <h2>Three passes, not ten</h2>
+    <ol>
+      <li><strong>Sitting, script in hand.</strong> Check the meaning holds and the words sound like you. Change any phrase you would not say naturally &mdash; a borrowed phrase is the one you will stumble on.</li>
+      <li><strong>Standing, out loud, with a timer.</strong> Reading in your head runs about a third faster than speaking, so a script only timed silently will overrun. Note where you actually are at 2:20 and at 3:35.</li>
+      <li><strong>Standing, no script, deck only.</strong> This proves you remember the structure rather than the phrasing &mdash; which is what you actually need on stage.</li>
+    </ol>
+    <h3>Rehearse the demo clicks in silence first</h3>
+    <p>Five times, no talking, until your hands know the sequence. <strong>Only then add words.</strong> Motor memory and verbal memory interfere with each other &mdash; learning them together is why people fumble a demo they have done a hundred times.</p>
+    <h3>The readiness test for the opening</h3>
+    <p>Say the first sentence while walking, or while somebody is talking to you. <strong>If it survives interference, it will survive the room.</strong></p>
+    <h3>Two things to practise saying without flinching</h3>
+    <ul>
+      <li>&ldquo;<strong>We have no paying customers yet.</strong>&rdquo; Followed immediately by the 30-day plan. Volunteering it is what makes the rest credible.</li>
+      <li>&ldquo;<strong>The suppliers in this demo are sample data</strong>, labelled as such in the app.&rdquo; Say it during the demo, not when someone catches it.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">Questions you will get</p>
+    <h2>Five answers to have ready</h2>
+    <div class="qa">
+      <div class="qa-item">
+        <p class="qa-q">Isn&rsquo;t this just ChatGPT with extra steps?</p>
+        <p class="qa-a">&ldquo;Ask ChatGPT which Berlin shop accepts customer-owned goods at a 100-unit minimum and it will invent a plausible answer that changes when you rephrase the question. <strong>Ours is arithmetic</strong> &mdash; six factors, same input, same answer, every factor auditable. And the sharpest version of that line is not ours: it is the print shop we interviewed saying <em>ChatGPT macht keine Bewertungen</em>.&rdquo;</p>
+      </div>
+      <div class="qa-item">
+        <p class="qa-q">Is it multi-agent? Where are the sub-agents?</p>
+        <p class="qa-a">&ldquo;<strong>No, and deliberately not.</strong> It is one state graph with fourteen nodes and five human interrupts. What is agentic is the retrieval decision &mdash; the system decides whether it needs the knowledge base, and a separate small model does that routing. We didn&rsquo;t add agents talking to agents because every extra degree of freedom is another place a number could be invented, and the whole product rests on the numbers being trustworthy.&rdquo; <strong>Never claim sub-agents in this room</strong> &mdash; somebody will ask where they are.</p>
+      </div>
+      <div class="qa-item">
+        <p class="qa-q">Isn&rsquo;t print sourcing a small market?</p>
+        <p class="qa-a">&ldquo;We start with print and merchandise because that is where our knowledge base is real. <strong>The layer underneath generalises to anything custom-made</strong> &mdash; &lsquo;can this material take this process&rsquo; is the same question for textiles, packaging or furniture. We are deliberately not claiming breadth we have not built yet.&rdquo;</p>
+      </div>
+      <div class="qa-item">
+        <p class="qa-q">Do you have customers or revenue?</p>
+        <p class="qa-a">&ldquo;<strong>No, and I will be precise about it.</strong> The product is deployed, but distribution has not started, and the suppliers in the demo are sample data &mdash; labelled as such in the app, because the code refuses to let a demo record claim to be verified. What we do have is one real supplier interview that changed the product.&rdquo;</p>
+      </div>
+      <div class="qa-item">
+        <p class="qa-q">You are three, and teams are five.</p>
+        <p class="qa-a">&ldquo;Correct, and the format allows teams to combine across schools. <strong>We would take two more &mdash; ideally a web developer and a second data person</strong> &mdash; and we are happy for them to come from another school. We would rather say that now than discover it on day one.&rdquo; Saying this before anyone asks shows you read the rules, which is itself a signal about how you would run the weekend.</p>
+      </div>
+      <div class="qa-item">
+        <p class="qa-q">You presented alone &mdash; what did the others actually do?</p>
+        <p class="qa-a">Have one concrete sentence each, and do not diminish anyone&rsquo;s part. Agree the wording with them beforehand so you are not improvising an answer about somebody else&rsquo;s work.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pre">
+  <div class="wrap">
+    <p class="eyebrow">Before Thursday</p>
+    <h2>Six things, and the first two are non-negotiable</h2>
+    <ul class="checks">
+      <li><label>
+        <input type="checkbox" data-k="s1">
+        <span class="ct"><b>Rehearse the demo clicks in silence, five times.</b><small>Non-negotiable. Hands first, words second.</small></span>
+      </label></li>
+      <li><label>
+        <input type="checkbox" data-k="s2">
+        <span class="ct"><b>Second browser tab with a finished project already open.</b><small>Non-negotiable. If the demo stalls, switch and keep talking &mdash; never debug in front of judges.</small></span>
+      </label></li>
+      <li><label>
+        <input type="checkbox" data-k="s3">
+        <span class="ct"><b>One timed run-through, standing, out loud.</b><small>Check where you actually are at 2:20 and 3:35. If you are behind, the cut points are marked in the script.</small></span>
+      </label></li>
+      <li><label>
+        <input type="checkbox" data-k="s4">
+        <span class="ct"><b>Input text in the clipboard before you walk up.</b><small>&ldquo;100 black yoga mats, PVC, I own them, gold logo, Berlin&rdquo; &mdash; typing it live costs fifteen seconds you do not have.</small></span>
+      </label></li>
+      <li><label>
+        <input type="checkbox" data-k="s6">
+        <span class="ct"><b>Decide what you say about being three, not five.</b><small>Teams are five and may combine across schools. Volunteer it rather than being asked &mdash; it reads as having read the rules.</small></span>
+      </label></li>
+      <li><label>
+        <input type="checkbox" data-k="s5">
+        <span class="ct"><b>One warm-up run from the venue, 15 minutes before.</b><small>Clears a cold container and confirms the network. The API budget is already verified.</small></span>
+      </label></li>
+    </ul>
+  </div>
+</section>
+
+<footer class="end">
+  <div class="wrap">
+    <p style="margin:0 0 0.8rem">The slides: <a href="https://claude.ai/code/artifact/f51f5d0a-4b27-49b5-a909-07d14f50fe58" style="color:#8b95ff">Stage Deck</a> &mdash; eleven slides, arrow keys to advance, F11 for full screen. Slide 07 is the architecture.</p>
+    <p style="margin:0 0 0.8rem">The live product:</p>
+    <a class="live" href="https://produceyourstuff.up.railway.app/" target="_blank" rel="noopener">produceyourstuff.up.railway.app</a>
+    <p style="margin:1.4rem 0 0;font-size:0.84rem">Produce Your Brand &middot; Berlin<br>Katerina &mdash; AI engineer &middot; Sebastian &mdash; data scientist &middot; Stefan &mdash; AI engineer</p>
+  </div>
+</footer>
+
+<script>
+  // Ticking prep items off should survive a reload. Storage can throw outright
+  // in some contexts, so every access is guarded.
+  (function () {
+    var KEY = "pyb-solo-prep";
+    var boxes = document.querySelectorAll(".checks input[type=checkbox]");
+    var state = {};
+    try {
+      state = JSON.parse(localStorage.getItem(KEY) || "{}") || {};
+    } catch (e) {
+      state = {};
+    }
+    boxes.forEach(function (box) {
+      if (state[box.dataset.k]) box.checked = true;
+      box.addEventListener("change", function () {
+        state[box.dataset.k] = box.checked;
+        try {
+          localStorage.setItem(KEY, JSON.stringify(state));
+        } catch (e) {
+          /* private window: the list simply will not persist */
+        }
+      });
+    });
+  })();
+</script>
+
+</body></html>

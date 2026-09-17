@@ -1,0 +1,440 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style></head><body>
+<title>Produce Your Brand</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --paper:#E8E6DE;
+    --surface:#F6F5F0;
+    --surface-2:#EFEDE4;
+    --ink:#1A1913;
+    --ink-soft:#4B4A40;
+    --rule:#B9B6A6;
+    --rule-strong:#8B8A7A;
+    --copper:#B84A1C;
+    --copper-ink:#FFFFFF;
+    --blue:#2F5170;
+    --focus:#2F5170;
+    --ok:#3E6B4F;
+    --shadow: 0 1px 0 rgba(26,25,19,0.06);
+  }
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#181713;
+      --surface:#201F1A;
+      --surface-2:#26251F;
+      --ink:#ECE8DC;
+      --ink-soft:#B7B3A2;
+      --rule:#3B3A31;
+      --rule-strong:#57554A;
+      --copper:#FF7A3D;
+      --copper-ink:#1A1913;
+      --blue:#8FB3D1;
+      --focus:#8FB3D1;
+      --ok:#8FC2A2;
+      --shadow: 0 1px 0 rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#181713; --surface:#201F1A; --surface-2:#26251F; --ink:#ECE8DC; --ink-soft:#B7B3A2;
+    --rule:#3B3A31; --rule-strong:#57554A; --copper:#FF7A3D; --copper-ink:#1A1913; --blue:#8FB3D1; --focus:#8FB3D1; --ok:#8FC2A2;
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  h1,h2,h3{
+    font-family:'Big Shoulders Display', 'Arial Narrow', sans-serif;
+    text-transform:uppercase; font-weight:800; line-height:0.92; text-wrap:balance; margin:0; letter-spacing:0.005em;
+  }
+  .mono{ font-family:'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace; }
+  a{ color:var(--blue); }
+  ::selection{ background:var(--copper); color:var(--copper-ink); }
+  :focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+  .frame{ max-width:1040px; margin:0 auto; padding:0 28px; }
+
+  .crop{ position:fixed; width:22px; height:22px; pointer-events:none; z-index:5; opacity:0.55; }
+  .crop::before, .crop::after{ content:""; position:absolute; background:var(--rule-strong); }
+  .crop::before{ width:100%; height:1px; top:50%; }
+  .crop::after{ width:1px; height:100%; left:50%; }
+  .crop.tl{ top:14px; left:14px; } .crop.tr{ top:14px; right:14px; }
+  .crop.bl{ bottom:14px; left:14px; } .crop.br{ bottom:14px; right:14px; }
+  @media (max-width: 700px){ .crop{ display:none; } }
+
+  header.top{ padding:20px 0 14px; border-bottom:1px solid var(--rule); }
+  .top-row{ display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  .wordmark{ font-family:'Big Shoulders Display', sans-serif; font-weight:800; text-transform:uppercase; font-size:20px; letter-spacing:0.02em; }
+  .wordmark em{ font-style:normal; color:var(--copper); }
+  .spec-eyebrow{ font-size:11px; letter-spacing:0.08em; color:var(--ink-soft); text-transform:uppercase; }
+  .spec-eyebrow span + span::before{ content:"·"; margin:0 8px; color:var(--rule-strong); }
+
+  .hero{ padding:60px 0 40px; }
+  .hero-kicker{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'IBM Plex Mono'; font-size:12px; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--copper); margin-bottom:18px; font-weight:600;
+  }
+  .hero-kicker::before{ content:""; width:8px; height:8px; background:var(--copper); display:inline-block; }
+  .hero h1{ font-size:clamp(38px,6.6vw,76px); }
+  .hero h1 .accent{ color:var(--copper); }
+  .hero-sub{ max-width:56ch; font-size:18px; color:var(--ink-soft); margin-top:22px; }
+  .hero-actions{ margin-top:32px; display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
+  .btn{
+    font-family:'IBM Plex Mono', monospace; font-size:13px; letter-spacing:0.04em; text-transform:uppercase;
+    padding:13px 22px; border:1px solid var(--ink); background:var(--ink); color:var(--paper);
+    cursor:pointer; text-decoration:none; display:inline-block;
+  }
+  .btn:hover{ background:var(--copper); border-color:var(--copper); color:var(--copper-ink); }
+  .btn.ghost{ background:transparent; color:var(--ink-soft); border-color:transparent; padding-left:0; padding-right:0; text-decoration:underline; text-underline-offset:4px; }
+  .btn.ghost:hover{ color:var(--ink); }
+
+  /* concrete example chain */
+  .chain-wrap{ border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); padding:26px 0 30px; }
+  .chain-request{ font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--copper); margin-bottom:8px; }
+  .chain-request-text{ font-size:16px; max-width:66ch; margin-bottom:22px; }
+  .chain{ display:flex; align-items:stretch; gap:0; flex-wrap:wrap; }
+  .chain-node{ flex:1 1 140px; background:var(--surface); border:1px solid var(--rule); padding:14px 16px; position:relative; }
+  .chain-node .n-label{ font-family:'IBM Plex Mono'; font-size:10px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-soft); }
+  .chain-node .n-value{ font-family:'Big Shoulders Display'; font-weight:700; font-size:17px; text-transform:uppercase; margin-top:6px; }
+  .chain-arrow{ flex:0 0 auto; display:flex; align-items:center; justify-content:center; width:28px; color:var(--rule-strong); font-family:'IBM Plex Mono'; }
+  @media (max-width:720px){ .chain{ flex-direction:column; } .chain-arrow{ width:100%; height:20px; transform:rotate(90deg); } }
+
+  section{ padding:60px 0; border-bottom:1px solid var(--rule); }
+  section:last-of-type{ border-bottom:none; }
+  .section-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:24px; margin-bottom:34px; flex-wrap:wrap; }
+  .section-num{ font-family:'IBM Plex Mono'; font-size:12px; color:var(--copper); letter-spacing:0.08em; }
+  .section-head h2{ font-size:clamp(24px,3.6vw,38px); margin-top:6px; }
+  .section-intro{ max-width:62ch; color:var(--ink-soft); font-size:16px; }
+
+  /* pain / rejection stamps */
+  .pain-lead{ font-size:19px; max-width:44ch; margin-bottom:30px; }
+  .pain-lead .no{ color:var(--copper); }
+  .pain-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--rule); border:1px solid var(--rule); }
+  @media (max-width:780px){ .pain-grid{ grid-template-columns:repeat(2,1fr); } }
+  .pain{ background:var(--surface); padding:18px 16px; font-family:'IBM Plex Mono'; font-size:12px; letter-spacing:0.03em; text-transform:uppercase; color:var(--ink-soft); position:relative; }
+  .pain::before{ content:"✕"; color:var(--copper); margin-right:8px; }
+
+  .routing{ position:relative; }
+  .stations{ display:flex; flex-direction:column; gap:0; }
+  .station{ position:relative; padding:20px 0 20px 46px; border-top:1px solid var(--rule); }
+  .station:first-child{ border-top:none; }
+  .station::before{
+    content:attr(data-n); position:absolute; left:0; top:22px; width:32px; height:32px; border-radius:50%;
+    background:var(--surface); border:1px solid var(--rule-strong); display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono'; font-size:12px; color:var(--ink);
+  }
+  .station-title{ font-family:'IBM Plex Mono'; font-weight:600; font-size:14px; text-transform:uppercase; letter-spacing:0.04em; }
+  .station-desc{ color:var(--ink-soft); margin-top:6px; max-width:60ch; font-size:15px; }
+
+  /* supplier example card */
+  .example-card{ border:1px solid var(--rule); background:var(--surface); max-width:460px; }
+  .example-flag{ font-family:'IBM Plex Mono'; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-soft); background:var(--surface-2); padding:8px 18px; border-bottom:1px dashed var(--rule-strong); }
+  .example-body{ padding:22px 18px; }
+  .example-best{ font-family:'IBM Plex Mono'; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--copper); margin-bottom:6px; }
+  .example-name{ font-family:'Big Shoulders Display'; font-weight:800; font-size:26px; text-transform:uppercase; }
+  .example-score{ font-family:'IBM Plex Mono'; font-size:13px; color:var(--ink-soft); margin-top:4px; }
+  .example-list{ list-style:none; margin:18px 0; padding:0; display:flex; flex-direction:column; gap:9px; font-size:14px; }
+  .example-list li{ padding-left:22px; position:relative; }
+  .example-list li.yes::before{ content:"✓"; position:absolute; left:0; color:var(--ok); }
+  .example-list li.unk::before{ content:"?"; position:absolute; left:0; color:var(--ink-soft); }
+  .example-meta{ display:flex; gap:24px; border-top:1px solid var(--rule); padding-top:14px; margin-top:6px; }
+  .example-meta div .k{ font-family:'IBM Plex Mono'; font-size:10px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-soft); }
+  .example-meta div .v{ font-size:14px; margin-top:2px; }
+  .example-card .btn{ width:100%; text-align:center; margin-top:18px; }
+
+  /* trust / compare */
+  .trust-lines{ display:flex; flex-direction:column; gap:8px; margin-bottom:32px; }
+  .trust-lines p{ font-size:18px; max-width:52ch; margin:0; }
+  .trust-lines p strong{ color:var(--copper); }
+  .compare{ display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--rule); border:1px solid var(--rule); }
+  @media (max-width: 720px){ .compare{ grid-template-columns:1fr; } }
+  .compare-col{ background:var(--surface); padding:24px 22px; }
+  .compare-col.hi{ background:var(--surface-2); }
+  .compare-head{ font-family:'IBM Plex Mono'; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:16px; }
+  .compare-col.hi .compare-head{ color:var(--copper); }
+  .compare-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:13px; }
+  .compare-list li{ padding-left:20px; position:relative; font-size:14.5px; }
+  .compare-list li::before{ content:"–"; position:absolute; left:0; color:var(--rule-strong); }
+  .compare-col.hi .compare-list li::before{ content:"+"; color:var(--copper); }
+
+  /* categories */
+  .cats{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--rule); border:1px solid var(--rule); }
+  @media (max-width: 780px){ .cats{ grid-template-columns:repeat(2,1fr); } }
+  .cat{ background:var(--surface); padding:20px 16px; min-height:120px; display:flex; flex-direction:column; justify-content:space-between; }
+  .cat .cat-id{ font-family:'IBM Plex Mono'; font-size:11px; color:var(--rule-strong); }
+  .cat .cat-name{ font-family:'Big Shoulders Display'; font-weight:700; font-size:20px; text-transform:uppercase; margin-top:22px; }
+  .cat .cat-status{ font-family:'IBM Plex Mono'; font-size:10px; letter-spacing:0.06em; text-transform:uppercase; margin-top:10px; }
+  .cat.live .cat-status{ color:var(--copper); }
+  .cat.next{ opacity:0.6; }
+
+  /* where we are (honest traction) */
+  .status-row{ display:flex; gap:1px; background:var(--rule); border:1px solid var(--rule); flex-wrap:wrap; }
+  .status-cell{ flex:1 1 200px; background:var(--surface); padding:20px 18px; }
+  .status-cell .num{ font-family:'Big Shoulders Display'; font-weight:800; font-size:34px; color:var(--copper); }
+  .status-cell.pending .num{ color:var(--ink-soft); }
+  .status-cell .label{ font-family:'IBM Plex Mono'; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); margin-top:6px; }
+
+  /* signal capture */
+  .signal-grid{ display:grid; grid-template-columns:1fr 1fr; gap:28px; }
+  @media (max-width: 780px){ .signal-grid{ grid-template-columns:1fr; } }
+  .ticket{ background:var(--surface); border:1px solid var(--rule); padding:26px 24px; }
+  .ticket-head{ display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px dashed var(--rule-strong); padding-bottom:14px; margin-bottom:18px; }
+  .ticket-title{ font-family:'Big Shoulders Display'; font-weight:700; text-transform:uppercase; font-size:22px; }
+  .ticket-id{ font-family:'IBM Plex Mono'; font-size:11px; color:var(--ink-soft); }
+  .ticket p{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-family:'IBM Plex Mono'; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:6px; }
+  .field input, .field textarea{ width:100%; background:var(--paper); border:1px solid var(--rule-strong); color:var(--ink); font-family:'IBM Plex Sans'; font-size:14px; padding:10px 11px; resize:vertical; }
+  .field textarea{ min-height:64px; }
+  .field input:focus, .field textarea:focus{ border-color:var(--focus); }
+  .ticket .btn{ width:100%; text-align:center; }
+  .ticket-note{ font-family:'IBM Plex Mono'; font-size:11px; color:var(--ink-soft); margin-top:12px; text-align:center; }
+  .form-ok{ font-family:'IBM Plex Mono'; font-size:12px; color:var(--copper); margin-top:12px; display:none; }
+  .form-ok.show{ display:block; }
+
+  /* final CTA */
+  .final-cta{ text-align:left; }
+  .final-cta h2{ font-size:clamp(30px,5vw,52px); }
+  .final-cta .btn{ margin-top:26px; font-size:14px; padding:16px 28px; }
+
+  footer{ padding:30px 0 56px; }
+  .foot-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; }
+  .foot-note{ font-size:13px; color:var(--ink-soft); max-width:56ch; }
+  .foot-tag{ font-family:'IBM Plex Mono'; font-size:11px; color:var(--ink-soft); white-space:nowrap; }
+  .partner-link{ font-family:'IBM Plex Mono'; font-size:12px; margin-top:14px; display:inline-block; }
+</style>
+
+<div class="crop tl"></div><div class="crop tr"></div><div class="crop bl"></div><div class="crop br"></div>
+
+<header class="top">
+  <div class="frame top-row">
+    <div class="wordmark">Produce <em>Your</em> Brand</div>
+    <div class="spec-eyebrow"><span>Sourcing &amp; production orchestration</span><span>Berlin</span></div>
+  </div>
+</header>
+
+<main>
+  <div class="frame hero">
+    <div class="hero-kicker"><span id="brand-tagline">Hard to source. Made possible.</span></div>
+    <h1>You know what<br>you want.<br><span class="accent">We find who<br>can make it.</span></h1>
+    <p class="hero-sub">Describe your custom production request. We turn it into technical requirements, match it against real supplier capabilities, and help you request comparable offers.</p>
+    <div class="hero-actions">
+      <a href="#signal" class="btn">Find a production partner</a>
+      <a href="#how" class="btn ghost">See how it works</a>
+    </div>
+  </div>
+
+  <div class="frame chain-wrap">
+    <div class="chain-request">A request like this one</div>
+    <div class="chain-request-text">"150 aluminium bottles, gold logo printed, Berlin, 10 days. I already own the bottles."</div>
+    <div class="chain">
+      <div class="chain-node"><div class="n-label">01 Request</div><div class="n-value">Free text</div></div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node"><div class="n-label">02 Production brief</div><div class="n-value">Structured</div></div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node"><div class="n-label">03 Supplier matches</div><div class="n-value">Compatibility</div></div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node"><div class="n-label">04 RFQ</div><div class="n-value">You approve</div></div>
+    </div>
+  </div>
+
+  <section id="pain">
+    <div class="frame">
+      <p class="pain-lead">Finding a printer is easy.<br>Finding one that can handle <span class="no">your exact request</span> isn't.</p>
+      <div class="pain-grid">
+        <div class="pain">Wrong production method</div>
+        <div class="pain">MOQ mismatch</div>
+        <div class="pain">Customer-owned goods rejected</div>
+        <div class="pain">Deadline impossible</div>
+        <div class="pain">Unclear pricing</div>
+        <div class="pain">Multiple emails, no answer</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="frame">
+      <div class="section-head">
+        <div><div class="section-num">01 — Process</div><h2>How it works</h2></div>
+        <p class="section-intro">Four steps. Nothing is sent to a real supplier until you approve it.</p>
+      </div>
+      <div class="routing">
+        <div class="stations">
+          <div class="station" data-n="1"><div class="station-title">Describe</div><div class="station-desc">Plain language — product, quantity, deadline, finish. No form to fill in first.</div></div>
+          <div class="station" data-n="2"><div class="station-title">Define</div><div class="station-desc">An editable production brief: product, ownership, customisation, potential method, location, deadline. You correct anything it got wrong.</div></div>
+          <div class="station" data-n="3"><div class="station-title">Match</div><div class="station-desc">Compatibility scored against real supplier capabilities — method, materials, MOQ, customer-owned-goods acceptance, location, deadline. Unknowns are shown as unknown, never assumed compatible.</div></div>
+          <div class="station" data-n="4"><div class="station-title">Request</div><div class="station-desc">A production-ready RFQ, generated and ready for you to review before it goes anywhere.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="match-example">
+    <div class="frame">
+      <div class="section-head">
+        <div><div class="section-num">02 — Output</div><h2>What a match looks like</h2></div>
+        <p class="section-intro">Not just a percentage — what it means, and what's still unverified.</p>
+      </div>
+      <div class="example-card">
+        <div class="example-flag">Example — illustrative, not a real supplier</div>
+        <div class="example-body">
+          <div class="example-best">Best match</div>
+          <div class="example-name">Supplier X</div>
+          <div class="example-score">94% capability match</div>
+          <ul class="example-list">
+            <li class="yes">Accepts customer-owned products</li>
+            <li class="yes">Supports screen printing</li>
+            <li class="yes">Quantity compatible</li>
+            <li class="yes">Berlin</li>
+            <li class="unk">Turnaround — not verified</li>
+          </ul>
+          <div class="example-meta">
+            <div><div class="k">Price</div><div class="v">On request</div></div>
+            <div><div class="k">Lead time</div><div class="v">Not verified</div></div>
+          </div>
+          <a href="#signal" class="btn">Request quote</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="trust">
+    <div class="frame">
+      <div class="trust-lines">
+        <p>AI helps structure the request. <strong>Supplier compatibility comes from real capability data.</strong></p>
+        <p>AI recommends. <strong>You decide.</strong></p>
+      </div>
+      <div class="compare">
+        <div class="compare-col">
+          <div class="compare-head">Google / a general assistant</div>
+          <ul class="compare-list">
+            <li>Finds companies — doesn't check whether this one can do this job</li>
+            <li>No memory of which quotes actually converted, or who actually delivered</li>
+            <li>No access to a supplier's current capacity, promotions or real lead time</li>
+          </ul>
+        </div>
+        <div class="compare-col hi">
+          <div class="compare-head">Produce Your Brand</div>
+          <ul class="compare-list">
+            <li>Matches against structured, hand-verified supplier capabilities</li>
+            <li>A published, deterministic score — same factors, every time, explainable</li>
+            <li>Never invents a supplier's capability. No data, no match.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="categories">
+    <div class="frame">
+      <div class="section-head">
+        <div><div class="section-num">03 — Scope</div><h2>Where we start</h2></div>
+        <p class="section-intro">Custom printing &amp; product customisation in Berlin. Narrow on purpose — depth before breadth.</p>
+      </div>
+      <div class="cats">
+        <div class="cat live"><div class="cat-id">01</div><div class="cat-name">Laser engraving</div><div class="cat-status">Live</div></div>
+        <div class="cat live"><div class="cat-id">02</div><div class="cat-name">Printing</div><div class="cat-status">Live</div></div>
+        <div class="cat live"><div class="cat-id">03</div><div class="cat-name">Embroidery</div><div class="cat-status">Live</div></div>
+        <div class="cat live"><div class="cat-id">04</div><div class="cat-name">Packaging &amp; labels</div><div class="cat-status">Live</div></div>
+        <div class="cat next"><div class="cat-id">05</div><div class="cat-name">Print shops</div><div class="cat-status">Next</div></div>
+        <div class="cat next"><div class="cat-id">06</div><div class="cat-name">Copyshops</div><div class="cat-status">Next</div></div>
+        <div class="cat next"><div class="cat-id">07</div><div class="cat-name">Carpentry</div><div class="cat-status">Next</div></div>
+        <div class="cat next"><div class="cat-id">08</div><div class="cat-name">Your category?</div><div class="cat-status">Tell us</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="status">
+    <div class="frame">
+      <div class="section-head">
+        <div><div class="section-num">04 — Where we are</div><h2>Real numbers only</h2></div>
+        <p class="section-intro">This is early. We'd rather show you what's true than what looks finished.</p>
+      </div>
+      <div class="status-row">
+        <div class="status-cell"><div class="num">24</div><div class="label">Hand-verified Berlin partners</div></div>
+        <div class="status-cell pending"><div class="num">—</div><div class="label">RFQs sent (none yet)</div></div>
+        <div class="status-cell pending"><div class="num">—</div><div class="label">Orders completed (none yet)</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="signal">
+    <div class="frame">
+      <div class="section-head">
+        <div><div class="section-num">05 — Start here</div><h2 class="final-cta-h">Have something difficult to source?</h2></div>
+      </div>
+      <div class="signal-grid">
+        <div class="ticket" id="buyer-ticket">
+          <div class="ticket-head"><div class="ticket-title">Buyer intake</div><div class="ticket-id mono">TICKET / BUY</div></div>
+          <p>You have a product and a custom-branding request no printer's website answers.</p>
+          <form id="buyer-form">
+            <div class="field"><label for="b-name">Name</label><input id="b-name" type="text" required></div>
+            <div class="field"><label for="b-email">Email</label><input id="b-email" type="email" required></div>
+            <div class="field"><label for="b-need">What do you need made?</label><textarea id="b-need" placeholder="e.g. 150 aluminium bottles, gold logo, 10 days"></textarea></div>
+            <button type="submit" class="btn">Find a production partner</button>
+          </form>
+          <div class="form-ok" id="buyer-ok">Opening your email client with this filled in →</div>
+          <div class="ticket-note">Opens a pre-filled email. Nothing is stored on this page.</div>
+        </div>
+
+        <div class="ticket" id="partner">
+          <div class="ticket-head"><div class="ticket-title">Partner intake</div><div class="ticket-id mono">TICKET / SUP</div></div>
+          <p>You run a print shop or workshop and want structured, pre-qualified leads instead of "how much for printing?"</p>
+          <form id="partner-form">
+            <div class="field"><label for="p-name">Name / company</label><input id="p-name" type="text" required></div>
+            <div class="field"><label for="p-email">Email</label><input id="p-email" type="email" required></div>
+            <div class="field"><label for="p-note">What do you offer, or what would make this worth it for you?</label><textarea id="p-note" placeholder="Method, capacity, or — what would a fair lead fee look like?"></textarea></div>
+            <button type="submit" class="btn">Send this to Ekaterina</button>
+          </form>
+          <div class="form-ok" id="partner-ok">Opening your email client with this filled in →</div>
+          <div class="ticket-note">Pay-per-outcome in principle — a fixed lead fee, small share only if it closes. Still being validated.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="frame">
+    <div class="foot-row">
+      <div class="foot-note">Supplier data is hand-verified, not scraped or invented. No request is sent to a real supplier without your approval.</div>
+      <div class="foot-tag">Berlin · 2026</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var BRAND = { name: "Produce Your Brand", short: "PYB", tagline: "Hard to source. Made possible." };
+  var tag = document.getElementById('brand-tagline');
+  if(tag) tag.textContent = BRAND.tagline;
+
+  function wire(formId, okId, subject){
+    var form = document.getElementById(formId);
+    if(!form) return;
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var fields = form.querySelectorAll('input, textarea');
+      var lines = [];
+      fields.forEach(function(f){
+        var label = form.querySelector('label[for="'+f.id+'"]');
+        lines.push((label ? label.textContent : f.id) + ': ' + (f.value || '—'));
+      });
+      var body = encodeURIComponent(lines.join('\n'));
+      var mailto = 'mailto:eka.kuzne@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + body;
+      window.location.href = mailto;
+      var ok = document.getElementById(okId);
+      if(ok) ok.classList.add('show');
+    });
+  }
+  wire('buyer-form', 'buyer-ok', '[Produce Your Brand] Buyer interest');
+  wire('partner-form', 'partner-ok', '[Produce Your Brand] Partner interest');
+})();
+</script>
+
+
+</body></html>
