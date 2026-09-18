@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "portfolio",
+      "runtimeExecutable": "C:\\Users\\ekaku\\OneDrive\\Desktop\\AI Engineering\\Projects\\produce-your-stuff\\.claude\\portfolio-dev.cmd",
+      "runtimeArgs": [],
+      "port": 3000
+    },
+    {
+      "name": "produce-your-stuff-frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "3010"],
+      "port": 3010,
+      "cwd": "frontend",
+      "env": { "API_BASE_URL": "http://127.0.0.1:8000/api" }
+    }
+  ]
+}

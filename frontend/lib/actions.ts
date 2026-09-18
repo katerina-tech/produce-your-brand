@@ -237,6 +237,19 @@ async function advance(
   try {
     await resumeProject(projectId, action, data);
   } catch (error) {
+    // A 409 means the project already moved past the step this screen was
+    // answering - a stale tab, a double submission, or another tab finishing
+    // first. The backend's own comment calls this "a correctable answer
+    // rather than silently resuming the wrong branch", but the correction
+    // only happens if the page actually refetches: without revalidating here,
+    // the form for the old step stayed on screen forever, showing the raw
+    // "not waiting for X, expects Y" message with no way off the page short
+    // of a manual reload. Revalidating instead lets the next render show
+    // whichever step the project is really on now.
+    if (error instanceof ApiError && error.status === 409) {
+      revalidatePath(`/projects/${projectId}`);
+      return {};
+    }
     return {
       error:
         error instanceof ApiError ? error.message : "Something went wrong.",
